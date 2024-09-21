@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils import timezone
-from production_plan.models import ProductionPlan
+from production_management.models import ProductionPlan
 
 class DryMix(models.Model):
     production_plan = models.ForeignKey(ProductionPlan, on_delete=models.CASCADE)
