@@ -45,3 +45,17 @@ class SalesOrder(models.Model):
 
     def __str__(self):
         return self.order_no
+
+class ProductionPlan(models.Model):
+    sales_order = models.ForeignKey(SalesOrder, on_delete=models.CASCADE)
+    plan_date = models.DateField()
+    plan_no = models.CharField(max_length=10, null=True)
+    plan_qty = models.IntegerField()
+    pd_line = models.CharField(max_length=10)
+    item_group = models.CharField(max_length=10)
+    pd_information = models.JSONField()
+    create_date = models.DateTimeField(default=timezone.now)
+    modify_date = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.sales_order.order_no}-{self.plan_date}"
