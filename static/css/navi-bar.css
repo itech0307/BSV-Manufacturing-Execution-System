@@ -1,0 +1,111 @@
+.nav-container {
+    width: 200px;
+    height: 100vh;
+    background-color: #24263d;
+    color: #ffffff;
+    padding: 20px 0;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    overflow-y: auto;
+    transition: transform 0.3s ease-out;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 1000;
+}
+.nav-container.collapsed {
+    transform: translateX(-170px);
+}
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 30px;
+    margin-bottom: 30px;
+    padding: 0 20px;
+    position: relative;
+}
+.BSV-PRO .text-wrapper-1 {
+    color: #ffffff;
+}
+.BSV-PRO .text-wrapper-2 {
+    color: #D66F6F
+}
+.BSV-PRO {
+    position: relative;
+    display: inline-block;
+    text-decoration: none;
+    color: inherit;
+}
+.BSV-PRO .subtitle {
+    position: absolute;
+    left: 0;
+    bottom: -12px; /* 4줄의 텍스트를 수용하기 위해 조정 */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    font-size: 9px;
+    line-height: 1;
+}
+.BSV-PRO .subtitle span {
+    display: block;
+    color: #D66F6F
+}
+.toggle-btn {
+    position: absolute;
+    right: 10px;
+    top: 5%;
+    transform: translateY(-100%);
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+}
+.navi-menu {
+    margin-bottom: 5px;
+}
+.menu-button {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 10px 20px;
+    transition: background-color 0.3s;
+}
+.menu-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+.text-wrapper {
+    margin-left: 10px;
+}
+.submenu {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    background-color: #2f3148;
+}
+.submenu-item {
+    display: block;
+    padding: 10px 30px;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+}
+.submenu-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: inherit;
+}
+.icon-placeholder {
+    width: 20px;
+    height: 20px;
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+}
+.hover-area {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 20px;
+    height: 100vh;
+    z-index: 999;
+}

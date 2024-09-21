@@ -1,0 +1,29 @@
+.id {
+    display: none;
+}
+
+.searchbox {
+    margin: 1px;
+    
+}
+
+.searchbox_cell {
+    padding: 0px;
+}
+
+.searchbox_title {
+    border-style: solid;
+    border-color: #F2F2F2;
+    background: #F2F2F2;
+}
+
+.searchbox_input {
+    height: 30px;
+    font-size:16px;
+    border-style: none;
+}
+
+.order_list {
+    color: solid #444444;
+    font-size: small;
+}
