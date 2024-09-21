@@ -41,6 +41,15 @@ INSTALLED_APPS = [
     # Celery
     'celery',
     'celery_progress',
+
+    # Local apps
+    'common',
+    'data_monitoring',
+    'production_management',
+    'quality_control',
+    'inventory_management',
+    'workforce_management',
+
 ]
 
 MIDDLEWARE = [
