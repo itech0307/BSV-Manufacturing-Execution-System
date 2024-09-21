@@ -1,0 +1,11 @@
+.idea
+db.sqlite3
+*.pyc
+__pycache__
+*.env
+.venv/
+.vscode/
+logs/
+temp/
+setup.ini
+redis/
