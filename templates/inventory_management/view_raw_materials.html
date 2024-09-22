@@ -1,166 +1,200 @@
 {% extends 'common/main.html' %}
 {% load static %}
 {% block content %}
-<body>
-    <div class="container mt-5">
-        <h1 class="mb-4">Raw Materials Management</h1>
-        
-        <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addItemModal">
-            Add New Item
-        </button>
-        
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Material Name</th>
-                    <th>Description</th>
-                    <th>Supplier</th>
-                    <th>Category</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for material in raw_materials %}
-                <tr>
-                    <td>{{ material.id }}</td>
-                    <td>{{ material.material_name }}</td>
-                    <td>{{ material.description|default:"N/A" }}</td>
-                    <td>{{ material.supplier.supplier_name }}</td>
-                    <td>{{ material.category.category_name }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="5" class="text-center">No raw materials found.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+<div class="container mt-5">
+    <h1 class="mb-4">Raw Materials Management</h1>
 
-    <!-- Modal -->
-    <div class="modal fade" id="addItemModal" tabindex="-1" aria-labelledby="addItemModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addItemModalLabel">Add New Item</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <!-- Tabs -->
-                    <ul class="nav nav-tabs" id="myTab" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="category-tab" data-bs-toggle="tab" data-bs-target="#category" type="button" role="tab">Category</button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="supplier-tab" data-bs-toggle="tab" data-bs-target="#supplier" type="button" role="tab">Supplier</button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="rawmaterial-tab" data-bs-toggle="tab" data-bs-target="#rawmaterial" type="button" role="tab">Raw Material</button>
-                        </li>
-                    </ul>
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addItemModal">
+        Add New Item
+    </button>
+    
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Material Name</th>
+                <th>Description</th>
+                <th>Supplier</th>
+                <th>Category</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for material in raw_materials %}
+            <tr>
+                <td>{{ material.id }}</td>
+                <td>{{ material.material_name }}</td>
+                <td>{{ material.description|default:"N/A" }}</td>
+                <td>{{ material.supplier.supplier_name }}</td>
+                <td>{{ material.category.category_name }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center">No raw materials found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="addItemModal" tabindex="-1" aria-labelledby="addItemModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addItemModalLabel">Add New Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Tabs -->
+                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="category-tab" data-bs-toggle="tab" data-bs-target="#category" type="button" role="tab">Category</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="supplier-tab" data-bs-toggle="tab" data-bs-target="#supplier" type="button" role="tab">Supplier</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="rawmaterial-tab" data-bs-toggle="tab" data-bs-target="#rawmaterial" type="button" role="tab">Raw Material</button>
+                    </li>
+                </ul>
+                
+                <!-- Tab Content -->
+                <div class="tab-content mt-3" id="myTabContent">
+                    <div class="tab-pane fade show active" id="category" role="tabpanel">
+                        <form method="post" action="{% url 'inventory_management:add_category' %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="category_name" class="form-label">Category Name</label>
+                                <input type="text" class="form-control" id="category_name" name="category_name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="category_description" class="form-label">Description</label>
+                                <textarea class="form-control" id="category_description" name="description" rows="3"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary" {% if not is_superuser %}disabled{% endif %} 
+                                    data-bs-toggle="tooltip" data-bs-placement="top" 
+                                    title="{% if not is_superuser %}Only administrators can add categories{% endif %}">
+                                Add Category
+                            </button>
+                        </form>
+                        <hr>
+                        <p>
+                            <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#categoryList" aria-expanded="false" aria-controls="categoryList">
+                                Show/Hide Existing Categories
+                            </button>
+                        </p>
+                        <div class="collapse" id="categoryList">
+                            <div class="card card-body">
+                                <ul class="list-group">
+                                    {% for category in categories %}
+                                    <li class="list-group-item">{{ category.category_name }}</li>
+                                    {% empty %}
+                                    <li class="list-group-item">No categories found.</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
                     
-                    <!-- Tab Content -->
-                    <div class="tab-content mt-3" id="myTabContent">
-                        <div class="tab-pane fade show active" id="category" role="tabpanel">
-                            <form method="post" action="{% url 'inventory_management:add_category' %}">
-                                {% csrf_token %}
-                                <div class="mb-3">
-                                    <label for="category_name" class="form-label">Category Name</label>
-                                    <input type="text" class="form-control" id="category_name" name="category_name" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="category_description" class="form-label">Description</label>
-                                    <textarea class="form-control" id="category_description" name="description" rows="3"></textarea>
-                                </div>
-                                <button type="submit" class="btn btn-primary">Add Category</button>
-                            </form>
-                            <hr>
-                            <p>
-                                <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#categoryList" aria-expanded="false" aria-controls="categoryList">
-                                    Show/Hide Existing Categories
-                                </button>
-                            </p>
-                            <div class="collapse" id="categoryList">
-                                <div class="card card-body">
-                                    <ul class="list-group">
-                                        {% for category in categories %}
-                                        <li class="list-group-item">{{ category.category_name }}</li>
-                                        {% empty %}
-                                        <li class="list-group-item">No categories found.</li>
-                                        {% endfor %}
-                                    </ul>
-                                </div>
+                    <div class="tab-pane fade" id="supplier" role="tabpanel">
+                        <form method="post" action="{% url 'inventory_management:add_supplier' %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="supplier_name" class="form-label">Supplier Name</label>
+                                <input type="text" class="form-control" id="supplier_name" name="supplier_name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="supplier_description" class="form-label">Description</label>
+                                <textarea class="form-control" id="supplier_description" name="description" rows="3"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary" {% if not is_superuser %}disabled{% endif %} 
+                                    data-bs-toggle="tooltip" data-bs-placement="top" 
+                                    title="{% if not is_superuser %}Only administrators can add suppliers{% endif %}">
+                                Add Supplier
+                            </button>
+                        </form>
+                        <hr>
+                        <p>
+                            <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#supplierList" aria-expanded="false" aria-controls="supplierList">
+                                Show/Hide Existing Suppliers
+                            </button>
+                        </p>
+                        <div class="collapse" id="supplierList">
+                            <div class="card card-body">
+                                <ul class="list-group">
+                                    {% for supplier in suppliers %}
+                                    <li class="list-group-item">{{ supplier.supplier_name }}</li>
+                                    {% empty %}
+                                    <li class="list-group-item">No suppliers found.</li>
+                                    {% endfor %}
+                                </ul>
                             </div>
                         </div>
-                        
-                        <div class="tab-pane fade" id="supplier" role="tabpanel">
-                            <form method="post" action="{% url 'inventory_management:add_supplier' %}">
-                                {% csrf_token %}
-                                <div class="mb-3">
-                                    <label for="supplier_name" class="form-label">Supplier Name</label>
-                                    <input type="text" class="form-control" id="supplier_name" name="supplier_name" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="supplier_description" class="form-label">Description</label>
-                                    <textarea class="form-control" id="supplier_description" name="description" rows="3"></textarea>
-                                </div>
-                                <button type="submit" class="btn btn-primary">Add Supplier</button>
-                            </form>
-                            <hr>
-                            <p>
-                                <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#supplierList" aria-expanded="false" aria-controls="supplierList">
-                                    Show/Hide Existing Suppliers
-                                </button>
-                            </p>
-                            <div class="collapse" id="supplierList">
-                                <div class="card card-body">
-                                    <ul class="list-group">
-                                        {% for supplier in suppliers %}
-                                        <li class="list-group-item">{{ supplier.supplier_name }}</li>
-                                        {% empty %}
-                                        <li class="list-group-item">No suppliers found.</li>
-                                        {% endfor %}
-                                    </ul>
-                                </div>
+                    </div>
+                    
+                    <div class="tab-pane fade" id="rawmaterial" role="tabpanel">
+                        <form method="post" action="{% url 'inventory_management:add_rawmaterial' %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="material_name" class="form-label">Raw Material Name</label>
+                                <input type="text" class="form-control" id="material_name" name="material_name" required>
                             </div>
-                        </div>
-                        
-                        <div class="tab-pane fade" id="rawmaterial" role="tabpanel">
-                            <form method="post" action="{% url 'inventory_management:add_rawmaterial' %}">
-                                {% csrf_token %}
-                                <div class="mb-3">
-                                    <label for="material_name" class="form-label">Raw Material Name</label>
-                                    <input type="text" class="form-control" id="material_name" name="material_name" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="material_description" class="form-label">Description</label>
-                                    <textarea class="form-control" id="material_description" name="description" rows="3"></textarea>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="supplier" class="form-label">Supplier</label>
-                                    <select class="form-select" id="supplier" name="supplier" required>
-                                        {% for supplier in suppliers %}
-                                            <option value="{{ supplier.id }}">{{ supplier.supplier_name }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="category" class="form-label">Category</label>
-                                    <select class="form-select" id="category" name="category" required>
-                                        {% for category in categories %}
-                                            <option value="{{ category.id }}">{{ category.category_name }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <button type="submit" class="btn btn-primary">Add Raw Material</button>
-                            </form>
-                        </div>
+                            <div class="mb-3">
+                                <label for="material_description" class="form-label">Description</label>
+                                <textarea class="form-control" id="material_description" name="description" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="supplier" class="form-label">Supplier</label>
+                                <select class="form-select" id="supplier" name="supplier" required>
+                                    {% for supplier in suppliers %}
+                                        <option value="{{ supplier.id }}">{{ supplier.supplier_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="category" class="form-label">Category</label>
+                                <select class="form-select" id="category" name="category" required>
+                                    {% for category in categories %}
+                                        <option value="{{ category.id }}">{{ category.category_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Raw Material</button>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
+{% endblock %}
+{% block script %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+    // Close the modal if a form was submitted successfully
+    {% if messages %}
+    var addItemModal = document.getElementById('addItemModal')
+    var modal = bootstrap.Modal.getInstance(addItemModal)
+    if (modal) {
+        modal.hide()
+    }
+    {% endif %}
+</script>
 {% endblock %}
