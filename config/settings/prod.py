@@ -2,7 +2,7 @@ from .base import *
 import os
 import environ
 
-ALLOWED_HOSTS = ['18.139.97.72']
+ALLOWED_HOSTS = ['18.139.97.72', 'bsv-mes.com']
 DEBUG = False
 
 AWS_STORAGE_BUCKET_NAME = 'bsv-mes-prod-bucket'
