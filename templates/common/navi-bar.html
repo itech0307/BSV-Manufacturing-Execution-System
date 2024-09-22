@@ -1,3 +1,4 @@
+{% load static %}
 <div class="hover-area"></div>
 <nav class="nav-container">
     <button class="toggle-btn">☰</button>
@@ -119,5 +120,29 @@
         <div class="submenu" id="hrm-submenu">
             <a href="#" class="submenu-item">Staff</a>
         </div>
+    </div>
+
+    <!-- 사용자 정보 섹션을 nav-container의 끝으로 이동 -->
+    <div class="user-info">
+        {% if user.is_authenticated %}
+        <div class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <!--
+                <div class="user-avatar me-2">
+                    <img src="{% static 'images/default-avatar.png' %}" alt="User Avatar" width="30" height="30" class="rounded-circle">
+                </div>
+                -->
+                <span>{{ user.username }}</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                <li><a class="dropdown-item" href="#">My Page</a></li>
+                <li><a class="dropdown-item" href="#">Change Password</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="#">Logout</a></li>
+            </ul>
+        </div>
+        {% else %}
+        <!-- 로그인되지 않은 경우의 처리 -->
+        {% endif %}
     </div>
 </nav>

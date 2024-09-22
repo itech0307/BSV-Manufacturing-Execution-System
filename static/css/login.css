@@ -7,19 +7,19 @@
     padding: 0 20px;
     position: relative;
 }
-.BSV-PRO .text-wrapper-1 {
+.BSV-MES .text-wrapper-1 {
     color: #24263d;
 }
-.BSV-PRO .text-wrapper-2 {
+.BSV-MES .text-wrapper-2 {
     color: #D66F6F
 }
-.BSV-PRO {
+.BSV-MES {
     position: relative;
     display: inline-block;
     text-decoration: none;
     color: inherit;
 }
-.BSV-PRO .subtitle {
+.BSV-MES .subtitle {
     position: absolute;
     left: 0;
     bottom: -12px; /* 4줄의 텍스트를 수용하기 위해 조정 */
@@ -29,7 +29,7 @@
     font-size: 9px;
     line-height: 1;
 }
-.BSV-PRO .subtitle span {
+.BSV-MES .subtitle span {
     display: block;
     color: #D66F6F
 }

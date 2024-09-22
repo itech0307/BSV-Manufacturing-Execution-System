@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/login.css' %}">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            padding-top: 40px;
+            padding-bottom: 40px;
+            background-color: #f5f5f5;
+            height: 100vh;
+        }
+        .form-signin {
+            width: 100%;
+            max-width: 330px;
+            padding: 15px;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
+    <main class="form-signin">
+        <div class="logo">
+            <p href="#" class="BSV-MES">
+                <span class="text-wrapper-1">BSV</span>
+                <span class="text-wrapper-2">MES</span>
+            </p>
+        </div>
+        <form method="post" action="{% url 'common:login' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="username" class="visually-hidden">Username</label>
+                <input type="text" class="form-control" name="username" id="username" placeholder="Username" required autofocus>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="visually-hidden">Password</label>
+                <input type="password" class="form-control" name="password" id="password" placeholder="Password" required>
+            </div>
+            <button class="w-100 btn btn-lg btn-primary" type="submit">Login</button>
+        </form>
+        <div class="text-center mt-3">
+            <a href="{% url 'common:register' %}">Register</a>
+        </div>
+    </main>
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

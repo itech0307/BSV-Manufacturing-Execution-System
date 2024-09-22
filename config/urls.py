@@ -26,5 +26,7 @@ urlpatterns = [
     path('common/', include('common.urls')),
     path('inventory_management/', include('inventory_management.urls')),
     path('data_monitoring/', include('data_monitoring.urls')),
+
+    path('accounts/', include('allauth.urls')),
     path('', redirect_to_main, name='home'),
 ]
