@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -27,6 +28,11 @@ SECRET_KEY = 'django-insecure-fu5z8knr^6))fu5j7a=y%)h7=+@%$8k3sj9$1i#rd&0&gvf1&+
 DEBUG = True
 
 ALLOWED_HOSTS = []
+
+env = environ.Env()
+environ.Env.read_env(BASE_DIR / 'config/.env')
+# Get the domain from the environment variable
+DOMAIN = env('DOMAIN')
 
 LOGIN_URL = '/common/login/'
 LOGIN_REDIRECT_URL = '/common/main/'  # 로그인 성공 후 리다이렉트할 URL
