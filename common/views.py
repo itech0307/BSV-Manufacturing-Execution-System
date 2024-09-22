@@ -2,6 +2,9 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from .forms import UserRegistrationForm
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.views.decorators.http import require_http_methods
+from django.contrib.auth import logout
 
 import logging
 logger = logging.getLogger('common')
@@ -22,9 +25,15 @@ def login_view(request):
             login(request, user)
             return redirect('common:main')  # 로그인 후 메인 페이지로 리다이렉트
         else:
-            error_message = "사용자 이름 또는 비밀번호가 올바르지 않습니다."
+            error_message = "Invalid username or password."
             return render(request, 'common/login.html', {'error_message': error_message})
     return render(request, 'common/login.html')
+
+@require_http_methods(["GET", "POST"])
+def logout_view(request):
+    logout(request)
+    messages.success(request, "Successfully logged out.")
+    return redirect('common:main')
 
 def register(request):
     if request.method == 'POST':
