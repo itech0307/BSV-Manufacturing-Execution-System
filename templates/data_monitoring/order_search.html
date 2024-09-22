@@ -1,0 +1,188 @@
+{% extends 'data_monitoring/base.html' %}
+{% load custom_filters %}
+{% block header %}[ORDER] SEARCH{% endblock %}
+{% block checkbox %}
+<!-- 열 표시 제어 체크 박스 -->
+<input class="form-check-input" type="checkbox" id="toggleOrderDateColumn" checked onchange="toggleColumn('OrderDate');">
+<label for="toggleOrderDateColumn">OrderDate</label>           
+<input class="form-check-input" type="checkbox" id="toggleRTDColumn" checked onchange="toggleColumn('RTD');">
+<label for="toggleRTDColumn">RTD</label>            
+<input class="form-check-input" type="checkbox" id="toggleETDColumn" checked onchange="toggleColumn('ETD');">
+<label for="toggleETDColumn">ETD</label>            
+<input class="form-check-input" type="checkbox" id="toggleSpecColumn" checked onchange="toggleColumn('Spec');">
+<label for="toggleSpecColumn">Spec</label>
+{% endblock %}
+{% block forms %}
+<form method="post" action="{% url 'data_monitoring:order_search' %}" onsubmit="return validateOrderNumber();" style="display: flex; align-items: center; width: 100%;">
+    {% csrf_token %}
+    <input class="form-control" type="text" placeholder="order number" aria-label="order number" id="order_number" name="order_number" style="width:30%; margin-right: 10px;" required>
+    <button class="btn btn-outline-success" type="submit">Search</button>
+</form>
+{% if "production_staffs" in user_groups %}
+<button onclick="generateQRCode()" title="QR" style="background: none; border: none; cursor: pointer; margin: 0 10px;">
+    <i class="fas fa-qrcode"></i>
+</button>
+{% endif %}
+{% endblock %}
+{% block url %}{% url 'data_monitoring:order_search' %}{% endblock %}
+{% block table %}
+{% if order_and_status %}
+<text>Total {{ count }} results found.</text>
+<div class="scrollable-tbody">
+    <table class="table table-report" style="width:80%">
+        <thead>
+            <tr>
+                <th>Order No</th>
+                <th>Customer</th>
+                <th>Order Type</th>
+                <th class="orderdate-col">OrderDate</th>
+                <th class="rtd-col">RTD</th>
+                <th class="etd-col">ETD</th>                    
+                <th>Brand</th>
+                <th>Item</th>
+                <th class="spec-col">Spec</th>
+                <th>Color</th>
+                <th>Pattern</th>
+                <th>OrderQty</th>
+                <th>Unit</th>
+                <th>Bal.Qty</th>
+                <th>Finish</th>
+                <th>Update</th>
+                <th>NextStep</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order, status in order_and_status %}
+            <tr data-order="{{ order }}"
+                data-status="{{ status|json_str }}"
+                data-order-number="{{ order.order_number }}">
+                <td>{{ order.order_number }}</td>
+                <td>{{ order.customer_name }}</td>
+                <td>{{ order.order_type }}</td>
+                <td class="orderdate-col">{{ order.order_date}}</td>
+                <td class="rtd-col">{{ order.rtd}}</td>
+                <td class="etd-col">{{ order.etd}}</td>
+                <td>{{ order.brand }}</td>
+                {% if order.specification|slice:"3:4" == '0' %}
+                    <td>{{ order.item_name }} {{ order.specification|slice:":3" }}</td>
+                {% else%}
+                    <td>{{ order.item_name }} {{ order.specification|slice:":4" }}</td>
+                {% endif %}
+                <td class="spec-col">{{ order.specification }}</td>
+                <td>{{ order.color_code }}</td>
+                <td>{{ order.pattern }}</td>
+                <td>{{ order.order_quantity }}</td>
+                <td>{{ order.quantity_unit }}</td>
+                <td>
+                    <b>{{ status.bal_qty }}</b>
+                </td>
+                {% if status.latest_process %}
+                    <td>
+                        {{ status.latest_process|default_if_none:"" }} {{ status.latest_machine|slice:"-1:" }}
+                    </td>
+                    <td>
+                        {{ status.latest_create_date|slice:"5:16"  }} {% if status.latest_create_date %} ({{ status.latest_create_date|elapsed_time }}) {% endif %}
+                    </td>
+                    {% if status.latest_process == 'DryPlan' %}
+                        <td>
+                            <span style="background-color: #FF4500; color: black; padding: 5px 10px; border-radius: 5px;"><b>MIXING</b></span>
+                        </td>
+                    {% elif status.latest_process == 'DryMix' %}
+                        <td>
+                            <span style="background-color: #FFC107; color: black; padding: 5px 10px; border-radius: 5px;"><b>PRODUCTION</b></span>
+                        </td>
+                    {% elif status.latest_process == 'DryLine' %}
+                        {% if status.latest_machine == "bsvdl01" %}
+                            <td>
+                                <span style="background-color: #5986c9; color: black; padding: 5px 10px; border-radius: 5px;"><b>RP{% if status.line_shortage < 0 %} ({{ status.line_shortage }}M) {% endif %}</b></span>
+                            </td>
+                        {% elif status.latest_machine == "bsvdl02" %}
+                            <td>
+                                <span style="background-color: #5986c9; color: black; padding: 5px 10px; border-radius: 5px;"><b>RP{% if status.line_shortage < 0 %} ({{ status.line_shortage }}M) {% endif %}</b></span>
+                            </td>
+                        {% elif status.latest_machine == "bsvdl03" %}
+                            <td>
+                                <span style="background-color: #5986c9; color: black; padding: 5px 10px; border-radius: 5px;"><b>INSPECTION{% if status.line_shortage < 0 %} ({{ status.line_shortage }}M) {% endif %}</b></span>
+                            </td>
+                        {% elif status.latest_machine == "bsvdl04" %}
+                            <td>
+                                <span style="background-color: #5986c9; color: black; padding: 5px 10px; border-radius: 5px;"><b>INSPECTION{% if status.line_shortage < 0 %} ({{ status.line_shortage }}M) {% endif %}</b></span>
+                            </td>
+                        {% else %}
+                            <td></td>
+                        {% endif %}
+                    {% elif status.latest_process == 'RP' %}
+                        <td>
+                            <span style="background-color: #5986c9; color: black; padding: 5px 10px; border-radius: 5px;"><b>INSPECTION{% if status.line_shortage < 0 %} ({{ status.line_shortage }}M) {% endif %}</b></span>
+                        </td>
+                    {% elif status.latest_process == 'Inspection' %}
+                        {% if status.bal_qty > 0 %}
+                            <td>
+                                <span style="background-color: #FFC107; color: black; padding: 5px 10px; border-radius: 5px;"><b>Add-Plan</b></span>
+                            </td>
+                        {% else %}
+                            <td>
+                                <span style="background-color: #3CB371; color: black; padding: 5px 10px; border-radius: 5px;"><b>SHIPMENT</b></span>
+                            </td>
+                        {% endif %}
+                    {% else %}
+                        <td></td>
+                    {% endif %}
+                {% else %}
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<p>No matching orders found.</p>
+{% endif %}
+{% endblock %}
+{% block extra_js %}
+<script>
+function generateQRCode() {
+    const table = document.querySelector('.table-report');
+    const rows = table.querySelectorAll('tbody tr');
+    const orderNumbers = Array.from(rows).map(row => row.cells[0].textContent.trim());
+
+    const csrftoken = getCookie('csrftoken');
+    const payload = {
+        action: 'download_to_qrcard',
+        order_numbers: orderNumbers.join(',')
+    };
+
+    fetch('/data_retrieval/order_search/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/json; charset=utf-8'
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.blob();
+    })
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = "qrcard.xlsx";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        alert("Failed to download file.");
+    });
+}
+</script>
+{% endblock %}

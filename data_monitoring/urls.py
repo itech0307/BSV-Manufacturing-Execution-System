@@ -4,5 +4,7 @@ from . import views
 app_name = 'data_monitoring'
 
 urlpatterns = [
-    path('drymix/', views.input_drymix, name='input_drymix')
+    path('drymix/', views.input_drymix, name='input_drymix'),
+
+    path('order_search/', views.order_search, name='order_search'),
 ]
