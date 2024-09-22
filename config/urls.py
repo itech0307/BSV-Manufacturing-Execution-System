@@ -24,5 +24,6 @@ def redirect_to_main(request):
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('common/', include('common.urls')),
+    path('inventory_management/', include('inventory_management.urls')),
     path('', redirect_to_main, name='home'),
 ]
