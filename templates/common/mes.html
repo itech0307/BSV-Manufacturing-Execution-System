@@ -1,0 +1,208 @@
+{% extends 'common/main.html' %}
+
+{% block content %}
+<h1 class="mb-4">MES (Manufacturing Execution System)</h1>
+
+<div class="section">
+    <h2>1. What is an MES?</h2>
+    <div class="card">
+        <div class="card-body">
+            <p>MES (Manufacturing Execution System) is an integrated information system that improves productivity through real-time monitoring and control of the production floor. MES acts as a bridge between ERP (Enterprise Resource Planning) and shop floor automation systems.</p>
+            <p>MES has the following key objectives:</p>
+            <ul>
+                <li>Optimization of production processes</li>
+                <li>Real-time data collection and analysis</li>
+                <li>Improved visibility of production operations</li>
+                <li>Enhanced quality control</li>
+                <li>Ensuring traceability of production history</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <h2>2. Key Functions of MES</h2>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Production Planning and Scheduling</h5>
+                    <p class="card-text">Efficiently processes production orders and establishes optimal production schedules. Creates flexible production plans considering resource availability, due dates, and priorities.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Work Order Management and Dispatch</h5>
+                    <p class="card-text">Assigns tasks to workers and equipment according to the production plan, provides detailed work instructions, and monitors work progress in real-time.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Inventory and Material Management</h5>
+                    <p class="card-text">Manages raw materials, work-in-progress, and finished goods inventory in real-time. Calculates material requirements and ensures timely supply of materials to prevent production interruptions.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Quality Management</h5>
+                    <p class="card-text">Collects and analyzes product quality data in real-time. Utilizes Statistical Process Control (SPC) techniques to detect and respond to quality issues early.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <h2>3. Benefits of Implementing MES</h2>
+    <div class="accordion" id="accordionBenefits">
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingOne">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                    Increased Productivity
+                </button>
+            </h2>
+            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionBenefits">
+                <div class="accordion-body">
+                    <p>MES identifies and improves inefficiencies in production processes through real-time monitoring. This leads to reduced production cycle times, increased equipment utilization, and improved worker productivity.</p>
+                </div>
+            </div>
+        </div>
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingTwo">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
+                    Quality Improvement
+                </button>
+            </h2>
+            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionBenefits">
+                <div class="accordion-body">
+                    <p>Real-time quality data collection and analysis enable early detection and response to quality issues. Statistical Process Control (SPC) techniques minimize quality variations and support continuous quality improvement activities.</p>
+                </div>
+            </div>
+        </div>
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingThree">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree">
+                    Cost Reduction
+                </button>
+            </h2>
+            <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionBenefits">
+                <div class="accordion-body">
+                    <p>MES optimizes inventory and improves resource utilization. It reduces unnecessary inventory holdings and enables efficient operation of equipment and personnel, leading to overall production cost reduction.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <h2>4. MES Integration with Other Systems</h2>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>System</th>
+                    <th>Description</th>
+                    <th>Integration Points with MES</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>ERP</td>
+                    <td>Enterprise Resource Planning</td>
+                    <td>Production planning, order management, cost management</td>
+                </tr>
+                <tr>
+                    <td>PLM</td>
+                    <td>Product Lifecycle Management</td>
+                    <td>Product design information, BOM (Bill of Materials) management</td>
+                </tr>
+                <tr>
+                    <td>SCM</td>
+                    <td>Supply Chain Management</td>
+                    <td>Material procurement, inventory management, logistics information</td>
+                </tr>
+                <tr>
+                    <td>CRM</td>
+                    <td>Customer Relationship Management</td>
+                    <td>Customer order information, quality feedback</td>
+                </tr>
+                <tr>
+                    <td>SCADA</td>
+                    <td>Supervisory Control And Data Acquisition</td>
+                    <td>Equipment data collection, process monitoring</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="section">
+    <h2>5. Considerations for MES Implementation</h2>
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Analysis of Company Characteristics and Requirements</h5>
+                    <p class="card-text">Customized MES implementation is necessary, considering each company's production methods, industry characteristics, and scale.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">System Integration</h5>
+                    <p class="card-text">Smooth data integration and connectivity with existing systems (ERP, PLM, etc.) is crucial.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">User Training and Change Management</h5>
+                    <p class="card-text">Organizational change management and user training are essential when implementing a new system.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <h2>6. Future Outlook for MES</h2>
+    <div class="card">
+        <div class="card-body">
+            <p>With the advancement of Industry 4.0 and smart factories, the role of MES is expected to become even more important. Future MES is anticipated to develop in the following directions:</p>
+            <ul>
+                <li>Predictive maintenance and quality management using Artificial Intelligence (AI) and machine learning</li>
+                <li>More precise real-time data collection through Internet of Things (IoT) technology</li>
+                <li>Proliferation of cloud-based MES solutions</li>
+                <li>Virtual production simulation using digital twin technology</li>
+                <li>Enhanced security of production history using blockchain technology</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+    // Additional script for accordion functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        var accordionButtons = document.querySelectorAll('.accordion-button');
+        accordionButtons.forEach(function(button) {
+            button.addEventListener('click', function() {
+                var target = document.querySelector(this.getAttribute('data-bs-target'));
+                if (target) {
+                    target.classList.toggle('show');
+                    this.classList.toggle('collapsed');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
