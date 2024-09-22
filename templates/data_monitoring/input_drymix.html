@@ -1,0 +1,225 @@
+{% extends "data_monitoring/input_base.html" %}
+{% block title %}PRODUCTION-DATA QR SYSTEM (DRY MIX){% endblock %}
+{% block header %}PRODUCTION-DATA QR SYSTEM (DRY MIX){% endblock %}
+{% block content %}
+<!-- 작업자 선택을 위한 모달 -->
+<div class="modal fade" id="personModal" tabindex="-1" role="dialog" aria-labelledby="personModalLabel" aria-hidden="true" data-backdrop="static">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="personModalLabel">CHỌN NHÂN VIÊN</h5>
+            </div>
+            <div class="modal-body">
+                <div class="grid-container-person" id="staffGrid">
+                    <!-- 여기에 작업자 선택 버튼 -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+    // 배합실 작업자 선택 스크립트
+    var dmStaffList; // 전역 변수로 선언
+    $(document).ready(function() { // 페이지 로딩 시 Staff 목록 로드
+        dmStaffList = JSON.parse('{{ dm_staff_list|safe }}');
+        var dmStaffName; // 선택된 직원의 이름을 저장할 변수
+        var dmStaffId;   // 선택된 직원의 ID를 저장할 변수
+
+        var staffButtonsHtml = ''; // Staff 버튼 목록을 HTML 요소로 변환
+        dmStaffList.forEach(function(staff, index) {                
+            // staff.id (또는 staff.number)를 사용하여 번호를 추가
+            staffButtonsHtml += `<button class="grid-item" onclick="selectStaff('${staff.staff_id}')">${staff.staff_id}<br>${staff.name}</button>`;
+        });
+
+        $('#staffGrid').html(staffButtonsHtml); // HTML 요소에 목록 추가
+    });
+    var selectedStaffNumber; // 전역 변수로 선택된 스태프 번호를 저장
+    function selectStaff(staffId) { // Staff 선택 함수
+        // 선택된 Staff의 이름을 찾습니다
+        var selectedStaff = dmStaffList.find(function(staff) {
+            return staff.id === staffId;
+        });
+        selectedStaffNumber = staffId;
+        $('#selectedStaffInfo').text(`[${selectedStaffNumber}]`); // 선택된 스태프 정보를 표시
+        $('#personModal').modal('hide'); // 모달 창 닫기
+    }
+
+    let nextBtnState = 0;
+    let scannedOrdersData;
+
+    $('#nextBtn').on('click', handleNextButtonClick);
+
+    function handleNextButtonClick() {
+        nextBtnState++;
+        switch(nextBtnState) {
+            case 1:
+                handleFirstClick();
+                break;
+            case 2:
+                handleSecondClick();
+                break;
+            case 3:
+                handleThirdClick();
+                break;
+            default:
+                resetPage();
+        }
+    }
+
+    function handleFirstClick() {
+        updateScannedQRCodes();
+        updateQRSummary();
+        clearOrderInfo();
+        disableAddButton();        
+        $('#personModal').modal('show');
+    }
+
+    function handleSecondClick() {
+        showQuantityInput();
+        setupTableToggle();
+    }
+
+    function handleThirdClick() {
+        sendDataToServer();
+    }
+
+    function showQuantityInput() {
+        $('#quantityInputContainer').show();
+        $('#scannedOrdersTable').hide();
+    }
+
+    function sendDataToServer() {
+        $('#keypad').hide();
+        $.ajax({
+            url: '/ppm/kiosk/drymix/',
+            type: 'POST',
+            data: JSON.stringify({
+                scannedOrders: scannedQRCodes,
+                quantityInput: quantityInput,
+                machine: machineValue,
+                staffNumber: selectedStaffNumber
+            }),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: handleServerResponse,
+            error: handleServerError
+        });
+    }
+
+    function toggleTableVisibility() {
+        $('#scannedOrdersTable').toggle();
+        const buttonText = $('#scannedOrdersTable').is(':visible') ? 'Giấu' : 'Hiện';
+        $('.toggle-button').text(buttonText);
+    }
+
+    const categories = JSON.parse('{{ categories|safe }}');
+    const subitems = JSON.parse('{{ subitems|safe }}');
+    const quantityInput = [];        
+    function addNewItem() {
+        const parentDiv = $('#quantityInputTable');
+        const addButtonContainer = $('#addButtonContainer');    
+        const itemGroupDiv = $('<div class="item-group row"></div>');
+        const excludeItems = ["ADDITIVE", "AGENT", "BINDER RESIN"]; // 제외할 항목 리스트
+
+        // categories 배열에서 제외할 항목 필터링 후 알파벳 순서로 정렬
+        const sortedCategories = categories.filter(category => !excludeItems.includes(category)).sort();
+        const staffGridContainer = $('<div class="staff-grid-container"></div>'); // 그리드 컨테이너 생성
+        sortedCategories.forEach(category => {
+            const gridItem = $(`<div class="grid-item">${category}</div>`);
+            gridItem.on('click', function() {
+                const item = $(this).text();
+                const itemSubitems = subitems[item] || [];
+
+                $('#categoryModal').modal('hide'); // 모달 닫기
+
+                // 선택된 카테고리에 따른 하위 항목들을 보여주는 <select> 드롭다운 생성
+                const subItemSelect = $('<select class="subitem-select form-control form-control-lg col-4" style="width:30%"></select>');
+                subItemSelect.append('<option value="" disabled selected>"Chọn"</option>');
+                itemSubitems.forEach(subitem => {
+                    subItemSelect.append(`<option value="${subitem}">${subitem}</option>`);
+                });
+
+                // "Go back to categories" 옵션 추가
+                const optgroup = $('<optgroup label="==============="></optgroup>');
+                optgroup.append('<option value="back_to_categories">Quay Lại</option>');
+                subItemSelect.append(optgroup);
+
+                itemGroupDiv.append(subItemSelect);
+                addButtonContainer.before(itemGroupDiv);
+
+                subItemSelect.on('change', function() { // 하위 항목 선택
+                    const selectedSubItem = $(this).val();
+                    if (selectedSubItem === "back_to_categories") {
+                        $('#categoryModal').modal('show'); // 카테고리 선택 모달을 다시 표시
+                        itemGroupDiv.empty(); // 선택 상자 내용 비우기
+                        return;
+                    }
+                    addQuantityField(itemGroupDiv, selectedSubItem);
+                    $(this).remove();
+                });
+            });
+            staffGridContainer.append(gridItem);
+        });
+
+        $('#categoryModal .modal-body').html(staffGridContainer); // 모달 body에 그리드 컨테이너 추가
+        $('#categoryModal').modal('show'); // 모달 표시
+    }
+
+    function addQuantityField(parentDiv, item) {
+        const inputLabel = $(`<label for="${item}" class="col-6"><h3>${item}:</h3></label>`);
+        const selectBoxQuantity = $('<select class="quantity-select form-control form-control-lg col-2" style="width:30%"></select>');
+        selectBoxQuantity.append('<option value="" disabled selected>Unit</option>');
+        selectBoxQuantity.append('<option value="kg">Kg</option>');
+        selectBoxQuantity.append('<option value="g">g</option>');
+        
+        parentDiv.append(inputLabel);
+        parentDiv.append(selectBoxQuantity);
+    
+        selectBoxQuantity.on('change', function() {
+            const unit = $(this).val();
+            const inputField = $(`<input type="text" id="${item}" name="${item}" class="form-control form-control-lg col-2" style="width:30%">`);
+            
+            // 입력 값 변경 이벤트 핸들러 추가
+            inputField.on('input', function() {
+                const quantity = $(this).val();
+            
+                // quantityInput 배열에서 현재 아이템을 찾습니다.
+                const existingItemIndex = quantityInput.findIndex(x => x.item === item);
+            
+                if (existingItemIndex !== -1) {
+                    // 이미 배열에 있으면, 해당 아이템의 수량을 업데이트합니다.
+                    quantityInput[existingItemIndex].quantity = quantity;
+                } else {
+                    // 새로운 아이템을 배열에 추가합니다.
+                    quantityInput.push({ item: item, unit: unit, quantity: quantity });
+                }
+            });
+            
+            parentDiv.append(inputField);
+    
+            const unitLabel = $('<span class="unit-label col-1"><h3>' + unit + '</h3></span>');
+            parentDiv.append(unitLabel);
+    
+            const removeButton = $('<button class="btn btn-danger btn-sm ml-2 col-1">(-)</button>');
+            parentDiv.append(removeButton);  // removeButton을 unitLabel 우측에 추가
+    
+            removeButton.on('click', function() {
+                // 버튼 클릭 시 quantityInput 배열에서 해당 아이템을 제거합니다.
+                const indexToRemove = quantityInput.findIndex(x => x.name === item);
+                if (indexToRemove !== -1) {
+                    quantityInput.splice(indexToRemove, 1);
+                }
+                inputLabel.remove();
+                inputField.remove();
+                unitLabel.remove();
+                selectBoxQuantity.remove();
+                removeButton.remove();
+            });
+    
+            selectBoxQuantity.remove();
+        });
+    }
+</script>
+{% endblock %}
