@@ -22,7 +22,8 @@ class Worker(models.Model):
         ('SP', 'Shipment'),
         ('ST', 'Stock'),
         ('WL', 'Wet Line'),
-        ('WM', 'Wet Mixing')
+        ('WM', 'Wet Mixing'),
+        ('WH', 'Warehouse')
     ]
 
     POSITION_CHOICES = [
