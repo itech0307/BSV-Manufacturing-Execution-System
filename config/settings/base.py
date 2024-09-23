@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     # Celery
     'celery',
     'celery_progress',
+    'django_celery_results',
 
     # Local apps
     'common',

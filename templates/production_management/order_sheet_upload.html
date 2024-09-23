@@ -1,0 +1,30 @@
+{% extends 'common/main.html' %}
+{% load static %}
+{% block content %}
+<h3>NEW ORDERS UPDATE</h3>
+<form method="post" enctype="multipart/form-data">  {# 파일 업로드를 위한 폼 시작 #}
+{% csrf_token %}  {# CSRF 토큰 추가하기 #}
+<input type="file" name="importData">  {# 파일 선택 입력창 #}
+<input hidden type="text" name="title" value="NEW ORDERS UPDATE">  {# 숨겨진 입력창으로 제목 설정 #}
+<button class="btn btn-primary" type="submit">Upload</button>  {# 가져오기 버튼 #}
+</form>
+<hr>
+<div class='progress-wrapper'>
+    <div id='progress-bar' class='progress-bar' style="background-color: #68a9ef; width: 0%;">&nbsp;</div>
+  </div>
+<div id="progress-bar-message">Waiting for progress to start...</div>
+<h3>Upload History (Lastest 30 days) </h3>
+<div style="height: 300px; overflow-y: auto;">  {# 이 부분을 추가하여 높이를 고정하고 오버플로우 발생 시 y축으로 스크롤이 되게 합니다. #}
+</div>
+{% endblock %}  {# 컨텐츠 블록 끝 #}
+{% block script %}  {# 스크립트 블록 시작 #}
+{% if task_id %}
+<script src="{% static 'js/celery_progress.js' %}"></script>  {# Celery 프로그레스 바 자바스크립트 파일 로드하기 #}
+<script type="text/javascript">
+	$(function () {
+		var progressUrl = "{% url 'celery_progress:task_status' task_id %}";  {# 작업 상태를 가져오는 URL 설정 #}
+		CeleryProgressBar.initProgressBar(progressUrl, {})  {# 진행률 표시 바 초기화하기 #}
+	});
+</script>
+{% endif %}
+{% endblock %}  {# 스크립트 블록 끝 #}
