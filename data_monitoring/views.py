@@ -12,7 +12,7 @@ from inventory_management.models import RawMaterial
 
 from django.utils.dateparse import parse_date
 from itertools import chain
-
+import datetime
 import pytz
 
 import logging
@@ -264,3 +264,140 @@ def order_search(request):
         'count': count
     }
     return render(request, 'data_monitoring/order_search.html', context)
+
+def drymix(request):
+    today = datetime.date.today()
+    now = datetime.datetime.now()
+    _3daysago = now+datetime.timedelta(days=-3)
+    _30daysago = today - datetime.timedelta(days=30)
+    order_numbers = []
+    list = []  # 검색 결과를 저장할 리스트를 초기화합니다.
+
+    if request.method == 'POST':
+        order_numbers = request.POST.get('order_numbers', '')
+        if order_numbers:
+            order_numbers = order_numbers.split(',')
+            list = DryMix.objects.filter(Q(production_plan__sales_order__order_no__in=order_numbers)).select_related('production_plan__sales_order').order_by('-create_date')
+        else:
+            # POST 요청을 받아 OrderNo를 검색합니다.
+            order_no = request.POST.get('order_no', '')  # 폼에서 입력한 OrderNo를 가져옵니다.
+            item = request.POST.get('item', '')  # Item 입력값을 받습니다.
+            color_code = request.POST.get('color_code', '')
+            pattern = request.POST.get('pattern', '')
+            start_date_str = request.POST.get('start_date', '')
+            end_date_str = request.POST.get('end_date', '')
+            customer = request.POST.get('customer', '')
+            order_type = request.POST.get('order_type', '')
+
+            # OrderNo와 Item을 조합하여 데이터를 검색합니다.
+            query = Q()
+            if order_no:
+                query &= Q(production_plan__sales_order__order_no__icontains=order_no)
+            if item:
+                query &= Q(production_plan__sales_order__item_name__icontains=item)
+            if color_code:
+                query &= Q(production_plan__sales_order__color_code__icontains=color_code)
+            if pattern:
+                query &= Q(production_plan__sales_order__pattern__icontains=pattern)
+            
+            if customer:
+                query &= Q(production_plan__sales_order__customer_name__icontains=customer)
+            
+            if order_type:
+                query &= Q(production_plan__sales_order__order_type__icontains=order_type)
+            
+            if start_date_str and end_date_str:
+                start_date = parse_date(start_date_str)
+                end_date = parse_date(end_date_str)
+                if start_date and end_date:
+                    start_of_day = datetime.datetime.combine(start_date, datetime.time.min)
+                    end_of_day = datetime.datetime.combine(end_date, datetime.time.max)
+                    query &= Q(create_date__range=(start_of_day, end_of_day))
+
+            list = DryMix.objects.filter(query).select_related('production_plan__sales_order').order_by('-create_date')
+    else:
+        # GET 요청의 경우, 최근 14일 동안의 DryLine 데이터를 표시합니다.
+        list = DryMix.objects.filter(
+            create_date__range=(_3daysago, now)
+        ).select_related('production_plan__sales_order').order_by('-create_date')
+
+    context = {'list': list,
+               'today': today,  # 오늘 날짜를 컨텍스트에 추가
+               '30daysago':_30daysago
+               }
+    return render(request, 'data_monitoring/drymix.html', context)
+
+def dryline(request):
+    today = datetime.date.today()
+    now = datetime.datetime.now()
+    _3daysago = now+datetime.timedelta(days=-3)
+    _30daysago = today - datetime.timedelta(days=30)
+    status_plan = []
+    order_numbers = []
+    list = []
+    list_and_plan = []  # 검색 결과를 저장할 리스트를 초기화
+
+    if request.method == 'POST':
+        order_numbers = request.POST.get('order_numbers', '')
+        if order_numbers:
+            order_numbers = order_numbers.split(',')
+            list = DryLine.objects.filter(Q(production_plan__sales_order__order_no__in=order_numbers)).select_related('production_plan__sales_order').order_by('-create_date')
+
+        else:
+            # POST 요청을 받아 OrderNo를 검색합니다.
+            order_no = request.POST.get('order_no', '')  # 폼에서 입력한 OrderNo를 가져옵니다.
+            item = request.POST.get('item', '')  # Item 입력값을 받습니다.
+            color_code = request.POST.get('color_code', '')
+            pattern = request.POST.get('pattern', '')
+            start_date_str = request.POST.get('start_date', '')
+            end_date_str = request.POST.get('end_date', '')
+            customer = request.POST.get('customer', '')
+            order_type = request.POST.get('order_type', '')
+
+            # OrderNo와 Item을 조합하여 데이터를 검색합니다.
+            query = Q()
+            if order_no:
+                query &= Q(production_plan__sales_order__order_no__icontains=order_no)
+            if item:
+                query &= Q(production_plan__sales_order__item_name__icontains=item)
+            if color_code:
+                query &= Q(production_plan__sales_order__color_code__icontains=color_code)
+            if pattern:
+                query &= Q(production_plan__sales_order__pattern__icontains=pattern)
+            
+            if customer:
+                query &= Q(production_plan__sales_order__customer_name__icontains=customer)
+            
+            if order_type:
+                query &= Q(production_plan__sales_order__order_type__icontains=order_type)
+            
+            if start_date_str and end_date_str:
+                start_date = parse_date(start_date_str)
+                end_date = parse_date(end_date_str)
+                if start_date and end_date:
+                    start_of_day = datetime.datetime.combine(start_date, datetime.time.min)
+                    end_of_day = datetime.datetime.combine(end_date, datetime.time.max)
+                    query &= Q(create_date__range=(start_of_day, end_of_day))
+
+            list = DryLine.objects.filter(query).select_related('production_plan__sales_order').order_by('-create_date')
+    else:
+        # GET 요청의 경우, 최근 3일 동안의 DryLine 데이터를 표시합니다.
+        list = DryLine.objects.filter(
+            create_date__range=(_3daysago, now)
+        ).select_related('production_plan__sales_order').order_by('-create_date')
+
+    # ProductionPlan 서브쿼리를 생성하여 각 ProductionPhase와 관련된 최신 ProductionPlan을 가져옵니다.
+    #latest_plan_subquery = ProductionPlan.objects.filter(
+    #    production_order=OuterRef('production_order')
+    #).order_by('-create_date').values('plan_information__plan_qty')[:1]
+
+    # ProductionPhase와 관련된 최신 ProductionPlan의 plan_qty를 annotate하여 가져옵니다.
+    #list_and_plan = list.annotate(
+    #    latest_plan_qty=Subquery(latest_plan_subquery)
+    #).order_by('-create_date')
+
+    context = {'list': list,
+               'today': today,  # 오늘 날짜를 컨텍스트에 추가
+               '30daysago':_30daysago
+               }
+    return render(request, 'data_monitoring/dryline.html', context)

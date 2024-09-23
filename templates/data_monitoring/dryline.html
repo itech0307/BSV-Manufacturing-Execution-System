@@ -1,0 +1,103 @@
+{% extends 'data_monitoring/base.html' %}
+{% load custom_filters %}
+{% block header %}DRYLINE REPORT{% endblock %}
+{% block checkbox %}
+<div class="col">
+    <input class="form-check-input" type="checkbox" id="toggleOrderDateColumn" checked onchange="toggleColumn('OrderDate');">
+    <label for="toggleOrderDateColumn">OrderDate</label>           
+    <input class="form-check-input" type="checkbox" id="toggleRTDColumn" checked onchange="toggleColumn('RTD');">
+    <label for="toggleRTDColumn">RTD</label>
+    <input class="form-check-input" type="checkbox" id="toggleETDColumn" checked onchange="toggleColumn('ETD');">
+    <label for="toggleETDColumn">ETD</label>
+    <input class="form-check-input" type="checkbox" id="toggleBrandColumn" checked onchange="toggleColumn('Brand');">
+    <label for="toggleBrandColumn">Brand</label>
+    <input class="form-check-input" type="checkbox" id="toggleBaseColumn" checked onchange="toggleColumn('Base');">
+    <label for="toggleBaseColumn">Base</label>                    
+</div>
+<div class="col">
+    <input class="form-check-input" type="checkbox" id="toggleSpecColumn" checked onchange="toggleColumn('Spec');">
+    <label for="toggleSpecColumn">Spec</label>
+    <input class="form-check-input" type="checkbox" id="toggleSkinBinderColumn" checked onchange="toggleColumn('SkinBinder');">
+    <label for="toggleSkinBinderColumn">Skin/Binder</label>
+    <input class="form-check-input" type="checkbox" id="togglePositionColumn" checked onchange="toggleColumn('Position');">
+    <label for="togglePositionColumn">Position</label>
+</div>
+{% endblock %}
+{% block forms %}
+{% if "production_lines" in user_groups %}
+<div class="col">
+</div>
+{% endif %}
+{% endblock %}
+{% block url_search_popup %}{% url 'data_monitoring:dryline' %}{% endblock %}
+{% block url_list_search %}{% url 'data_monitoring:dryline' %}{% endblock %}
+{% block table %}
+<div class="scrollable-tbody">
+    <table class="table table-report">
+        <thead>
+            <tr>
+                <th>Line</th>
+                <th>PlanDate</th>
+                <th>PlanNo</th>
+                <th>OrderNo</th>
+                <th>OrderType</th>
+                <th class="orderdate-col">OrderDate</th>
+                <th class="rtd-col">RTD</th>
+                <th class="etd-col">ETD</th>
+                <th class="brand-col">Brand</th>
+                <th>Customer</th>
+                <th>Item</th>
+                <th>ColorCode</th>
+                <th>Pattern</th>
+                <th class="base-col">Base</th>
+                <th class="spec-col">Spec</th>
+                <th class="skinbinder-col">Skin/Binder</th>
+                <th>OrderQty</th>
+                <th>PlanQty</th>
+                <th>DateTime</th>
+                <th>P/D Qty</th>
+                <th class="position-col">Position</th>
+            </tr>
+        </thead>
+        <tbody class="data-tbody">
+            {% for data in list %}
+            <tr>
+                <td>{{ data.line_no | get_slice:-1}}</td>                        
+                <td>{{ data.production_plan.plan_date }}</td>
+                <td>{{ data.production_plan.plan_no }}</td>
+                <td>{{ data.production_plan.sales_order.order_no }}</td>
+                <td>{{ data.production_plan.sales_order.order_type }}</td>
+                <td class="orderdate-col">{{ data.production_plan.sales_order.order_date }}</td>
+                <td class="rtd-col">{{ data.production_plan.sales_order.rtd }}</td>
+                <td class="etd-col">{{ data.production_plan.sales_order.etd }}</td>
+                <td class="brand-col">{{ data.production_plan.sales_order.brand }}</td>
+                <td>{{ data.production_plan.sales_order.customer_name }}</td>
+                <td>
+                    {{ data.production_plan.sales_order.item_name }}
+                    {% if data.production_plan.sales_order.specification|slice:"3:4" == '0' %}
+                        {{ data.production_plan.sales_order.specification|slice:":3" }}
+                    {% elif data.production_plan.sales_order.specification|slice:"3:4" != '0' %}
+                        {{ data.production_plan.sales_order.specification|slice:":4" }}
+                    {% endif %}
+                </td>
+                <td>{{ data.production_plan.sales_order.color_code }}</td>
+                <td>{{ data.production_plan.sales_order.pattern }}</td>
+                <td class="base-col">{{ data.production_plan.pd_information.base }}</td>
+                <td class="spec-col">{{ data.production_plan.sales_order.specification }}</td>
+                <td class="skinbinder-col">{{ data.production_plan.pd_information.skin_resin }}/{{ data.production_plan.pd_information.binder_resin }}</td>
+                <td>{{ data.production_plan.sales_order.order_qty }}</td>
+                <td>{{ data.production_plan.plan_qty }}</td>
+                <td>{{ data.create_date | date:"Y-m-d H:i" }}</td>
+                <td>{{ data.pd_qty }}</td>
+                <td class="position-col">{{ data.material_position}}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">Report not found</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+{% block extra_js %}{% endblock %}
