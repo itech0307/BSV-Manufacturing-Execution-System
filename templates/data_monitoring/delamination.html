@@ -1,0 +1,339 @@
+{% extends 'data_monitoring/base.html' %}
+{% load static %}
+{% load custom_filters %}
+{% block content %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/report.css' %}">
+<body>
+    <div class="report-container">
+        <div class="report-row row" style="padding:10px">
+            <div class="col">
+                <h2>[RP] REPORT</h2>
+            </div>
+            {% if "production_lines" in user_groups %}
+            <div class="col">
+            </div>
+            {% endif %}
+            <div class="col title-buttons">
+                <button onclick="toggleSearchPopup()" title="Search" style="background: none; border: none; cursor: pointer; margin: 0 10px;">
+                    <i class="fas fa-search"></i>
+                </button>
+                <button type="button" title="List Search" onclick="openListSearchModal();" style="background: none; border: none; cursor: pointer; margin: 0 10px;">
+                    <i class="fas fa-paste"></i>
+                </button>
+                <button onclick="exportTableToExcel()" title="Download as Excel" style="background: none; border: none; cursor: pointer; margin: 0 10px;">
+                    <i class="fas fa-file-excel"></i>
+                </button>
+                <button onclick="captureTableAsImage()" title="Capture" style="background: none; border: none; cursor: pointer; margin: 0 10px;">
+                    <i class="fas fa-camera"></i>
+                </button>
+            </div>
+        </div>
+        <div class="scrollable-tbody">
+            <table class="table table-report">
+                <thead>
+                    <tr>
+                        <th>Line</th>
+                        <th>OrderNo</th>
+                        <th>OrderType</th>
+                        <th>Customer</th>
+                        <th>Item</th>
+                        <th>ColorCode</th>
+                        <th>Pattern</th>
+                        <th>Qty</th>
+                        <th>DateTime</th>
+                        <th>P/D Qty</th>
+                        <th>Roll Lot</th>
+                    </tr>
+                </thead>
+                <tbody class="data-tbody">
+                    {% for data in list %}
+                    <tr>
+                        <td>{{ data.line_no | get_slice:-1}}</td>
+                        <td>{{ data.production_plan.sales_order.order_no }}</td>
+                        <td>{{ data.production_plan.sales_order.order_type }}</td>
+                        <td>{{ data.production_plan.sales_order.customer_name }}</td>
+                        <td>
+                            {{ data.production_plan.sales_order.item_name }}
+                            {% if data.production_plan.sales_order.spec|slice:"3:4" == '0' %}
+                                {{ data.production_plan.sales_order.spec|slice:":3" }}
+                            {% elif data.production_plan.sales_order.spec|slice:"3:4" != '0' %}
+                                {{ data.production_plan.sales_order.spec|slice:":4" }}
+                            {% endif %}
+                        </td>
+                        <td>{{ data.production_plan.sales_order.color_code }}</td>
+                        <td>{{ data.production_plan.sales_order.pattern }}</td>
+                        <td>{{ data.production_plan.sales_order.order_quantity }}</td>
+                        <td>{{ data.create_date }}</td>
+                        <td>{{ data.delamination_qty }}</td>
+                        <td>{{ data.material_position }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4">Report not found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 검색 팝업 창 -->
+    <div id="searchPopup" class="popup">
+        <!-- Form 태그 추가: action은 Django URLconf에 따라 수정해야 합니다. -->
+        <form method="post" action="{% url 'data_monitoring:delamination' %}">
+            {% csrf_token %}
+            <div class="popup-content">
+                <div>
+                    <h5>OrderNo</h5>
+                    <input type="text" id="orderNoInput" name="order_no" placeholder="Enter OrderNo">
+                </div>
+                <div>
+                    <h5>Item</h5>
+                    <input type="text" id="itemInput" name="item" placeholder="Enter Item">
+                </div>
+                <div>
+                    <h5>ColorCode</h5>
+                    <input type="text" id="colorCodeInput" name="color_code" placeholder="Enter ColorCode">
+                </div>
+                <div>
+                    <h5>Pattern</h5>
+                    <input type="text" id="patternInput" name="pattern" placeholder="Enter Pattern">
+                </div>
+                <div>
+                    <h5>Customer</h5>
+                    <input type="text" id="customerInput" name="customer" placeholder="Enter Customer">
+                </div>
+                <div>
+                    <h5>OrderType</h5>
+                    <input type="text" id="orderTypeInput" name="order_type" placeholder="Enter OrderType">
+                </div>
+                <div>
+                    <h5>Start Date</h5>
+                    <input type="date" id="startDateInput" name="start_date" value="{{ 30daysago|date:'Y-m-d' }}">
+                </div>
+                <div>
+                    <h5>End Date</h5>
+                    <input type="date" id="endDateInput" name="end_date" value="{{ today|date:'Y-m-d' }}">
+                </div>
+            </div>
+        </form>
+    </div>
+    <!-- List Search 모달 창에 form 요소 추가 -->
+    <div id="listSearchModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeListSearchModal('listSearchModal')">&times;</span>
+            <h2>List Order Search</h2>
+            <form id="listOrderForm" method="post" action="{% url 'data_monitoring:delamination' %}">
+                {% csrf_token %}
+                <textarea name="order_numbers" id="listOrderInput" style="width: 100%; height: 200px;"></textarea>
+                <button type="button" onclick="searchListOrders();">Search Orders</button>
+            </form>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.8/FileSaver.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js"></script>
+    <script>
+        document.getElementById('searchPopup').addEventListener('keypress', function(event) {
+            if (event.keyCode === 13) { // Enter 키의 keyCode는 13입니다.
+                event.preventDefault(); // 폼이 자동으로 제출되는 것을 방지합니다.
+                toggleSearchPopup(); // 검색 실행 함수를 호출합니다.
+            }
+        });
+        document.addEventListener('click', function(event) {
+            var popup = document.getElementById('searchPopup');
+            var searchButton = document.querySelector('button[onclick="toggleSearchPopup()"]');
+            // 팝업이 열려 있고, 클릭한 요소가 팝업 내부에 있지 않으며, 검색 버튼이 아닐 때 팝업을 닫습니다.
+            if (popupVisible && !popup.contains(event.target) && !searchButton.contains(event.target)) {
+                closeSearchPopup(popup);
+                popupVisible = false;
+            }
+        });
+
+        function openListSearchModal() {
+            document.getElementById('listSearchModal').style.display = 'block';
+        }
+        
+        function closeListSearchModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        function searchListOrders() {
+            const input = document.getElementById('listOrderInput').value;
+            const orderLines = input.trim().split('\n');
+            const orderNumbers = orderLines.map(line => {
+                const orderNumberList = line.replace(/\t/g, '-');
+                return orderNumberList;
+            });
+            document.getElementById('listOrderInput').value = orderNumbers;
+            const form = document.getElementById('listOrderForm');  // form 객체를 올바르게 참조
+            form.submit();  // form  제출
+            closeListSearchModal('listSearchModal');
+        }
+        
+        function exportTableToExcel() {
+            var wb = XLSX.utils.table_to_book(document.querySelector('table'), {
+                sheet:"Sheet JS",
+                raw: true  // 모든 데이터를 원시 문자열로 처리
+            });
+            var wbout = XLSX.write(wb, {bookType:'xlsx', bookSST:true, type: 'binary'});
+        
+            function s2ab(s) {
+                var buf = new ArrayBuffer(s.length);
+                var view = new Uint8Array(buf);
+                for (var i=0; i<s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
+                return buf;
+            }
+        
+            saveAs(new Blob([s2ab(wbout)],{type:"application/octet-stream"}), 'rp_report.xlsx');
+        }
+
+        function showSearchPopup() {
+            var popup = document.getElementById('searchPopup');
+            var searchButton = document.querySelector('button[onclick="showSearchPopup()"]');
+            
+            var buttonRect = searchButton.getBoundingClientRect(); // 검색 버튼의 위치 정보를 가져옵니다.
+            var popupHeight = popup.clientHeight;
+        
+            popup.style.top = buttonRect.bottom + 'px'; // 버튼 아래에 위치하도록 설정합니다.
+            popup.style.left = buttonRect.right + 'px';
+        
+            popup.style.display = 'block';
+            setTimeout(function () {
+                popup.style.opacity = '1';
+            }, 300);
+        }
+        
+        function closeSearchPopup() {
+            var popup = document.getElementById('searchPopup');
+            popup.style.opacity = '0';
+            setTimeout(function () {
+                popup.style.display = 'none';
+            }, 300);
+            popupVisible = false; // 팝업 상태를 업데이트합니다.
+        }
+
+        var popupVisible = false; // 팝업 창의 상태를 나타내는 변수 추가
+
+        function validateDates(startDateInput, endDateInput) {
+            if (startDateInput && endDateInput) {
+                var startDate = new Date(startDateInput);
+                var endDate = new Date(endDateInput);
+                var sixMonths = 6 * 30; // 대략 6개월을 일수로 환산
+        
+                var timeDiff = endDate - startDate;
+                var daysDiff = timeDiff / (1000 * 3600 * 24); // 밀리초 차이를 일수로 환산
+        
+                if (daysDiff > sixMonths) {
+                    alert("Date range cannot exceed 6 months.");
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function toggleSearchPopup() {
+            var popup = document.getElementById('searchPopup');
+            if (popupVisible) {
+                // 팝업 창이 열려 있을 때, 폼을 제출하고 팝업을 닫습니다.
+                // 폼 제출 로직을 여기로 이동합니다.
+                var orderNoInput = document.getElementById('orderNoInput').value;
+                var itemInput = document.getElementById('itemInput').value; // Item 값 받기
+                var colorCodeInput = document.getElementById('colorCodeInput').value;
+                var patternInput = document.getElementById('patternInput').value;
+                var customerInput = document.getElementById('customerInput').value;
+                var orderTypeInput = document.getElementById('orderTypeInput').value;
+                var startDateInput = document.getElementById('startDateInput').value;
+                var endDateInput = document.getElementById('endDateInput').value;
+                
+                // 입력 값이 없으면 검색을 실행하지 않음
+                if (
+                    orderNoInput.trim() === "" 
+                    && itemInput.trim() === "" 
+                    && colorCodeInput.trim() === "" 
+                    && patternInput.trim() === "" 
+                    && customerInput.trim() === "" 
+                    && orderTypeInput.trim() === ""
+                    ) {
+                    alert("Please enter at least one search criteria.");
+                    return; // 경고 후 추가 작업 중단
+                }
+                if (orderNoInput.length >= 1 && orderNoInput.length < 6) {
+                    // 입력 값이 6자리 미만일 경우 경고 팝업을 띄웁니다.
+                    alert("'OrderNo' must be at least 6 characters long.");
+                    return; // 추가 작업을 중단합니다.
+                }
+                if (itemInput.length >= 1 && itemInput.length < 4) {
+                    // 입력 값이 6자리 미만일 경우 경고 팝업을 띄웁니다.
+                    alert("'Item' must be at least 4 characters long.");
+                    return; // 추가 작업을 중단합니다.
+                }
+                if (colorCodeInput.length >= 1 && colorCodeInput.length < 3) {
+                    // 입력 값이 6자리 미만일 경우 경고 팝업을 띄웁니다.
+                    alert("'ColorCode' must be at least 3 characters long.");
+                    return; // 추가 작업을 중단합니다.
+                }
+                if (patternInput.length == 1) {
+                    // 입력 값이 6자리 미만일 경우 경고 팝업을 띄웁니다.
+                    alert("'Pattern' must be at least 2 characters long.");
+                    return; // 추가 작업을 중단합니다.
+                }
+                if (customerInput.length == 1) {
+                    // 입력 값이 1자리일 경우 경고 팝업을 띄웁니다.
+                    alert("'Customer' must be at least 2 characters long.");
+                    return; // 추가 작업을 중단합니다.
+                }
+                if (!validateDates(startDateInput, endDateInput)) {
+                    return; // 날짜 범위가 유효하지 않으면 중단
+                }
+                document.forms[0].submit(); // 폼이 하나만 있다고 가정합니다. 그렇지 않은 경우 적절한 선택자를 사용해야 합니다.
+                popup.style.opacity = '0';
+                setTimeout(function () {
+                    popup.style.display = 'none';
+                }, 300);
+            } else {
+                // 팝업 창이 닫혀 있을 때, 열도록 합니다.
+                var searchButton = document.querySelector('button[onclick="toggleSearchPopup()"]');
+                var buttonRect = searchButton.getBoundingClientRect();
+                var leftPosition = buttonRect.right + 20; // 버튼의 우측에 20px 간격을 두고 위치
+                var windowWidth = window.innerWidth;
+
+                // 팝업이 화면 밖으로 나가지 않도록 조정
+                if (leftPosition + 600 > windowWidth) { // 600px은 팝업의 최대 너비
+                    leftPosition = windowWidth - 620; // 오른쪽 여백을 고려하여 조금 이동
+                }
+                popup.style.top = buttonRect.bottom + 'px';
+                popup.style.left = leftPosition  + 'px';
+                popup.style.display = 'block';
+                setTimeout(function () {
+                    popup.style.opacity = '1';
+                }, 300);
+            }
+            popupVisible = !popupVisible;
+        }
+        function captureTableAsImage() {
+            const table = document.querySelector('.table');
+            
+            // 테이블의 행 수를 계산 (thead 내 행은 제외)
+            const rowCount = table.querySelectorAll('tbody tr').length;
+        
+            // 행 수가 100건 이상인 경우 작동하지 않음
+            if (rowCount >= 100) {
+                alert('Table is too large to capture (100 rows maximum).');
+                return;
+            }
+        
+            html2canvas(table).then(canvas => {
+                canvas.toBlob(function(blob) {
+                    const item = new ClipboardItem({ "image/png": blob });
+                    navigator.clipboard.write([item]);
+                    alert('Table captured and copied to clipboard!');
+                });
+            });
+        }
+    </script>
+</body>
+{% endblock %}
