@@ -89,7 +89,13 @@
                 <td>{{ data.production_plan.plan_qty }}</td>
                 <td>{{ data.create_date | date:"Y-m-d H:i" }}</td>
                 <td>{{ data.pd_qty }}</td>
-                <td class="position-col">{{ data.material_position}}</td>
+                <td class="position-col">
+                    {% if data.ag_position %}
+                        {{ data.ag_position }}
+                    {% elif data.pd_lot %}
+                        {{ data.pd_lot }}
+                    {% endif %}
+                </td>
             </tr>
             {% empty %}
             <tr>
