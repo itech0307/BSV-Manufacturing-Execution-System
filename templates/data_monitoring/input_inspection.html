@@ -1,0 +1,159 @@
+{% extends "data_monitoring/input_base.html" %}
+{% block title %}PRODUCTION-DATA QR SYSTEM (INSPECTION){% endblock %}
+{% block header %}PRODUCTION-DATA QR SYSTEM (INSPECTION){% endblock %}
+
+{% block content %}
+{% endblock %}
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        var decimalButton = document.querySelector('.decimal');
+        // 버튼이 존재하는 경우에만 숨깁니다
+        decimalButton.style.display = 'none';
+    });
+    let nextBtnState = 0;
+    let scannedOrdersData;
+
+    $('#nextBtn').on('click', handleNextButtonClick);
+
+    function handleNextButtonClick() {
+        nextBtnState++;
+        switch(nextBtnState) {
+            case 1:
+                handleFirstClick();
+                break;
+            case 2:
+                handleSecondClick();
+                break;
+            default:
+                resetPage();
+        }
+    }
+
+    function handleFirstClick() {
+        updateScannedQRCodes();
+        updateQRSummary();
+        clearOrderInfo();
+        addAgradeQuantity();
+        showQuantityInput();
+        disableAddButton();
+    }
+
+    function handleSecondClick() {
+        sendDataToServer();
+    }
+
+    function showQuantityInput() {
+        $('#quantityInputContainer').show();
+    }
+
+    function sendDataToServer() {
+        $('#keypad').hide();
+        $.ajax({
+            url: '/data_monitoring/input_inspection/',
+            type: 'POST',
+            data: JSON.stringify({
+                scannedOrders: scannedQRCodes,
+                quantityInput: quantityInput,
+                machine: machineValue
+            }),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: handleServerResponse,
+            error: handleServerError
+        });
+    }
+    
+    const quantityInput = [{ Grade: 'A', quantity: 0 }];
+    
+    function addAgradeQuantity() {
+        parentDiv = $('#quantityInputTable');
+        // Flex 컨테이너 생성 (수평 정렬)
+        const flexContainer = $('<div class="d-flex align-items-center"></div>');  
+    
+        // "A급 수량" 라벨 추가
+        const label = $('<label style="width:50%; font-size:35px;">A Grade:</label>');
+        // "A급 수량" 입력 필드 생성
+        const aGradeQuantityInput = $('<input type="text" class="form-control form-control-lg numeric-input" style="width:50%" placeholder="Qty">');
+        // "M" 라벨 추가
+        const unitLabel = $('<span class="ml-2">M</span>');
+        
+        // 라벨, 입력 필드, 단위 라벨을 flex 컨테이너에 추가
+        flexContainer.append(label); // 라벨 추가
+        flexContainer.append(aGradeQuantityInput); // 입력 필드 추가
+        flexContainer.append(unitLabel); // "M" 라벨 추가
+        parentDiv.append(flexContainer); // 전체 flex 컨테이너를 parentDiv에 추가
+
+        // addButtonContainer의 위치를 flexContainer 아래로 조정
+        parentDiv.append(addButtonContainer); // addButtonContainer를 flexContainer 아래에 추가
+    
+        // 입력 필드에 이벤트 핸들러 추가
+        aGradeQuantityInput.on('input', function() {
+            const quantity = $(this).val()
+            // A급 수량을 quantityInput 배열에서 관리
+            const existingAgrade = quantityInput.find(x => x.Grade === 'A');
+            if (existingAgrade) {
+                // 이미 배열에 있으면 수량 업데이트
+                existingAgrade.quantity = quantity;
+            } else {
+                // 새로운 A급 수량을 배열에 추가
+                quantityInput.push({ Grade: 'A', quantity: quantity });
+            }
+        });
+    }
+    
+    function addNewItem() {
+        const parentDiv = $('#quantityInputTable');
+        const addButtonContainer = $('#addButtonContainer');    
+    
+        // defect_cause를 가져와서 추가
+        const defectCauseOptions = JSON.parse('{{ defect_cause|escapejs }}');
+        const sortedDefectCauses = Object.keys(defectCauseOptions).sort((a, b) => defectCauseOptions[a].localeCompare(defectCauseOptions[b]));
+    
+        const defectCauseContainer = $('<div class="defect-cause-container"></div>'); // 그리드 컨테이너 생성
+    
+        // 그리드 형식으로 표시될 항목들을 추가
+        sortedDefectCauses.forEach(key => {
+            const gridItem = $(`<div class="grid-item" data-key="${key}">${defectCauseOptions[key]}</div>`);
+            gridItem.on('click', function() {
+                const defectCauseKey = $(this).data('key');
+                const defectCauseText = defectCauseOptions[defectCauseKey];
+                $('#categoryModal').modal('hide'); // 모달 닫기
+    
+                const flexContainer = $('<div class="d-flex align-items-center"></div>');
+    
+                // 수량 입력 필드 추가
+                const quantityInputField = $(`<input type="text" id="${defectCauseKey}" name="${defectCauseKey}" class="form-control form-control-lg numeric-input col-2" style="width:30%">`);
+                const unitLabel = $('<span class="ml-2">M</span>');
+    
+                flexContainer.append(`<span class="mr-2"><h3>${defectCauseText}</h3></span>`); // 선택한 항목 이름을 추가
+                flexContainer.append(quantityInputField); // 수량 입력 필드를 flex 컨테이너에 추가                    
+                flexContainer.append(unitLabel); // 수량 입력 필드를 flex 컨테이너에 추가
+                parentDiv.append(flexContainer); // 전체 flex 컨테이너를 parentDiv에 추가
+                parentDiv.append(addButtonContainer); // addButtonContainer를 flexContainer 아래에 추가
+    
+                quantityInputField.focus(); // 포커스를 새로운 입력 필드로 설정합니다.
+    
+                // 수량 입력 필드 이벤트 핸들러 추가
+                quantityInputField.on('input', function() {
+                    const quantity = $(this).val();
+                    // quantityInput 배열에서 현재 defectCauseKey를 찾습니다.
+                    const existingItemIndex = quantityInput.findIndex(x => x.defectCause === defectCauseKey);
+    
+                    if (existingItemIndex !== -1) {
+                        // 이미 배열에 있으면, 해당 defectCause의 수량을 업데이트합니다.
+                        quantityInput[existingItemIndex].quantity = quantity;
+                    } else {
+                        // 새로운 defectCause를 배열에 추가합니다.
+                        quantityInput.push({ defectCause: defectCauseKey, quantity: quantity });
+                    }
+                });
+            });
+            defectCauseContainer.append(gridItem);
+        });
+    
+        $('#categoryModal .modal-body').html(defectCauseContainer); // 모달 body에 그리드 컨테이너 추가
+        $('#categoryModal').modal('show'); // 모달 표시
+    }
+</script>
+{% endblock %}

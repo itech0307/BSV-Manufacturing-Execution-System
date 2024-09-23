@@ -277,6 +277,109 @@ def input_rp(request):
         }
     return JsonResponse(data)
 
+@csrf_exempt
+def input_inspection(request):
+    machine = request.GET.get('machine', None)
+    if request.method == "POST":
+        # POST 데이터에서 필요한 정보 가져오기
+        data = json.loads(request.body)
+        scanned_orders = data.get('scannedOrders', [])
+        quantity_data = data.get('quantityInput', [])
+        machine_value = data.get('machine', '')  # 키오스크 기기 이름
+        logger.info(f"[KIOSK] INSPECTION DATA: {data}")
+        
+        a_qty = 0
+        defect = []
+        for item in quantity_data:
+            if item.get('Grade') == 'A':
+                a_qty = int(item.get('quantity', 0))
+            else:
+                defect.append({
+                    'quantity': int(item.get('quantity', 0)),
+                    'defectCause': item.get('defectCause')
+                })
+        
+        # Inspection 결과를 ProductionPhase 모델에 저장
+        for order in scanned_orders:
+            if order['order_number'][:3] == 'SOV':
+                try:
+                    production_order = SalesOrder.objects.exclude(status=False).get(order_no=order['order_number'])
+                    last_phase = Inspection.objects.filter(production_plan__sales_order=production_order).order_by('-create_date').first()
+                    
+                    if last_phase:
+                        last_phase_plan = last_phase.production_plan
+                    else:
+                        last_phase_plan = None
+                    
+                    # ProductionPhase 모델 인스턴스 생성
+                    production_phase = Inspection(
+                        production_plan=last_phase_plan,
+                        ins_qty=a_qty,
+                        ins_information=defect,
+                        create_date=timezone.now()
+                    )
+                    production_phase.save()  # 인스턴스 저장
+                    logger.info(f"[KIOSK] INSPECTION SAVED: {order['order_number']}")
+                except SalesOrder.DoesNotExist:
+                    logger.info(f"[KIOSK] INSPECTION ERROR: {order['order_number']}")
+
+        return JsonResponse({"status": "success", "message": "Data added successfully"})
+    
+    qr_content = request.GET.get('qrContent')
+
+    # 불량 원인 가져오기
+    #defect_cause = Information.objects.filter(name='defect_cause').order_by('-modify_date').first()
+
+    defect_cause = {
+        "Shiny": "Bóng",
+        "Stain": "Loang Màu",
+        "Stock": "Stock",
+        "Folding": "Quấn Nhăn",
+        "Pinhole": "Lỗ Kim",
+        "RP Line": "R/P Xước",
+        "Shortage": "Số Lượng Thiếu",
+        "RP Overlap": "R/P Nhăn",
+        "Wrong Base": "Da Sai",
+        "Surface Line": "Xước",
+        "Air Expansion": "Phồng Hơi",
+        "Contamination": "Dơ",
+        "Color Mismatch": "Màu Sai",
+        "Fabric Overlap": "Da Nhăn",
+        "Base Transparency": "Đốm"
+    }
+
+    # QR 코드 내용이 없는 경우, 일반 페이지 로드
+    if not qr_content:
+        context = {'defect_cause':json.dumps(defect_cause)}
+        return render(request, 'data_monitoring/input_inspection.html', context)
+
+    # QR 코드 내용이 있는 경우, order_number로 검색
+    try:
+        qr_content = f"{qr_content.split('!')[2]}-{qr_content.split('!')[3]}"
+        logger.info(f"[KIOSK] INSPECTION CONNECTED: {qr_content}")
+        order = SalesOrder.objects.exclude(status=False).get(order_no=qr_content)
+        data = {
+            'order_number': order.order_no,
+            'order_information': {
+                'item': order.item_name,
+                'pattern': order.pattern,
+                'color_code': order.color_code,
+                'customer': order.customer_name,
+                'order_qty': order.order_qty,
+                'order_type': order.order_type,
+                'brand': order.brand,
+                'qty_unit': order.qty_unit
+            },
+            'status': 'success',
+            'message': 'Order found'
+        }
+    except order.DoesNotExist:
+        data = {
+            'status': 'fail',
+            'message': 'Order not found'
+        }
+    return JsonResponse(data)
+
 def order_search(request):
     order_and_status = []
     count = 0
