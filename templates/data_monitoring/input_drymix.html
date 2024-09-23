@@ -93,7 +93,7 @@
     function sendDataToServer() {
         $('#keypad').hide();
         $.ajax({
-            url: '/ppm/kiosk/drymix/',
+            url: '/data_monitoring/input_drymix/',
             type: 'POST',
             data: JSON.stringify({
                 scannedOrders: scannedQRCodes,

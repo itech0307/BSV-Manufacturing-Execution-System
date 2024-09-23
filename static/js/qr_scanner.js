@@ -6,7 +6,7 @@ scanner.addListener('scan', function (content) {
 
     // AJAX를 사용하여 Django 뷰에 QR 코드 내용 전달
     $.ajax({
-        url: '/ppm/kiosk/drymix/',  // Django 뷰의 URL
+        url: window.location.pathname,  // Django 뷰의 URL
         type: 'GET',
         data: { 'qrContent': content },
         success: function(response) {

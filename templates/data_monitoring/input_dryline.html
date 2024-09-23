@@ -1,0 +1,116 @@
+{% extends "data_monitoring/input_base.html" %}
+{% block title %}PRODUCTION-DATA QR SYSTEM (DRY LINE){% endblock %}
+{% block header %}PRODUCTION-DATA QR SYSTEM (DRY LINE){% endblock %}
+
+{% block content %}
+{% endblock %}
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // 페이지가 로드되었을 때 'Production Quantity' 입력 필드를 비웁니다.
+    $('#qty').val('');
+
+    // 'qty' 필드의 값이 변경될 때마다 quantityInput 변수를 업데이트합니다.
+    $('#qty').change(function() {
+        quantityInput = $(this).val(); // quantityInput 변수에 입력값을 설정합니다.
+    });
+    var decimalButton = document.querySelector('.decimal');
+    // 버튼이 존재하는 경우에만 숨깁니다
+    decimalButton.style.display = 'none';
+});
+
+let nextBtnState = 0;
+let scannedOrdersData;
+
+$('#nextBtn').on('click', handleNextButtonClick);
+
+function handleNextButtonClick() {
+    nextBtnState++;
+    switch(nextBtnState) {
+        case 1:
+            handleFirstClick();
+            break;
+        case 2:
+            handleSecondClick();
+            break;
+        case 3:
+            handleThirdClick();
+            break;
+        default:
+            resetPage();
+    }
+}
+
+function handleFirstClick() {
+    updateScannedQRCodes();
+    updateQRSummary();
+    clearOrderInfo();
+    disableAddButton();
+}
+
+function handleSecondClick() {
+    addQuantityInput();
+    showQuantityInput();
+    setupTableToggle();
+}
+
+function handleThirdClick() {
+    const quantityInput = $('#qty').val();
+    if (quantityInput) {
+        sendDataToServer(quantityInput);
+    } else {
+        alert('Vui lòng nhập số lượng.');
+        nextBtnState = 1;
+        $('#nextBtn').click();
+    }
+}
+
+function addQuantityInput() {
+    const htmlContent = `
+        <label class="col-6"><h3>SỐ LƯỢNG SẢN XUẤT</h3></label>
+        <div class="row">
+            <input style="font-size: 128px;" type="text" id="qty" name="qty" class="form-control col-10 form-control-lg">
+            <label style="font-size: 128px;" class="col-2">M</label>
+        </div>`;
+    $('#addButtonContainer').html(htmlContent);
+}
+
+function showQuantityInput() {
+    $('#quantityInputContainer').show();
+    $('#qty').focus();
+    $('#scannedOrdersTable').hide();
+}
+
+function sendDataToServer(quantityInput) {
+    $('#keypad').hide();
+
+    $.ajax({
+        url: window.location.pathname,
+        type: 'POST',
+        data: JSON.stringify({
+            scannedOrders: scannedQRCodes,
+            quantityInput: quantityInput,
+            machine: machineValue
+        }),
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        success: handleServerResponse,
+        error: handleServerError
+    });
+}
+
+function toggleTableVisibility() {
+    $('#scannedOrdersTable').toggle();
+    const buttonText = $('#scannedOrdersTable').is(':visible') ? 'Giấu' : 'Hiện';
+    $('.toggle-button').text(buttonText);
+}
+
+// 입력 필드의 값이 변경될 때 quantityInput 변수를 업데이트하는 함수
+function updateQuantityInput() {
+    quantityInput = $('#qty').val();
+}
+
+// 'input' 이벤트 리스너를 추가하여 입력 필드가 변경될 때마다 updateQuantityInput 함수를 호출합니다.
+$('#qty').on('input', updateQuantityInput);
+</script>
+{% endblock %}
