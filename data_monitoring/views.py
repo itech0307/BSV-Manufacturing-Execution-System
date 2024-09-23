@@ -187,6 +187,96 @@ def input_dryline(request):
         }
     return JsonResponse(data)
 
+@csrf_exempt
+def input_rp(request):
+    machine = request.GET.get('machine', None)
+    if request.method == "POST":
+        # POST 데이터에서 필요한 정보 가져오기
+        data = json.loads(request.body)
+        scanned_orders = data.get('scannedOrders', [])
+        quantity_data = data.get('quantityInput', [])
+        machine_value = data.get('machine', '')  # machine 값 추가
+
+        quantity_info = []
+        logger.info(f"[KIOSK] RP DATA: {data}")
+        
+        # RP 결과를 ProductionPhase 모델에 저장
+        for order in scanned_orders:
+            if order['order_number'][:3] == 'SOV':
+                try:
+                    production_order = SalesOrder.objects.exclude(status=False).get(order_no=order['order_number'])
+                    last_phase = DryLine.objects.filter(production_plan__sales_order=production_order).order_by('-create_date').first()
+                    
+                    if last_phase:
+                        last_phase_plan = last_phase.production_plan
+                    else:
+                        last_phase_plan = None
+                    
+                    # 가장 최근에 생산된 이력 찾기
+                    production_phase = Delamination.objects.filter(
+                            production_plan=last_phase_plan
+                    ).order_by('-create_date').first()
+                    
+                    if production_phase is None or production_phase.dlami_lot is not None: # 이력이 없거나 생산 Roll이 확인된 경우, 신규 Lot 추가
+                        production_phase = Delamination.objects.create(
+                            production_plan=last_phase_plan,
+                            dlami_qty=quantity_data,
+                            line_no=machine_value,
+                            create_date=timezone.now()
+                        )
+                    elif production_phase is not None and production_phase.dlami_lot is None: # 생산된 이력이 있고, Roll이 미확인된 경우, 기존 Lot에 업데이트 
+                        production_phase = Delamination.objects.update_or_create(
+                            id=production_phase.id, # 가장 최근 생산된 Lot에 업데이트
+                            production_plan=last_phase_plan,
+                            defaults={
+                                'dlami_qty' : quantity_data,
+                                'line_no' : machine_value,
+                                'create_date': timezone.now()
+                            }
+                        )
+                    logger.info(f"[KIOSK] RP SAVED: {order['order_number']}")
+                except SalesOrder.DoesNotExist:
+                    # 오더 번호가 없는 경우 에러 처리
+                    logger.info(f"[KIOSK] RP ERROR: {order['order_number']}")
+                
+
+        return JsonResponse({"status": "success", "message": "Data added successfully"})    
+    
+    qr_content = request.GET.get('qrContent')
+
+    # QR 코드 내용이 없는 경우, 일반 페이지 로드
+    if not qr_content:
+        context = {}
+        return render(request, 'data_monitoring/input_rp.html', context)
+
+    # QR 코드 내용이 있는 경우, order_number로 검색
+    try:
+        qr_content = f"{qr_content.split('!')[2]}-{qr_content.split('!')[3]}"
+        logger.info(f"[KIOSK] RP CONNECTED: {qr_content}")
+        if qr_content[:3] == "SOV":
+            order = SalesOrder.objects.exclude(status=False).get(order_no=qr_content)
+        data = {
+            'order_number': order.order_no,
+            'order_information': {
+                'item': order.item_name,
+                'pattern': order.pattern,
+                'color_code': order.color_code,
+                'customer': order.customer_name,
+                'order_qty': order.order_qty,
+                'order_type': order.order_type,
+                'brand': order.brand,
+                'qty_unit': order.qty_unit
+            },
+            'status': 'success',
+            'message': 'Order found'
+        }
+    except order.DoesNotExist:
+        data = {
+            'status': 'fail',
+            'message': 'Order not found'
+        }
+    return JsonResponse(data)
+
 def order_search(request):
     order_and_status = []
     count = 0
