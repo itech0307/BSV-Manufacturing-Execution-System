@@ -30,7 +30,7 @@
         var staffButtonsHtml = ''; // Staff 버튼 목록을 HTML 요소로 변환
         dmStaffList.forEach(function(staff, index) {                
             // staff.id (또는 staff.number)를 사용하여 번호를 추가
-            staffButtonsHtml += `<button class="grid-item" onclick="selectStaff('${staff.staff_id}')">${staff.staff_id}<br>${staff.name}</button>`;
+            staffButtonsHtml += `<button class="grid-item" onclick="selectStaff('${staff.worker_code}')">${staff.worker_code}<br>${staff.name}</button>`;
         });
 
         $('#staffGrid').html(staffButtonsHtml); // HTML 요소에 목록 추가

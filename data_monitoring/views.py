@@ -8,7 +8,7 @@ from django.db.models import Q
 from .models import DryMix, DryLine, Delamination, Inspection
 from production_management.models import SalesOrder, ProductionPlan
 from workforce_management.models import Worker
-from inventory_management.models import RawMaterial
+from inventory_management.models import RawMaterial, Category
 
 from django.utils.dateparse import parse_date
 from itertools import chain
@@ -55,11 +55,10 @@ def input_drymix(request):
     dm_staff_list = list(Worker.objects.filter(department='DM').values('id', 'worker_code', 'name'))  # id와 name을 가져옵니다.
 
     # RawMaterial 모델에서 category의 고유한 값들을 가져옵니다.
-    categories = list(RawMaterial.objects.values_list('category', flat=True).distinct())
+    categories = list(Category.objects.values_list('category_name', flat=True).distinct())
     subitems = defaultdict(list)
-
     for category in categories:
-        subitems[category] = list(RawMaterial.objects.filter(category=category).values_list('material_name', flat=True))
+        subitems[category] = list(RawMaterial.objects.filter(category__category_name=category).values_list('material_name', flat=True))
 
     # 가장 최근 입력한 생산 기록 호출
     latest_phase = DryMix.objects.select_related('production_plan').order_by('-create_date').first()
