@@ -1,0 +1,63 @@
+{% extends 'data_monitoring/base.html' %}
+{% load custom_filters %}
+{% block header %}[INSPECTION] REPORT{% endblock %}
+{% block url_search_popup %}{% url 'data_monitoring:inspection' %}{% endblock %}
+{% block url_list_search %}{% url 'data_monitoring:inspection' %}{% endblock %}
+{% block table %}
+<div class="scrollable-tbody">
+    <table class="table table-report">
+        <thead>
+            <tr>
+                <th>Line</th>
+                <th>OrderNo</th>
+                <th>OrderType</th>
+                <th>Customer</th>
+                <th>Item</th>
+                <th>ColorCode</th>
+                <th>Pattern</th>
+                <th>Qty</th>
+                <th>DateTime</th>
+                <th>P/D Qty</th>
+                <th>Loss Qty</th>
+                <th>Pck. Qty</th>
+                <th>Position</th>
+            </tr>
+        </thead>
+        <tbody class="data-tbody">
+            {% for data, quantity in list %}
+            <tr>
+                <td>{{ data.line_no | get_slice:-1}}</td>
+                <td>{{ data.production_plan.sales_order.order_no }}</td>
+                <td>{{ data.production_plan.sales_order.order_type }}</td>
+                <td>{{ data.production_plan.sales_order.customer_name }}</td>
+                <td>
+                    {{ data.production_plan.sales_order.item_name }}
+                    {% if data.production_plan.sales_order.spec|slice:"3:4" == '0' %}
+                        {{ data.production_plan.sales_order.spec|slice:":3" }}
+                    {% elif data.production_plan.sales_order.spec|slice:"3:4" != '0' %}
+                        {{ data.production_plan.sales_order.spec|slice:":4" }}
+                    {% endif %}
+                </td>
+                <td>{{ data.production_plan.sales_order.color_code }}</td>
+                <td>{{ data.production_plan.sales_order.pattern }}</td>
+                <td>{{ data.production_plan.sales_order.order_qty }}</td>
+                <td>{{ data.create_date | date:"Y-m-d H:i"}}</td>
+                {% if quantity != 0 %}
+                <td>{{ quantity }}</td>
+                {% else %}
+                <td></td>
+                {% endif %}
+                <td>{{ data.ins_information|sum_defect_quantities }}</td>
+                <td>{{ data.position}}</td>
+                <td></td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">Report not found</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+{% block extra_js %}{% endblock %}
