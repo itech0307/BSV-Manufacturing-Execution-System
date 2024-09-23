@@ -74,16 +74,16 @@
                 <td>{{ data.production_plan.sales_order.customer_name }}</td>
                 <td>
                     {{ data.production_plan.sales_order.item_name }}
-                    {% if data.production_plan.sales_order.specification|slice:"3:4" == '0' %}
-                        {{ data.production_plan.sales_order.specification|slice:":3" }}
-                    {% elif data.production_plan.sales_order.specification|slice:"3:4" != '0' %}
-                        {{ data.production_plan.sales_order.specification|slice:":4" }}
+                    {% if data.production_plan.sales_order.spec|slice:"3:4" == '0' %}
+                        {{ data.production_plan.sales_order.spec|slice:":3" }}
+                    {% elif data.production_plan.sales_order.spec|slice:"3:4" != '0' %}
+                        {{ data.production_plan.sales_order.spec|slice:":4" }}
                     {% endif %}
                 </td>
                 <td>{{ data.production_plan.sales_order.color_code }}</td>
                 <td>{{ data.production_plan.sales_order.pattern }}</td>
                 <td class="base-col">{{ data.production_plan.pd_information.base }}</td>
-                <td class="spec-col">{{ data.production_plan.sales_order.specification }}</td>
+                <td class="spec-col">{{ data.production_plan.sales_order.spec }}</td>
                 <td class="skinbinder-col">{{ data.production_plan.pd_information.skin_resin }}/{{ data.production_plan.pd_information.binder_resin }}</td>
                 <td>{{ data.production_plan.sales_order.order_qty }}</td>
                 <td>{{ data.production_plan.plan_qty }}</td>
