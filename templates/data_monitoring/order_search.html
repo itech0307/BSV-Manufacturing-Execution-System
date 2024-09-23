@@ -55,24 +55,24 @@
             {% for order, status in order_and_status %}
             <tr data-order="{{ order }}"
                 data-status="{{ status|json_str }}"
-                data-order-number="{{ order.order_number }}">
-                <td>{{ order.order_number }}</td>
+                data-order-number="{{ order.order_no }}">
+                <td>{{ order.order_no }}</td>
                 <td>{{ order.customer_name }}</td>
                 <td>{{ order.order_type }}</td>
                 <td class="orderdate-col">{{ order.order_date}}</td>
                 <td class="rtd-col">{{ order.rtd}}</td>
                 <td class="etd-col">{{ order.etd}}</td>
                 <td>{{ order.brand }}</td>
-                {% if order.specification|slice:"3:4" == '0' %}
-                    <td>{{ order.item_name }} {{ order.specification|slice:":3" }}</td>
+                {% if order.spec|slice:"3:4" == '0' %}
+                    <td>{{ order.item_name }} {{ order.spec|slice:":3" }}</td>
                 {% else%}
-                    <td>{{ order.item_name }} {{ order.specification|slice:":4" }}</td>
+                    <td>{{ order.item_name }} {{ order.spec|slice:":4" }}</td>
                 {% endif %}
-                <td class="spec-col">{{ order.specification }}</td>
+                <td class="spec-col">{{ order.spec }}</td>
                 <td>{{ order.color_code }}</td>
                 <td>{{ order.pattern }}</td>
-                <td>{{ order.order_quantity }}</td>
-                <td>{{ order.quantity_unit }}</td>
+                <td>{{ order.order_qty }}</td>
+                <td>{{ order.qty_unit }}</td>
                 <td>
                     <b>{{ status.bal_qty }}</b>
                 </td>

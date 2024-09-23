@@ -36,9 +36,8 @@ def input_drymix(request):
                     production_plan = ProductionPlan.objects.filter(sales_order=sales_order).order_by('-create_date').first()
                     # ProductionPhase 모델 인스턴스 생성
                     production_phase = DryMix(
-                        sales_order=sales_order,
                         production_plan = production_plan,
-                        mix_information=quantity_data,
+                        mixing_information=quantity_data,
                         worker_code=worker_code
                     )
                     production_phase.save()  # 인스턴스 저장
@@ -84,7 +83,16 @@ def input_drymix(request):
         #order = ProductionOrder.objects.filter(order_number=qr_content).latest('create_date')
         data = {
             'order_number': order.order_no,
-            'order_information': order.order_information,
+            'order_information': {
+                'item': order.item_name,
+                'pattern': order.pattern,
+                'color_code': order.color_code,
+                'customer': order.customer_name,
+                'order_qty': order.order_qty,
+                'order_type': order.order_type,
+                'brand': order.brand,
+                'qty_unit': order.qty_unit
+            },
             'status': 'success',
             'message': 'Order found'
         }
@@ -143,10 +151,10 @@ def order_search(request):
             # 여러 모델에서 sales_order로 검색
             production_phases = list(chain(
                 ProductionPlan.objects.filter(sales_order=order),
-                DryMix.objects.filter(sales_order=order),
-                DryLine.objects.filter(sales_order=order),
-                Delamination.objects.filter(sales_order=order),
-                Inspection.objects.filter(sales_order=order)
+                DryMix.objects.filter(production_plan__sales_order=order),
+                DryLine.objects.filter(production_plan__sales_order=order),
+                Delamination.objects.filter(production_plan__sales_order=order),
+                Inspection.objects.filter(production_plan__sales_order=order)
             ))
             
             bal_qty = int(order.order_qty)
@@ -174,7 +182,7 @@ def order_search(request):
                             process.append(phase_info)
                     
                     elif isinstance(production_phase, DryMix):
-                        phase_info = production_phase.mix_information
+                        phase_info = production_phase.mixing_information
 
                         for info in phase_info: # json 형식의 phase_information 의 정보 확인
                             if info.get('item', ''):
@@ -198,24 +206,24 @@ def order_search(request):
                         })
                     
                     elif isinstance(production_phase, Delamination):
-                        phase_info = production_phase.delamination_information
+                        phase_info = production_phase.dlami_information
 
                         process.append({
                             'process' : 'RP',
-                            'delami_qty': production_phase.delamination_qty,
+                            'delami_qty': production_phase.dlami_qty,
                             'create_date': create_date,
                             'machine': production_phase.line_no
                         })
                     
                     elif isinstance(production_phase, Inspection):
-                        phase_info = production_phase.inspection_information
+                        phase_info = production_phase.ins_information
                         
                         sub_pd_qty = 0
                        
                         for info in phase_info:
                             defect[info.get('defectCause')] = info.get('quantity')
                         
-                        agrade_qty = production_phase.inspection_qty
+                        agrade_qty = production_phase.ins_qty
                         bal_qty = bal_qty - agrade_qty
                         
                         process.append({
