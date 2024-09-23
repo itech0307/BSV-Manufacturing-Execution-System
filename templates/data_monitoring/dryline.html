@@ -62,8 +62,8 @@
         <tbody class="data-tbody">
             {% for data in list %}
             <tr>
-                <td>{{ data.line_no | get_slice:-1}}</td>                        
-                <td>{{ data.production_plan.plan_date }}</td>
+                <td>{{ data.line_no | get_slice:-1}}</td>
+                <td>{{ data.production_plan.plan_date | date:"Y-m-d" }}</td>
                 <td>{{ data.production_plan.plan_no }}</td>
                 <td>{{ data.production_plan.sales_order.order_no }}</td>
                 <td>{{ data.production_plan.sales_order.order_type }}</td>
