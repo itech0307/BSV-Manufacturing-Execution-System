@@ -59,9 +59,9 @@
                 <td>{{ order.order_no }}</td>
                 <td>{{ order.customer_name }}</td>
                 <td>{{ order.order_type }}</td>
-                <td class="orderdate-col">{{ order.order_date}}</td>
-                <td class="rtd-col">{{ order.rtd}}</td>
-                <td class="etd-col">{{ order.etd}}</td>
+                <td class="orderdate-col">{{ order.order_date|custom_date_format }}</td>
+                <td class="rtd-col">{{ order.rtd|custom_date_format }}</td>
+                <td class="etd-col">{{ order.etd|custom_date_format }}</td>
                 <td>{{ order.brand }}</td>
                 {% if order.spec|slice:"3:4" == '0' %}
                     <td>{{ order.item_name }} {{ order.spec|slice:":3" }}</td>

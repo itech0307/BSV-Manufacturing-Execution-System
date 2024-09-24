@@ -124,3 +124,9 @@ def d_day(value):
             return f"D+{-days}"
     
     return value
+
+@register.filter
+def custom_date_format(value):
+    if value:
+        return value.strftime("%-m-%d")
+    return ""
