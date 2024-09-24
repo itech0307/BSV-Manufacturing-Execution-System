@@ -30,7 +30,7 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 env = environ.Env()
-environ.Env.read_env(BASE_DIR / 'config/.env')
+environ.Env.read_env(BASE_DIR / '.env')
 # Get the domain from the environment variable
 DOMAIN = env('DOMAIN')
 

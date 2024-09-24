@@ -10,7 +10,7 @@ AWS_S3_CUSTOM_DOMAIN = 'bsv-mes-dev-bucket.s3.ap-southeast-1.amazonaws.com'
 AWS_S3_REGION_NAME = 'ap-southeast-1'
 
 env = environ.Env()
-environ.Env.read_env(BASE_DIR / 'config/.env')
+environ.Env.read_env(BASE_DIR / '.env')
 
 TIME_ZONE = 'Asia/Ho_Chi_Minh'  # 베트남 호치민 시간 적용
 USE_I18N = True
