@@ -8,6 +8,7 @@ from django.conf import settings
 from openpyxl.drawing.image import Image
 import qrcode
 import io
+import os
 
 # Celery
 from celery import shared_task
@@ -16,15 +17,11 @@ from celery_progress.backend import ProgressRecorder
 
 import boto3
 
-import environ
-env = environ.Env()
-environ.Env.read_env('config/.env')
-
-s3 = boto3.client('s3', region_name='ap-southeast-1')
+s3 = boto3.client('s3', region_name=settings.AWS_S3_REGION_NAME)
 
 def get_s3_file(key):
     """S3에서 파일을 가져와 BytesIO 객체로 반환합니다."""
-    s3_response = s3.get_object(Bucket='bsv-mes-dev-bucket', Key=key)
+    s3_response = s3.get_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=key)
     file_content = s3_response['Body'].read()
     return io.BytesIO(file_content)
 
