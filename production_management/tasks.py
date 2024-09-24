@@ -193,105 +193,111 @@ def ordersheet_upload_celery(self,df_json):
         #progress_recorder.set_progress(i + 1, len(df), description="Uploading")
 
 def dryplan_convert_to_qrcard(df_json):
-    # 엑셀 파일로 응답을 생성합니다.
-    response = HttpResponse(content_type='application/ms-excel')
-    response['Content-Disposition'] = 'attachment; filename="qrcard_dryline.xlsx"'
-    
-    # JSON 데이터를 pandas DataFrame으로 변환합니다.
-    df = pd.read_json(df_json)
-    
-    # 새 워크북을 생성하고 기존의 'qrcard.xlsx' 파일을 로드합니다.
-    wb = openpyxl.Workbook()
-    
-    # S3에서 파일 가져오기
-    excel_file = get_s3_file('forms/qrcard.xlsx')
-    
-    # openpyxl로 워크북 로드
-    qrcard = openpyxl.load_workbook(excel_file)
-    
-    # 각 행에 대해 새 워크시트를 생성하고 데이터를 채웁니다.
-    for i in range(len(df)):
-        ws = wb.create_sheet(str(i+1))
-        copy_sheet(qrcard['DRY'], ws)
-        # 워크시트에 데이터를 채웁니다.
-        row_data = df.iloc[i]  # 데이터 프레임에서 한 행의 데이터를 미리 불러옴
-        try:
-            sales_order = SalesOrder.objects.exclude(status=False).get(order_no=f"{row_data.iloc[0]}-{row_data.iloc[1]}")
-            if '/' in str(row_data.iloc[14]):
-                skin_resin = str(row_data.iloc[14]).split('/')[0]
-                binder_resin = str(row_data.iloc[14]).split('/')[1]
-            else:
-                skin_resin = ''
-                binder_resin = ''
-            plan_dict = {
-                    "base":f"{row_data.iloc[7]}",
-                    "skin_resin":f"{skin_resin}",
-                    "binder_resin":f"{binder_resin}",
-                    "rp_qty":f"{row_data.iloc[15]}",
-                    "plan_remark":f"{row_data.iloc[16]}"
+    try:
+        # 엑셀 파일로 응답을 생성합니다.
+        response = HttpResponse(content_type='application/ms-excel')
+        response['Content-Disposition'] = 'attachment; filename="qrcard_.xlsx"'
+        
+        # JSON 데이터를 pandas DataFrame으로 변환합니다.
+        df = pd.read_json(df_json)
+        
+        # 새 워크북을 생성하고 기존의 'qrcard.xlsx' 파일을 로드합니다.
+        wb = openpyxl.Workbook()
+        
+        # S3에서 파일 가져오기
+        excel_file = get_s3_file('forms/qrcard.xlsx')
+
+        # openpyxl로 워크북 로드
+        qrcard = openpyxl.load_workbook(excel_file)
+        
+        # 각 행에 대해 새 워크시트를 생성하고 데이터를 채웁니다.
+        for i in range(len(df)):
+            ws = wb.create_sheet(str(i+1))
+            copy_sheet(qrcard['DRY'], ws)
+            # 워크시트에 데이터를 채웁니다.
+            row_data = df.iloc[i]  # 데이터 프레임에서 한 행의 데이터를 미리 불러옴
+            try:
+                sales_order = SalesOrder.objects.exclude(status=False).get(order_no=f"{row_data.iloc[0]}-{row_data.iloc[1]}")
+                if '/' in str(row_data.iloc[14]):
+                    skin_resin, binder_resin = str(row_data.iloc[14]).split('/')
+                else:
+                    skin_resin, binder_resin = '', ''
+                
+                pd_information = {
+                    "base": f"{row_data.iloc[7]}",
+                    "skin_resin": skin_resin,
+                    "binder_resin": binder_resin,
+                    "rp_qty": f"{row_data.iloc[15]}",
+                    "plan_remark": f"{row_data.iloc[16]}"
                 }
-            # ProductionPlan 모델 인스턴스 업데이트 및 생성
-            production_plan, created = ProductionPlan.objects.update_or_create(
-                sales_order=sales_order,
-                plan_date = row_data.iloc[11][:10],
-                item_group='Dry',
-                defaults={
-                    'plan_no': row_data.iloc[12],
-                    'plan_qty': row_data.iloc[13],
-                    'pd_information': plan_dict
-                }
-            )
-        except:
-            pass
+                
+                # ProductionPlan 모델 인스턴스 생성 또는 업데이트
+                production_plan, created = ProductionPlan.objects.update_or_create(
+                    sales_order=sales_order,
+                    plan_date=row_data.iloc[11][:10],
+                    defaults={
+                        'plan_no': f"{row_data.iloc[12]}",
+                        'plan_qty': int(row_data.iloc[13]),
+                        'pd_line': f"{row_data.iloc[10]}",
+                        'item_group': 'Dry',
+                        'pd_information': pd_information
+                    }
+                )
+            except:
+                pass
 
-        ws['A3'] = row_data.iloc[2]  # customer
-        ws['F3'] = row_data.iloc[3]  # brand
-        ws['A4'] = row_data.iloc[4]  # item
-        ws['A5'] = row_data.iloc[5]  # color
-        ws['F5'] = row_data.iloc[6]  # pattern
-        ws['A6'] = f"{row_data.iloc[0]}-{row_data.iloc[1]}"   # order number
-        ws['G6'] = row_data.iloc[7]  # Base
-        #ws['D6'] = row_data[8]  # order qty
-        ws['C9'] = row_data.iloc[9]  # Remark
-        ws['C11'] = row_data.iloc[16]  # Plan Remark
+            ws['A3'] = row_data.iloc[2]  # customer
+            ws['F3'] = row_data.iloc[3]  # brand
+            ws['A4'] = row_data.iloc[4]  # item
+            ws['A5'] = row_data.iloc[5]  # color
+            ws['F5'] = row_data.iloc[6]  # pattern
+            ws['A6'] = f"{row_data.iloc[0]}-{row_data.iloc[1]}"   # order number
+            ws['G6'] = row_data.iloc[7]  # Base
+            #ws['D6'] = row_data[8]  # order qty
+            ws['C9'] = row_data.iloc[9]  # Remark
+            ws['C11'] = row_data.iloc[16]  # Plan Remark
 
-        ws['A17'] = f'D{row_data.iloc[10]}-{row_data.iloc[12]}'  # Line
-        ws['F17'] = row_data.iloc[11][5:10]  # plan date
-        ws['D6'] = row_data.iloc[13]  # plan qty
-        ws['A7'] = row_data.iloc[17]  # order type
-        
-        qr_str = f"!BSVPD!{row_data.iloc[0]}!{row_data.iloc[1]}!"
-        qr_img = qrcode.make(qr_str).resize((160, 160))
-        
-        # QR 코드 이미지를 BytesIO 스트림에 저장합니다.
-        img_stream = io.BytesIO()
-        qr_img.save(img_stream, format='PNG')
-        
-        # 스트림 위치를 처음으로 돌립니다.
-        img_stream.seek(0)
-        
-        # openpyxl 이미지 객체를 생성합니다.
-        qr_img_openpyxl = Image(img_stream)
-        
-        # 워크시트에 QR 코드 이미지를 추가합니다.
-        ws.add_image(qr_img_openpyxl, "G22")
+            ws['A17'] = f'D{row_data.iloc[10]}-{row_data.iloc[12]}'  # Line
+            ws['F17'] = row_data.iloc[11][5:10]  # plan date
+            ws['D6'] = row_data.iloc[13]  # plan qty
+            ws['A7'] = row_data.iloc[17]  # order type
+            
+            qr_str = f"!BSVPD!{row_data.iloc[0]}!{row_data.iloc[1]}!"
+            qr_img = qrcode.make(qr_str).resize((160, 160))
+            
+            # QR 코드 이미지를 BytesIO 스트림에 저장합니다.
+            img_stream = io.BytesIO()
+            qr_img.save(img_stream, format='PNG')
+            
+            # 스트림 위치를 처음으로 돌립니다.
+            img_stream.seek(0)
+            
+            # openpyxl 이미지 객체를 생성합니다.
+            qr_img_openpyxl = Image(img_stream)
+            
+            # 워크시트에 QR 코드 이미지를 추가합니다.
+            ws.add_image(qr_img_openpyxl, "G22")
 
-        qr_img_2 = qrcode.make(qr_str).resize((160, 160))
+            qr_img_2 = qrcode.make(qr_str).resize((160, 160))
 
-        # QR 코드 이미지를 BytesIO 스트림에 저장합니다.
-        img_stream_2 = io.BytesIO()
-        qr_img_2.save(img_stream_2, format='PNG')
+            # QR 코드 이미지를 BytesIO 스트림에 저장합니다.
+            img_stream_2 = io.BytesIO()
+            qr_img_2.save(img_stream_2, format='PNG')
+            
+            # 스트림 위치를 처음으로 돌립니다.
+            img_stream_2.seek(0)
+            
+            # openpyxl 이미지 객체를 생성합니다.
+            qr_img_openpyxl_2 = Image(img_stream_2)
+            
+            # 워크시트에 QR 코드 이미지를 추가합니다.
+            ws.add_image(qr_img_openpyxl_2, "A22")
         
-        # 스트림 위치를 처음으로 돌립니다.
-        img_stream_2.seek(0)
-        
-        # openpyxl 이미지 객체를 생성합니다.
-        qr_img_openpyxl_2 = Image(img_stream_2)
-        
-        # 워크시트에 QR 코드 이미지를 추가합니다.
-        ws.add_image(qr_img_openpyxl_2, "A22")
+        # 워크북을 저장하고 응답을 반환합니다.
+        del wb['Sheet']
+        wb.save(response)
+        return response
     
-    # 워크북을 저장하고 응답을 반환합니다.
-    del wb['Sheet']
-    wb.save(response)
-    return response
+    except Exception as e:
+        # 에러가 발생하면 JSON 형식으로 에러 메시지를 반환합니다.
+        return JsonResponse({'error': str(e)})
