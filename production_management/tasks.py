@@ -1,8 +1,9 @@
 import openpyxl
 from copy import copy
 import pandas as pd
-from .models import SalesOrder
+from production_management.models import SalesOrder
 from datetime import datetime
+
 # Celery
 from celery import shared_task
 # Celery-progress
@@ -65,76 +66,106 @@ def copy_sheet(source_sheet, target_sheet):
     copy_sheet_attributes(source_sheet, target_sheet)
 
 def parse_date(date_string):
-    try:
-        return datetime.strptime(date_string, '%Y-%m-%d %H:%M:%S').date()
-    except ValueError:
+    if not date_string or pd.isna(date_string):
+        return None
+    
+    date_formats = ['%Y-%m-%d %H:%M:%S', '%Y-%m-%d']
+    for date_format in date_formats:
         try:
-            return datetime.strptime(date_string, '%Y-%m-%d').date()
+            return datetime.strptime(str(date_string), date_format).date()
         except ValueError:
-            return None
+            continue
+    
+    return None
 
-@shared_task(bind=True)
-def ordersheet_upload_celery(self, df_json):
-    try:
-        # 작업 진행 상황을 기록하기 위한 객체
-        progress_recorder = ProgressRecorder(self)
+#@shared_task(bind=True)
+def ordersheet_upload_celery(df_json):
+    # 작업 진행 상황을 기록하기 위한 객체
+    #progress_recorder = ProgressRecorder(self)
+    
+    # JSON을 다시 데이터프레임으로 변환
+    df = pd.read_json(df_json)
+    
+    for i in range(len(df)):
+        # Sales order와 Line number가 빈 경우 건너뜀
+        if df['Sales order'][i] == "" and df['Line number'][i] == "":
+            continue
+    
+        sales_order = SalesOrder.objects.filter(
+            order_no = f"{df['Sales order'][i]}-{(df['Line number'][i])}"
+            ).first()
         
-        # JSON을 다시 데이터프레임으로 변환
-        df = pd.read_json(df_json)
-        
-        for i in range(len(df)):
-            # Sales order와 Line number가 빈 경우 건너뜀
-            if df['Sales order'][i] == "" and df['Line number'][i] == "":
-                continue
-        
-            order = SalesOrder.objects.filter(
-                order_no = f"{df['Sales order'][i]}-{(df['Line number'][i])}"
-                )
+        if sales_order:
+            # 객체의 order_quantity 필드에서 값을 비교 합니다
+            if (int(df['Quantity'][i])) < 0:
+                
+                # order_status 필드 false로 변경
+                sales_order.status = False
+                sales_order.save()  # 변경 사항을 저장합니다.
             
-            if order.exists():
-                # 첫 번째 일치하는 객체를 가져옵니다.
-                first_order = order.first()
-                # 객체의 order_quantity 필드에서 값을 비교 합니다
-                if first_order.order_qty*(-1) == (int(df['Quantity'][i])):
-                    
-                    # order_status 필드 false로 변경
-                    first_order.status = False
-                    first_order.save()  # 변경 사항을 저장합니다.
+            elif (int(df['Quantity'][i])) > 0:
+                order_data = {
+                    'order_id': df['Sales order'][i],
+                    'seq_no': int(df['Line number'][i]),
+                    'customer_order_no': df['po number'][i],
+                    'customer_name': df['Customer Name'][i],
+                    'order_type': df['Sales origin'][i],
+                    'order_date': parse_date(df['Receipt date'][i]),
+                    'rtd': parse_date(df['RTD'][i]),
+                    'etd': parse_date(df['ETD'][i]),
+                    'brand': df['Brand Name'][i],
+                    'item_name': df['Item Name'][i],
+                    'color_code': df['Color Code'][i],
+                    'color_name': df['Color Name'][i],
+                    'pattern': df['TYPE'][i],
+                    'spec': df['Spec Name'][i],
+                    'order_qty': int(df['Quantity'][i]),
+                    'qty_unit': df['Unit'][i],
+                    'unit_price': float(df['Ship Unit price'][i]),
+                    'currency': df['Currency(Trade)'][i],
+                    'order_remark': df['Prod. remark'][i],
+                    'model_name': df['Model name'][i],
+                    'sample_step': df['Sample Step'][i],
+                    'production_location': df['Order To Company'][i],
+                    'product_group': df['Prod Group'][i],
+                    'product_type': df['Custom No'][i],
+                    'status': True
+                }
+    
+                for key, value in order_data.items():
+                    setattr(sales_order, key, value)
+                sales_order.save()
+        else:
+            if int(df['Quantity'][i]) > 0:
+                order_data = {
+                    'order_id': df['Sales order'][i],
+                    'seq_no': int(df['Line number'][i]),
+                    'customer_order_no': df['po number'][i],
+                    'customer_name': df['Customer Name'][i],
+                    'order_type': df['Sales origin'][i],
+                    'order_date': parse_date(df['Receipt date'][i]),
+                    'rtd': parse_date(df['RTD'][i]),
+                    'etd': parse_date(df['ETD'][i]),
+                    'brand': df['Brand Name'][i],
+                    'item_name': df['Item Name'][i],
+                    'color_code': df['Color Code'][i],
+                    'color_name': df['Color Name'][i],
+                    'pattern': df['TYPE'][i],
+                    'spec': df['Spec Name'][i],
+                    'order_qty': int(df['Quantity'][i]),
+                    'qty_unit': df['Unit'][i],
+                    'unit_price': float(df['Ship Unit price'][i]),
+                    'currency': df['Currency(Trade)'][i],
+                    'order_remark': df['Prod. remark'][i],
+                    'model_name': df['Model name'][i],
+                    'sample_step': df['Sample Step'][i],
+                    'production_location': df['Order To Company'][i],
+                    'product_group': df['Prod Group'][i],
+                    'product_type': df['Custom No'][i]
+                }
+                
+                SalesOrder.objects.create(**order_data)
             else:
-                if int(df['Quantity'][i]) > 0:
-                    order_data = {
-                        'order_id': df['Sales order'][i],
-                        'seq_no': int(df['Line number'][i]),
-                        'customer_order_no': df['po number'][i],
-                        'customer_name': df['Customer Name'][i],
-                        'order_type': df['Sales origin'][i],
-                        'order_date': parse_date(df['Receipt date'][i]),
-                        'rtd': parse_date(df['RTD'][i]),
-                        'etd': parse_date(df['ETD'][i]),
-                        'brand': df['Brand Name'][i],
-                        'item_name': df['Item Name'][i],
-                        'color_code': df['Color Code'][i],
-                        'color_name': df['Color Name'][i],
-                        'pattern': df['TYPE'][i],
-                        'spec': df['Spec Name'][i],
-                        'order_qty': int(df['Quantity'][i]),
-                        'qty_unit': df['Unit'][i],
-                        'unit_price': float(df['Ship Unit price'][i]),
-                        'currency': df['Currency(Trade)'][i],
-                        'order_remark': df['Prod. remark'][i],
-                        'model_name': df['Model name'][i],
-                        'sample_step': df['Sample Step'][i],
-                        'production_location': df['Order To Company'][i],
-                        'product_group': df['Prod Group'][i],
-                        'product_type': df['Custom No'][i]
-                    }
-                    
-                    SalesOrder.objects.create(**order_data)
-                else:
-                    continue
-        
-            progress_recorder.set_progress(i + 1, len(df), description="Uploading")
-    except Exception as e:
-        # 작업 중 에러가 발생한 경우 로그에 출력
-        print(f"작업 중 에러가 발생했습니다: {e}")
-        # 필요한 예외 처리를 여기에 추가
+                continue
+    
+        #progress_recorder.set_progress(i + 1, len(df), description="Uploading")

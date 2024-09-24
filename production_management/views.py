@@ -1,7 +1,5 @@
 from django.shortcuts import render
-
 from django.http import JsonResponse
-from django.shortcuts import render
 import pandas as pd
 from .tasks import ordersheet_upload_celery
 
@@ -27,8 +25,12 @@ def order_sheet_upload(request):
         # ordersheet_file_validation(df_json)
         
         # Celery 작업 시작
-        order_upload_task = ordersheet_upload_celery.delay(df_json)
-        task_id = order_upload_task.task_id
+        #order_upload_task = ordersheet_upload_celery.delay(df_json)
+        #task_id = order_upload_task.task_id
+
+        task_id =''
+
+        ordersheet_upload_celery(df_json)
         
         return render(request, 'production_management/order_sheet_upload.html', {'task_id': task_id})
 
