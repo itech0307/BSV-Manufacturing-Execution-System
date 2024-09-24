@@ -6,7 +6,7 @@ from django.utils import timezone
 import json
 from collections import defaultdict
 from django.db.models import Q
-from .models import DryMix, DryLine, Delamination, Inspection
+from .models import DryMix, DryLine, Delamination, Inspection, ProductionLot
 from production_management.models import SalesOrder, ProductionPlan
 from workforce_management.models import Worker
 from inventory_management.models import RawMaterial, Category
@@ -450,6 +450,124 @@ def aging_room(request):
             }
         
     return render(request, 'data_monitoring/aging_room.html', context)
+
+@login_required
+@csrf_protect
+def create_lot_no(request):
+	context = {}
+	now = datetime.datetime.now()
+
+	if request.method == 'POST':
+		action = request.POST.get('action')
+		
+		if action == 'search':
+			lot_no = ProductionLot.generate_lot()
+			inside_order_no = "SOV0" + request.POST.get('inside_order_number')
+			outside_order_no = "SOV0" + request.POST.get('outside_order_number')
+
+			logger.info(f"[ROLL LOT] ORDER SEARCH: INSIDE {inside_order_no} / OUTSIDE {outside_order_no}")
+			
+			inside_product_list = list(chain(
+				DryLine.objects.filter(production_plan__sales_order__order_no=inside_order_no),
+				Delamination.objects.filter(production_plan__sales_order__order_no=inside_order_no)
+			))
+			inside_product = sorted(inside_product_list, key=lambda x: x.create_date, reverse=True)[0] if inside_product_list else None
+
+			outside_product_list = list(chain(
+				DryLine.objects.filter(production_plan__sales_order__order_no=outside_order_no),
+				Delamination.objects.filter(production_plan__sales_order__order_no=outside_order_no)
+			))
+			outside_product = sorted(outside_product_list, key=lambda x: x.create_date, reverse=True)[0] if outside_product_list else None
+			
+			if inside_product and inside_product.line_no[:5] == 'bsvdl':
+				inside_product = DryLine.objects.filter(Q(production_plan__sales_order__order_no=inside_order_no)).order_by('-create_date').first()
+				outside_product = DryLine.objects.filter(Q(production_plan__sales_order__order_no=outside_order_no)).order_by('-create_date').first()
+				dept = 'DryLine'
+			elif inside_product and inside_product.line_no[:5] == 'bsvrp':
+				inside_product = Delamination.objects.filter(Q(production_plan__sales_order__order_no=inside_order_no)).order_by('-create_date').first()
+				outside_product = Delamination.objects.filter(Q(production_plan__sales_order__order_no=outside_order_no)).order_by('-create_date').first()
+				dept = "RP"
+			else:
+				dept = ""
+
+			if inside_product is not None and outside_product is not None:
+				if inside_product.line_no == outside_product.line_no:
+					line = inside_product.line_no
+					inside_product_time = inside_product.create_date
+					outside_product_time = outside_product.create_date
+
+					if dept == 'DryLine':
+						initial_list = DryLine.objects.filter(Q(create_date__gte=inside_product_time) & Q(create_date__lte=outside_product_time))
+					elif dept == 'RP':
+						initial_list = Delamination.objects.filter(Q(create_date__gte=inside_product_time) & Q(create_date__lte=outside_product_time))
+
+					# Python으로 추가 필터링 수행
+					filtered_list = [item for item in initial_list if item.line_no == line]
+				else:
+					filtered_list = None
+			else:
+				filtered_list = None
+
+			context = {
+				'list': filtered_list,
+				'dept':dept,
+				'inside_order_number': inside_order_no,
+				'outside_order_number': outside_order_no,
+				'roll_lot':lot_no
+			}
+
+		elif action == 'register':
+			lot_no = request.POST.get('roll_lot')
+			dept = request.POST.get('dept')
+			inside_order_no = request.POST.get('inside_order_number')
+			outside_order_no = request.POST.get('outside_order_number')
+
+			if dept == 'DryLine':
+				inside_product = DryLine.objects.filter(Q(production_plan__sales_order__order_no=inside_order_no)).order_by('-create_date').first()
+				outside_product = DryLine.objects.filter(Q(production_plan__sales_order__order_no=outside_order_no)).order_by('-create_date').first()
+			elif dept == 'RP':
+				inside_product = Delamination.objects.filter(Q(production_plan__sales_order__order_no=inside_order_no)).order_by('-create_date').first()
+				outside_product = Delamination.objects.filter(Q(production_plan__sales_order__order_no=outside_order_no)).order_by('-create_date').first()
+
+			line = inside_product.line_no
+			inside_product_time = inside_product.create_date
+			outside_product_time = outside_product.create_date
+			if dept == 'DryLine':
+				initial_list = DryLine.objects.filter(Q(create_date__gte=inside_product_time) & Q(create_date__lte=outside_product_time))
+			elif dept == 'RP':
+				initial_list = Delamination.objects.filter(Q(create_date__gte=inside_product_time) & Q(create_date__lte=outside_product_time))
+
+			# Python으로 추가 필터링 수행
+			filtered_list = [item for item in initial_list if item.line_no == line]
+			
+			# 'list'에 있는 각 데이터의 ID를 기반으로 라디오 버튼 값을 처리
+			selected_values = {}
+			for data in request.POST:
+				if data.startswith('selection_'):
+					data_id = int(data.split('_')[1])
+					selected_values[data_id] = request.POST[data]
+			
+			# filtered_list의 각 항목에 roll_lot input_time 추가
+			for item in filtered_list:
+				# 현재의 phase_information 리스트를 가져옴
+				if dept == 'DryLine':
+					item.pd_lot = lot_no + selected_values[item.id]
+				elif dept == 'RP':
+					item.dlami_lot = lot_no + selected_values[item.id]
+				
+				# 변경된 항목을 데이터베이스에 저장
+				item.save()
+            
+			ProductionLot.objects.create(lot_no=lot_no)
+			
+			logger.info(f"[ROLL LOT] SAVED: {lot_no}")
+
+			context = {
+				'inside_order_number': inside_order_no,
+				'outside_order_number': outside_order_no
+			}
+		
+	return render(request, 'data_monitoring/create_lot_no.html', context)
 
 def order_search(request):
     order_and_status = []

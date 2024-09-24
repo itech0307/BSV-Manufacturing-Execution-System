@@ -9,10 +9,9 @@
             <div class="col">
                 <h2>[RP] REPORT</h2>
             </div>
-            {% if "production_lines" in user_groups %}
             <div class="col">
+                <button class="btn btn-outline-success" onclick="location.href='{% url 'data_monitoring:create_lot_no' %}'">Số Cuộn</button>
             </div>
-            {% endif %}
             <div class="col title-buttons">
                 <button onclick="toggleSearchPopup()" title="Search" style="background: none; border: none; cursor: pointer; margin: 0 10px;">
                     <i class="fas fa-search"></i>

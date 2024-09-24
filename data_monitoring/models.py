@@ -80,38 +80,17 @@ class ProductionLot(models.Model):
     @classmethod
     def generate_lot(cls):
         today = datetime.now().strftime('%m%d')
-        three_days_ago = datetime.now() - timedelta(days=3)
         
-        # 'DryLine'와 'RP'의 phase 검색
-        production_phases = list(chain(
-                DryLine.objects.filter(),
-                Delamination.objects.filter()
-            ))
+        # ProductionLot 모델에서 lot_no를 검색하여 누락된 숫자 찾기
+        existing_lots = ProductionLot.objects.filter(lot_no__startswith=today)
         
-        lots_set = set()
-        
-        for phase in production_phases:
-            if isinstance(phase, DryLine):
-                lot_no = phase.pd_lot
-            elif isinstance(phase, Delamination):
-                lot_no = phase.dlami_lot
-            
-            if lot_no.split('-')[-1][-1:] in 'AB':
-                lot_no = lot_no[:-1]
-            else:
-                lot_no = lot_no
-            if today in lot_no:
-                lots_set.add(lot_no)
-        
-        # 현재 lot_no의 숫자를 추출
         existing_counts = sorted(
-            int(lot_no.split('-')[-1][:-1]) if lot_no.split('-')[-1][-1] in 'AB'
-            else int(lot_no.split('-')[-1])
-            for lot_no in lots_set 
-            if '-' in lot_no
+            int(lot.lot_no.split('-')[-1][:-1]) if lot.lot_no.split('-')[-1][-1] in 'AB'
+            else int(lot.lot_no.split('-')[-1])
+            for lot in existing_lots
+            if '-' in lot.lot_no
         )
         
-        # 누락된 숫자 찾기
         count = 1
         for existing_count in existing_counts:
             if existing_count != count:
@@ -119,5 +98,4 @@ class ProductionLot(models.Model):
             count += 1
         
         new_lot_no = f"{today}-{count}"
-        cls.objects.create(lot_no=new_lot_no)
         return new_lot_no

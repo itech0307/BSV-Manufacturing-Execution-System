@@ -10,6 +10,7 @@ urlpatterns = [
     path('input_inspection/', views.input_inspection, name='input_inspection'),
 
     path('aging_room/', views.aging_room, name='aging_room'),
+    path('create_lot_no/', views.create_lot_no, name='create_lot_no'),
     
     path('order_search/', views.order_search, name='order_search'),
     path('drymix/', views.drymix, name='drymix'),
