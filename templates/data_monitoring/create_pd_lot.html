@@ -1,0 +1,90 @@
+{% extends 'common/main.html' %}
+{% block content %}
+{% load custom_filters %}
+<body style="background-color:#E0F7FA;">
+    <h1>Vào Đóng Gói</h1>
+    <form method="post" action="{% url 'data_monitoring:create_pd_lot' %}">
+        {% csrf_token %}
+        <label for="inside_order_number">Số Order Đầu</label>
+        <input type="text" id="inside_order_number" name="inside_order_number">
+        <label for="outside_order_number">Số Order Cuối</label>
+        <input type="text" id="outside_order_number" name="outside_order_number">
+        <button type="submit" name="action" value="search">Khám Xét</button>
+        {% if list %}
+        <div class="scrollable-tbody">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Line</th>
+                        <th>OrderNo</th>
+                        <th>OrderType</th>
+                        <th>Customer</th>
+                        <th>Item</th>
+                        <th>ColorCode</th>
+                        <th>Pattern</th>
+                        <th>OrderQty</th>
+                        <th>PlanQty</th>
+                        <th>DateTime</th>
+                        <th>P/D Qty</th>
+                        <th>A or B</th>
+                    </tr>
+                </thead>
+                <tbody class="data-tbody">
+                    {% for data in list %}
+                    <tr>
+                        <td>{{ data.phase_information|get_item:0|get_key:'machine'|get_slice:-1}}</td>
+                        <td>{{ data.production_order.order_number }}</td>
+                        <td>{{ data.production_order.order_information.order_type }}</td>
+                        <td>{{ data.production_order.order_information.customer }}</td>
+                        <td>
+                            {{ data.production_order.order_information.item }}
+                            {% if data.production_order.order_information.spec|slice:"3:4" == '0' %}
+                                {{ data.production_order.order_information.spec|slice:":3" }}
+                            {% elif data.production_order.order_information.spec|slice:"3:4" != '0' %}
+                                {{ data.production_order.order_information.spec|slice:":4" }}
+                            {% endif %}
+                        </td>
+                        <td>{{ data.production_order.order_information.color_code }}</td>
+                        <td>{{ data.production_order.order_information.pattern }}</td>
+                        <td>{{ data.production_order.order_information.order_qty }}</td>
+                        <td>{{ data.production_plan.plan_information.plan_qty }}</td>
+                        <td>{{ data.create_date | date:"Y-m-d H:i"}}</td>
+                        <td>{{ data.phase_information |get_item:0|get_key:'quantity' }}</td>
+                        <td>
+                            <!-- 라디오 버튼 추가 -->
+                            <label>
+                                <input type="radio" name="selection_{{ data.id }}" value="A" checked> A
+                            </label>
+                            <label>
+                                <input type="radio" name="selection_{{ data.id }}" value="B"> B
+                            </label>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    <tr>
+                        <td colspan="10"><strong>Số Tất Cả:</strong></td>
+                        <td>{{ list|length }}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="10"><strong>Số Lượng Tất Cả:</strong></td>
+                        <td>{{ list|sum_pd_qty }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    
+        {% csrf_token %}
+        <input type="hidden" name="inside_order_number" value="{{ inside_order_number }}">
+        <input type="hidden" name="outside_order_number" value="{{ outside_order_number }}">
+        <label for="roll_lot">Số Cuộn</label>
+        <input type="text" id="roll_lot" name="roll_lot" value="{{ roll_lot }}" disabled>
+        <input type="hidden" id="input_time" name="input_time" value="{{ now }}">
+        <input type="hidden" name="roll_lot" value="{{ roll_lot }}">
+        <input type="hidden" name="dept" value="{{ dept }}">
+        <button type="submit" name="action" value="register">Đăng ký</button>
+    </form>
+    {% else %}
+        <p>Không Có Kết Quả.</p>
+    {% endif %}
+</body>
+{% endblock %}
