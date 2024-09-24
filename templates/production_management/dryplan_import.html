@@ -1,0 +1,33 @@
+{% extends 'common/main.html' %}
+{% load static %}
+{% block content %}
+<h3>DRYPLAN IMPORT</h3>
+<form method="post" enctype="multipart/form-data">  {# 파일 업로드를 위한 폼 시작 #}
+{% csrf_token %}  {# CSRF 토큰 추가하기 #}
+<input type="file" name="importData">  {# 파일 선택 입력창 #}
+<input hidden type="text" name="title" value="CONVERT QR">  {# 숨겨진 입력창으로 제목 설정 #}
+<p>Please select format of file.</p>
+<button class="btn btn-primary" type="submit">convert</button>  {# 변환 버튼 #}
+</form>
+<a href="#">Return Home View</a>  {# 홈 화면으로 돌아가기 링크 #}
+<div class="text-center" style="font-size: 14px">
+	<div id="progress-bar-message">
+	</div>
+</div>
+<div class='progress-wrapper' style="padding-top: 10px;">
+	<div id='progress-bar' class='progress-bar' style="background-color: #68a9ef; width: 0%;">&nbsp;</div>  {# 진행률 표시 바 #}
+</div>
+<div id="celery-result">
+</div>
+{% endblock %}  {# 컨텐츠 블록 끝 #}
+{% block script %}  {# 스크립트 블록 시작 #}
+{% if task_id %}
+<script src="{% static 'js/celery_progress.js' %}"></script>  {# Celery 프로그레스 바 자바스크립트 파일 로드하기 #}
+<script type="text/javascript">
+	$(function () {
+		var progressUrl = "{% url 'celery_progress:task_status' task_id %}";  {# 작업 상태를 가져오는 URL 설정 #}
+		CeleryProgressBar.initProgressBar(progressUrl, {})  {# 진행률 표시 바 초기화하기 #}
+	});
+</script>
+{% endif %}
+{% endblock %}  {# 스크립트 블록 끝 #}

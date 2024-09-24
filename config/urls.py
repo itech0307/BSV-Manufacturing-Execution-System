@@ -27,10 +27,10 @@ urlpatterns = [
     path('inventory_management/', include('inventory_management.urls')),
     path('data_monitoring/', include('data_monitoring.urls')),
     path('production_management/', include('production_management.urls')),
+    
+    # Celery progress
+    path('celery-progress/', include('celery_progress.urls')),
 
     path('accounts/', include('allauth.urls')),
     path('', redirect_to_main, name='home'),
-
-    # Celery progress
-    path('celery-progress/', include('celery_progress.urls')),
 ]

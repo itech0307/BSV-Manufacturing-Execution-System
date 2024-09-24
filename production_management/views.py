@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 import pandas as pd
-from .tasks import ordersheet_upload_celery
+from .tasks import ordersheet_upload_celery, dryplan_convert_to_qrcard
 
 def order_sheet_upload(request):
     if request.method == 'POST':
@@ -36,3 +36,44 @@ def order_sheet_upload(request):
 
     content = {}
     return render(request, 'production_management/order_sheet_upload.html', content)
+
+def dryplan_import(request):
+    if request.method == 'POST':
+        try:
+            file = request.FILES['importData']
+            df = pd.read_excel(file, na_filter=False, sheet_name='plan', header=1)
+            
+            # 필요한 열만 선택하기
+            columns_needed = [
+                3, # Order Id
+                4, # Seq
+                6, # Customer
+                11, # Bran
+                12, # Item
+                13, # Color
+                14, # Pattern
+                15, # Base
+                17, # Order Qty
+                36, # Remark
+                0, # Line
+                2, # Plan Date
+                1, # Plan No
+                21, # Plan Qty
+                16, # Skin/Binder
+                24, # RP Qty
+                35, # Plan Remark
+                7, # OrderType
+                ]
+            df = df.iloc[:, columns_needed]
+            
+            # 두 번째 열(order id)이 빈 문자열인 행만 제거
+            df = df[df[df.columns[1]] != ""]
+           
+            df = df.applymap(str)
+            df_json = df.to_json()
+            response = dryplan_convert_to_qrcard(df_json)
+            return response
+        except Exception as e:
+            return JsonResponse({'error': str(e)})
+
+    return render(request, 'production_management/dryplan_import.html')
