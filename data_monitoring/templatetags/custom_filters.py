@@ -27,7 +27,7 @@ def get_slice(value, arg):
 
 @register.filter
 def sum_pd_qty(data_list):
-    return sum(int(data.phase_information[0].get('quantity')) for data in data_list)
+    return sum(int(data.pd_qty) for data in data_list)
 
 @register.filter
 def sum_defect_quantities(phase_information):

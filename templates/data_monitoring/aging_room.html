@@ -1,0 +1,79 @@
+{% extends 'common/main.html' %}
+{% block content %}
+{% load custom_filters %}
+<body style="background-color:#FFF9C4;">
+    <h1>Vào Phòng Sấy</h1>
+    <form method="post" action="{% url 'data_monitoring:aging_room' %}">
+        {% csrf_token %}
+        <label for="inside_order_number">Số Order Đầu</label>
+        <input type="text" id="inside_order_number" name="inside_order_number">
+        <label for="outside_order_number">Số Order Cuối</label>
+        <input type="text" id="outside_order_number" name="outside_order_number">
+        <button type="submit" name="action" value="search">Khám Xét</button>
+    </form>
+    {% if list %}
+    <div class="scrollable-tbody">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Line</th>
+                    <th>OrderNo</th>
+                    <th>OrderType</th>
+                    <th>Customer</th>
+                    <th>Item</th>
+                    <th>ColorCode</th>
+                    <th>Pattern</th>
+                    <th>OrderQty</th>
+                    <th>PlanQty</th>
+                    <th>DateTime</th>
+                    <th>P/D Qty</th>
+                </tr>
+            </thead>
+            <tbody class="data-tbody">
+                {% for data in list %}
+                <tr>
+                    <td>{{ data.line_no | get_slice:-1 }}</td>
+                    <td>{{ data.production_plan.sales_order.order_no }}</td>
+                    <td>{{ data.production_plan.sales_order.order_type }}</td>
+                    <td>{{ data.production_plan.sales_order.customer }}</td>
+                    <td>
+                        {{ data.production_plan.sales_order.item_name }}
+                        {% if data.production_plan.sales_order.spec|slice:"3:4" == '0' %}
+                            {{ data.production_plan.sales_order.spec|slice:":3" }}
+                        {% elif data.production_plan.sales_order.spec|slice:"3:4" != '0' %}
+                            {{ data.production_plan.sales_order.spec|slice:":4" }}
+                        {% endif %}
+                    </td>
+                    <td>{{ data.production_plan.sales_order.color_code }}</td>
+                    <td>{{ data.production_plan.sales_order.pattern }}</td>
+                    <td>{{ data.production_plan.sales_order.order_qty }}</td>
+                    <td>{{ data.production_plan.plan_qty }}</td>
+                    <td>{{ data.create_date | date:"Y-m-d H:i"}}</td>
+                    <td>{{ data.pd_qty }}</td>
+                </tr>
+                {% endfor %}
+                <tr>
+                    <td colspan="10"><strong>Số Tất Cả:</strong></td>
+                    <td>{{ list|length }}</td>
+                </tr>
+                <tr>
+                    <td colspan="10"><strong>Số Lượng Tất Cả:</strong></td>
+                    <td>{{ list|sum_pd_qty }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <form method="post" action="{% url 'data_monitoring:aging_room' %}">
+        {% csrf_token %}
+        <input type="hidden" name="inside_order_number" value="{{ inside_order_number }}">
+        <input type="hidden" name="outside_order_number" value="{{ outside_order_number }}">
+        <label for="aging_position">Vị Trí</label>
+        <input type="text" id="aging_position" name="aging_position">
+        <input type="hidden" id="input_time" name="input_time" value="{{ now }}">
+        <button type="submit" name="action" value="register">Đăng ký</button>
+    </form>
+    {% else %}
+        <p>Không Có Kết Quả.</p>
+    {% endif %}
+</body>
+{% endblock %}

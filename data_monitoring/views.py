@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.utils import timezone
 import json
@@ -378,6 +379,77 @@ def input_inspection(request):
             'message': 'Order not found'
         }
     return JsonResponse(data)
+
+@login_required
+@csrf_protect
+def aging_room(request):
+    context = {}
+    now = datetime.datetime.now()
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'search':
+            inside_order_no = "SOV0" + request.POST.get('inside_order_number')
+            outside_order_no = "SOV0" + request.POST.get('outside_order_number')
+
+            logger.info(f"[AGING ROOM] ORDER SEARCH: INSIDE {inside_order_no} / OUTSIDE {outside_order_no}")
+
+            inside_product = DryLine.objects.filter(Q(production_plan__sales_order__order_no=inside_order_no)).order_by('-create_date').first()
+            outside_product = DryLine.objects.filter(Q(production_plan__sales_order__order_no=outside_order_no)).order_by('-create_date').first()
+
+            if inside_product is not None and outside_product is not None:
+                if inside_product.line_no == outside_product.line_no:
+                    line = inside_product.line_no
+                    inside_product_time = inside_product.create_date
+                    outside_product_time = outside_product.create_date
+                    initial_list = DryLine.objects.filter(Q(create_date__gte=inside_product_time) & Q(create_date__lte=outside_product_time))
+
+                    # Python으로 추가 필터링 수행
+                    filtered_list = [item for item in initial_list if item.line_no == line]
+                else:
+                    filtered_list = None
+            else:
+                filtered_list = None
+
+            context = {
+                'list': filtered_list,
+                'inside_order_number': inside_order_no,
+                'outside_order_number': outside_order_no,
+                'now': now
+            }
+
+        elif action == 'register':
+            aging_position = request.POST.get('aging_position')
+            formatted_aging_position = aging_position.replace(" ", "").upper()
+            inside_order_no = request.POST.get('inside_order_number')
+            outside_order_no = request.POST.get('outside_order_number')
+
+            inside_product = DryLine.objects.filter(Q(production_plan__sales_order__order_no=inside_order_no)).order_by('-create_date').first()
+            outside_product = DryLine.objects.filter(Q(production_plan__sales_order__order_no=outside_order_no)).order_by('-create_date').first()
+
+            line = inside_product.line_no
+            inside_product_time = inside_product.create_date
+            outside_product_time = outside_product.create_date
+            initial_list = DryLine.objects.filter(Q(create_date__gte=inside_product_time) & Q(create_date__lte=outside_product_time))
+
+            # Python으로 추가 필터링 수행
+            filtered_list = [item for item in initial_list if item.line_no == line]
+
+            # filtered_list의 각 항목에 aging_position과 input_time 추가
+            for item in filtered_list:
+                # 현재의 phase_information 리스트를 가져옴
+                item.ag_position = formatted_aging_position
+                
+                # 변경된 항목을 데이터베이스에 저장
+                item.save()
+
+            context = {
+                'inside_order_number': inside_order_no,
+                'outside_order_number': outside_order_no
+            }
+        
+    return render(request, 'data_monitoring/aging_room.html', context)
 
 def order_search(request):
     order_and_status = []
