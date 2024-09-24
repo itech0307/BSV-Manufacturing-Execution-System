@@ -74,11 +74,11 @@ class Inspection(models.Model):
         return f"{self.production_plan.sales_order.order_no}-{self.production_plan.plan_date}"
 
 class ProductionLot(models.Model):
-    lot_number = models.CharField(max_length=20, unique=True)
+    lot_no = models.CharField(max_length=20, unique=True)
     create_date = models.DateTimeField(default=timezone.now)
 
     @classmethod
-    def generate_roll_lot(cls):
+    def generate_lot(cls):
         today = datetime.now().strftime('%m%d')
         three_days_ago = datetime.now() - timedelta(days=3)
         
@@ -88,27 +88,36 @@ class ProductionLot(models.Model):
                 Delamination.objects.filter()
             ))
         
-        roll_lots = set()
+        lots_set = set()
         
         for phase in production_phases:
             if isinstance(phase, DryLine):
-                roll_lots.add(phase.pd_lot)
+                lot_no = phase.pd_lot
             elif isinstance(phase, Delamination):
-                roll_lots.add(phase.dlami_lot)
+                lot_no = phase.dlami_lot
+            
+            if lot_no.split('-')[-1][-1:] in 'AB':
+                lot_no = lot_no[:-1]
+            else:
+                lot_no = lot_no
+            if today in lot_no:
+                lots_set.add(lot_no)
         
+        # 현재 lot_no의 숫자를 추출
         existing_counts = sorted(
-            int(roll_lot.split('-')[-1][:-1]) if roll_lot.split('-')[-1][-1] in 'AB'
-            else int(roll_lot.split('-')[-1])
-            for roll_lot in roll_lots 
-            if '-' in roll_lot
+            int(lot_no.split('-')[-1][:-1]) if lot_no.split('-')[-1][-1] in 'AB'
+            else int(lot_no.split('-')[-1])
+            for lot_no in lots_set 
+            if '-' in lot_no
         )
         
+        # 누락된 숫자 찾기
         count = 1
         for existing_count in existing_counts:
             if existing_count != count:
                 break
             count += 1
         
-        new_lot_number = f"{today}-{count}"
-        cls.objects.create(lot_number=new_lot_number)
-        return new_lot_number
+        new_lot_no = f"{today}-{count}"
+        cls.objects.create(lot_no=new_lot_no)
+        return new_lot_no
