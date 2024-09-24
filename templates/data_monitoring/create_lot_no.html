@@ -35,9 +35,9 @@
                         <td>{{ data.line_no|get_slice:-1}}</td>
                         <td>{{ data.production_plan.sales_order.order_no }}</td>
                         <td>{{ data.production_plan.sales_order.order_type }}</td>
-                        <td>{{ data.production_plan.sales_order.customer }}</td>
+                        <td>{{ data.production_plan.sales_order.customer_name }}</td>
                         <td>
-                            {{ data.production_plan.sales_order.item }}
+                            {{ data.production_plan.sales_order.item_name }}
                             {% if data.production_plan.sales_order.spec|slice:"3:4" == '0' %}
                                 {{ data.production_plan.sales_order.spec|slice:":3" }}
                             {% elif data.production_plan.sales_order.spec|slice:"3:4" != '0' %}
