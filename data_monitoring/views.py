@@ -474,6 +474,8 @@ def order_search(request):
                     elif isinstance(production_phase, DryLine):
                         phase_info = production_phase.pd_information
 
+                        sub_pd_qty = sub_pd_qty + production_phase.pd_qty
+
                         process.append({
                             'process': 'DryLine',
                             'pd_qty': production_phase.pd_qty,
