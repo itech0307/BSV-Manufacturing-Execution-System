@@ -4,9 +4,10 @@ from urllib.parse import quote, unquote
 from django.contrib.auth import authenticate, login, get_user_model
 from .forms import UserRegistrationForm
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib import messages
 from django.views.decorators.http import require_http_methods
-from django.contrib.auth import logout
+from django.contrib.auth import logout, update_session_auth_hash
 from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -97,6 +98,23 @@ def activate(request, uidb64, token):
         return redirect('common:main')
     else:
         return render(request, 'common/account_activation_invalid.html')
+
+@login_required
+def change_password(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)  # Important!
+            messages.success(request, 'Your password was successfully updated!')
+            return redirect('common:main')
+        else:
+            messages.error(request, 'Please correct the error below.')
+    else:
+        form = PasswordChangeForm(request.user)
+    return render(request, 'common/change_password.html', {
+        'form': form
+    })
 
 # 레포지토리 루트 설정
 REPOSITORY_ROOT = 'repository/'  # S3 버킷 내의 레포지토리 경로
