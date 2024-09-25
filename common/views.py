@@ -1,4 +1,6 @@
 from django.shortcuts import render, redirect
+from django.urls import reverse
+from urllib.parse import quote, unquote
 from django.contrib.auth import authenticate, login, get_user_model
 from .forms import UserRegistrationForm
 from django.contrib.auth.decorators import login_required
@@ -13,10 +15,14 @@ from django.core.mail import EmailMessage
 from .models import Profile
 from django.contrib.auth.models import User
 from django.conf import settings
+
 import boto3
 from botocore.exceptions import ClientError
+from botocore.config import Config
+
 from datetime import datetime, timezone
 from django.http import HttpResponseForbidden
+import os
 
 import logging
 logger = logging.getLogger('common')
@@ -92,11 +98,32 @@ def activate(request, uidb64, token):
     else:
         return render(request, 'common/account_activation_invalid.html')
 
+# 레포지토리 루트 설정
+REPOSITORY_ROOT = 'repository/'  # S3 버킷 내의 레포지토리 경로
+
+# S3 클라이언트 설정
+s3_config = Config(
+    region_name=settings.AWS_S3_REGION_NAME,
+    signature_version='s3v4',
+    retries={
+        'max_attempts': 10,
+        'mode': 'standard'
+    }
+)
+s3 = boto3.client('s3', config=s3_config)
+
 @login_required
 def list_files(request):
-    s3 = boto3.client('s3')
     bucket_name = settings.AWS_STORAGE_BUCKET_NAME
-    path = request.GET.get('path', '')
+    path = request.GET.get('path', REPOSITORY_ROOT)
+
+    # 경로가 레포지토리 루트 밖으로 나가지 않도록 보장
+    if not path.startswith(REPOSITORY_ROOT):
+        path = REPOSITORY_ROOT
+    
+    # 경로의 끝에 '/'가 없으면 추가
+    if path and not path.endswith('/'):
+        path += '/'
 
     try:
         response = s3.list_objects_v2(Bucket=bucket_name, Prefix=path, Delimiter='/')
@@ -108,28 +135,67 @@ def list_files(request):
 
     if 'CommonPrefixes' in response:
         for obj in response['CommonPrefixes']:
-            dir_name = obj['Prefix'].split('/')[-2]
-            directories.append({'name': dir_name, 'path': obj['Prefix']})
+            dir_name = obj['Prefix'][len(path):].rstrip('/')
+            directories.append({
+                'name': dir_name,
+                'path': quote(obj['Prefix'])
+            })
 
     if 'Contents' in response:
         for obj in response['Contents']:
-            if not obj['Key'].endswith('/'):
-                file_name = obj['Key'].split('/')[-1]
-                files.append({
-                    'name': file_name,
-                    'path': obj['Key'],
-                    'size': obj['Size'],
-                    'last_modified': obj['LastModified'],
-                    'etag': obj['ETag'].strip('"')  # ETag can be used to identify the uploader
-                })
+            if obj['Key'] != path:  # 현재 디렉토리 자체는 제외
+                file_name = obj['Key'][len(path):]
+                if not file_name.endswith('/'):  # 디렉토리는 제외
+                    # 파일에 대한 임시 URL 생성
+                    url = s3.generate_presigned_url('get_object',
+                                                    Params={'Bucket': bucket_name, 'Key': obj['Key']},
+                                                    ExpiresIn=3600,  # URL의 유효 시간을 1시간으로 설정
+                                                    )
+                    files.append({
+                        'name': file_name,
+                        'path': quote(obj['Key']),
+                        'size': obj['Size'],
+                        'last_modified': obj['LastModified'],
+                        'url': url
+                    })
 
-    parent_directory = '/'.join(path.split('/')[:-2]) + '/' if path else None
+    # Parent Directory 경로 계산
+    parent_directory = os.path.dirname(path.rstrip('/'))
+    if parent_directory.endswith('/'):
+        parent_directory = parent_directory[:-1]
+    
+    # 레포지토리 루트에 있을 때는 parent_directory를 None으로 설정
+    if parent_directory + REPOSITORY_ROOT == REPOSITORY_ROOT:
+        parent_directory = None
+    else:
+        # parent_directory가 비어있지 않도록 보장
+        parent_directory = parent_directory if parent_directory else REPOSITORY_ROOT
+
+    # 현재 경로를 부분으로 나누기
+    current_path_parts = []
+    if path.startswith(REPOSITORY_ROOT):
+        relative_path = path[len(REPOSITORY_ROOT):].strip('/')
+        if relative_path:
+            current_path_parts = relative_path.split('/')
+    
+    # 각 경로 부분에 대한 전체 경로 생성
+    breadcrumbs = []
+    cumulative_path = REPOSITORY_ROOT
+    for part in current_path_parts:
+        cumulative_path += part + '/'
+        breadcrumbs.append({
+            'name': part,
+            'path': quote(cumulative_path)
+        })
 
     context = {
         'files': files,
         'directories': directories,
         'current_path': path,
+        'breadcrumbs': breadcrumbs,
         'parent_directory': parent_directory,
+        'repository_root': REPOSITORY_ROOT,
+        'is_superuser': request.user.is_superuser,  # 슈퍼유저 여부 추가
     }
 
     return render(request, 'common/file_browser.html', context)
@@ -138,9 +204,12 @@ def list_files(request):
 def upload_file(request):
     if request.method == 'POST' and request.FILES['file']:
         file = request.FILES['file']
-        s3 = boto3.client('s3')
         bucket_name = settings.AWS_STORAGE_BUCKET_NAME
-        path = request.POST.get('path', '')
+        path = request.POST.get('path', REPOSITORY_ROOT)
+        
+        # 경로가 레포지토리 루트 밖으로 나가지 않도록 보장
+        if not path.startswith(REPOSITORY_ROOT):
+            path = REPOSITORY_ROOT
         
         try:
             s3.upload_fileobj(
@@ -154,12 +223,15 @@ def upload_file(request):
         except ClientError as e:
             return render(request, 'common/error.html', {'error': str(e)})
         
-    return redirect('list_files')
+    return redirect('common:list_files')
 
 @login_required
 def delete_file(request, file_path):
-    s3 = boto3.client('s3')
     bucket_name = settings.AWS_STORAGE_BUCKET_NAME
+    
+    # 파일 경로가 레포지토리 루트 밖에 있으면 삭제를 허용하지 않음
+    if not file_path.startswith(REPOSITORY_ROOT):
+        return HttpResponseForbidden("You don't have permission to delete this file.")
     
     try:
         # 파일 메타데이터를 가져와 업로더 확인
@@ -173,4 +245,25 @@ def delete_file(request, file_path):
     except ClientError as e:
         return render(request, 'common/error.html', {'error': str(e)})
     
+    # 삭제 후 현재 디렉토리로 리다이렉트
+    current_dir = os.path.dirname(file_path)
+    return redirect(f"{reverse('common:list_files')}?path={current_dir}")
+
+@login_required
+def create_folder(request):
+    if request.method == 'POST':
+        folder_name = request.POST.get('folder_name')
+        current_path = request.POST.get('current_path', REPOSITORY_ROOT)
+        
+        if not current_path.endswith('/'):
+            current_path += '/'
+        
+        new_folder_path = f"{current_path}{folder_name}/"
+        
+        # S3에 빈 객체를 생성하여 폴더를 시뮬레이션합니다
+        try:
+            s3.put_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=new_folder_path)
+        except ClientError as e:
+            return render(request, 'common/error.html', {'error': str(e)})
+        
     return redirect('common:list_files')

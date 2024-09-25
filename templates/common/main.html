@@ -33,6 +33,7 @@
             window.open(url, 'popupWindow', 'width=600,height=400,scrollbars=yes');
         }
     </script>
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
 {% include 'common/navi-bar.html' %}
@@ -46,5 +47,6 @@
     <script src="{% static 'js/navi-bar.js' %}"></script>
 {% block script %}
 {% endblock %}
+{% block extra_js %}{% endblock %}
 </body>
 </html>
