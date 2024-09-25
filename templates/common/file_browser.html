@@ -1,0 +1,43 @@
+{% extends "common/main.html" %}
+
+{% block content %}
+<h1>File Browser</h1>
+<h2>{{ current_path }}</h2>
+
+<form action="{% url 'common:upload_file' %}" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="hidden" name="path" value="{{ current_path }}">
+    <input type="file" name="file">
+    <button type="submit">Upload</button>
+</form>
+
+<h3>Directories</h3>
+<ul>
+    {% if parent_directory %}
+    <li><a href="?path={{ parent_directory }}">[Parent Directory]</a></li>
+    {% endif %}
+    {% for directory in directories %}
+    <li><a href="?path={{ directory.path }}">{{ directory.name }}</a></li>
+    {% endfor %}
+</ul>
+
+<h3>Files</h3>
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Last Modified</th>
+        <th>Size</th>
+        <th>Actions</th>
+    </tr>
+    {% for file in files %}
+    <tr>
+        <td><a href="{{ file.path }}">{{ file.name }}</a></td>
+        <td>{{ file.last_modified|date:"M. d, Y, g:i a" }}</td>
+        <td>{{ file.size|filesizeformat }}</td>
+        <td>
+            <a href="{% url 'common:delete_file' file.path %}" onclick="return confirm('Are you sure you want to delete this file?');">Delete</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

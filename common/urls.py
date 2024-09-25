@@ -11,4 +11,8 @@ urlpatterns = [
 
     path('register/', views.register, name='register'),
     path('activate/<uidb64>/<token>/', views.activate, name='activate'),
+
+    path('file_browser/', views.list_files, name='list_files'),
+    path('upload/', views.upload_file, name='upload_file'),
+    path('delete/<int:file_id>/', views.delete_file, name='delete_file'),
 ]
