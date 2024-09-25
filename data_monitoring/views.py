@@ -317,6 +317,7 @@ def input_inspection(request):
                         sales_order=sales_order,
                         production_plan=last_phase_plan,
                         ins_qty=a_qty,
+                        line_no=machine_value,
                         ins_information=defect,
                         create_date=timezone.now()
                     )
