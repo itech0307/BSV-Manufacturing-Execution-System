@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils import timezone
-from production_management.models import ProductionPlan
+from production_management.models import SalesOrder, ProductionPlan
 from itertools import chain
 from datetime import datetime, timedelta
 
@@ -62,7 +62,8 @@ class Delamination(models.Model):
         return f"{self.production_plan.sales_order.order_no}-{self.production_plan.plan_date}"
 
 class Inspection(models.Model):
-    production_plan = models.ForeignKey(ProductionPlan, on_delete=models.CASCADE)
+    sales_order = models.ForeignKey(SalesOrder, null=True, on_delete=models.CASCADE)
+    production_plan = models.ForeignKey(ProductionPlan, null=True, on_delete=models.CASCADE)
     ins_qty = models.IntegerField()
     ins_information = models.JSONField(null=True)
     line_no = models.CharField(max_length=10)    

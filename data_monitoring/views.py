@@ -303,8 +303,8 @@ def input_inspection(request):
         for order in scanned_orders:
             if order['order_number'][:3] == 'SOV':
                 try:
-                    production_order = SalesOrder.objects.exclude(status=False).get(order_no=order['order_number'])
-                    last_phase = Inspection.objects.filter(production_plan__sales_order=production_order).order_by('-create_date').first()
+                    sales_order = SalesOrder.objects.exclude(status=False).get(order_no=order['order_number'])
+                    last_phase = Inspection.objects.filter(production_plan__sales_order=sales_order).order_by('-create_date').first()
                     
                     if last_phase:
                         last_phase_plan = last_phase.production_plan
@@ -313,6 +313,7 @@ def input_inspection(request):
                     
                     # ProductionPhase 모델 인스턴스 생성
                     production_phase = Inspection(
+                        sales_order=sales_order,
                         production_plan=last_phase_plan,
                         ins_qty=a_qty,
                         ins_information=defect,
@@ -991,7 +992,7 @@ def inspection(request):
     # DryLine 단계의 quantity 합계 계산
     list_and_quantity = []
     for inspection in list:
-        sales_order = inspection.production_plan.sales_order
+        sales_order = inspection.sales_order
         production_plan = inspection.production_plan
         
         # 해당 plan_id 로 전체 공정 내역 조회

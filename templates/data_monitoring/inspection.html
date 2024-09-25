@@ -25,6 +25,7 @@
         </thead>
         <tbody class="data-tbody">
             {% for data, quantity in list %}
+            {% if data.production_plan %}
             <tr>
                 <td>{{ data.line_no | get_slice:-1}}</td>
                 <td>{{ data.production_plan.sales_order.order_no }}</td>
@@ -51,6 +52,34 @@
                 <td>{{ data.position}}</td>
                 <td></td>
             </tr>
+            {% else %}
+            <tr>
+                <td>{{ data.line_no | get_slice:-1}}</td>
+                <td>{{ data.sales_order.order_no }}</td>
+                <td>{{ data.sales_order.order_type }}</td>
+                <td>{{ data.sales_order.customer_name }}</td>
+                <td>
+                    {{ data.sales_order.item_name }}
+                    {% if data.sales_order.spec|slice:"3:4" == '0' %}
+                        {{ data.sales_order.spec|slice:":3" }}
+                    {% elif data.sales_order.spec|slice:"3:4" != '0' %}
+                        {{ data.sales_order.spec|slice:":4" }}
+                    {% endif %}
+                </td>
+                <td>{{ data.sales_order.color_code }}</td>
+                <td>{{ data.sales_order.pattern }}</td>
+                <td>{{ data.sales_order.order_qty }}</td>
+                <td>{{ data.create_date | date:"Y-m-d H:i"}}</td>
+                {% if quantity != 0 %}
+                <td>{{ quantity }}</td>
+                {% else %}
+                <td></td>
+                {% endif %}
+                <td>{{ data.ins_information|sum_defect_quantities }}</td>
+                <td>{{ data.position}}</td>
+                <td></td>
+            </tr>
+            {% endif %}
             {% empty %}
             <tr>
                 <td colspan="4">Report not found</td>
