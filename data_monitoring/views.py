@@ -15,6 +15,7 @@ from django.utils.dateparse import parse_date
 from itertools import chain
 import datetime
 import pytz
+from .tasks import order_convert_to_qrcard
 
 import logging
 logger = logging.getLogger('data_monitoring')
@@ -588,12 +589,12 @@ def order_search(request):
                 content = data.get('content')
                 sales_order = SalesOrder.objects.exclude(status=False).get(order_no=my_list)
                 
-            #elif action == 'download_to_qrcard':
-            #    order_numbers = data.get('order_numbers').split(',')
-            #    sales_orders = SalesOrder.objects.exclude(status=False).filter(order_number__in=order_numbers)
-            #    response = order_convert_to_qrcard(sales_orders)
+            elif action == 'download_to_qrcard':
+                order_numbers = data.get('order_numbers').split(',')
+                sales_orders = SalesOrder.objects.exclude(status=False).filter(order_no__in=order_numbers)
+                response = order_convert_to_qrcard(sales_orders)
                 
-            #    return response
+                return response
         except:
             pass
         
