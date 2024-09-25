@@ -1,5 +1,25 @@
 {% extends "common/main.html" %}
 
+{% block extra_css %}
+{{ block.super }}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+<style>
+    .file-list-container {
+        height: 400px;  /* 원하는 높이로 조정 가능 */
+        overflow-y: auto;
+    }
+    .directory-list-container {
+        height: 400px;  /* 파일 리스트와 같은 높이로 설정 */
+        overflow-y: auto;
+    }
+    @media (max-width: 768px) {
+        .file-list-container, .directory-list-container {
+            height: 300px;  /* 모바일 화면에서는 더 작은 높이로 조정 */
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-5">
     <h1 class="mb-4">File Browser</h1>
@@ -120,10 +140,7 @@
 </div>
 {% endblock %}
 
-{% block extra_css %}
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
-{% endblock %}
-
 {% block extra_js %}
+{{ block.super }}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
 {% endblock %}
