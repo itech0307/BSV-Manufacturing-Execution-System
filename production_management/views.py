@@ -2,16 +2,21 @@ from django.shortcuts import render
 from django.http import JsonResponse
 import pandas as pd
 from .tasks import ordersheet_upload_celery, dryplan_convert_to_qrcard
+from .models import SalesOrderUploadLog
+import hashlib
 
 def order_sheet_upload(request):
     try:
         if request.method == 'POST':
             # 사용자가 업로드한 파일을 가져옴
             file = request.FILES['importData']
+
+            # 파일 해시 계산
+            file_hash = hashlib.sha256(file.read()).hexdigest()
+            file.seek(0)  # 파일 포인터를 다시 처음으로 이동
             
             # 엑셀 파일을 Pandas 데이터프레임으로 변환
-            df = pd.read_excel(file, na_filter=False, sheet_name='Total received today')
-            
+            df = pd.read_excel(file, na_filter=False, sheet_name='Total received today')            
             # NaN 값을 가진 행 제거
             df = df.dropna()
             
@@ -28,6 +33,14 @@ def order_sheet_upload(request):
             # Celery 작업 시작
             order_upload_task = ordersheet_upload_celery.delay(df_json)
             task_id = order_upload_task.task_id
+
+            # SalesOrderUploadLog 생성
+            SalesOrderUploadLog.objects.create(
+                user=request.user,
+                file_name=file.name,
+                file_hash=file_hash,
+                data_count=len(df)
+            )
             
             return render(request, 'production_management/order_sheet_upload.html', {'task_id': task_id})
 

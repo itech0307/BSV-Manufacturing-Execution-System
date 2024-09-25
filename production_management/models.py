@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
+from django.contrib.auth.models import User
 
 # ERP 주문 정보
 class SalesOrder(models.Model):
@@ -45,6 +46,16 @@ class SalesOrder(models.Model):
 
     def __str__(self):
         return self.order_no
+
+class SalesOrderUploadLog(models.Model):
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)  # 업로드한 유저
+    upload_time = models.DateTimeField(auto_now_add=True)  # 업로드 시간
+    file_name = models.CharField(max_length=255)  # 업로드 파일 이름
+    file_hash = models.CharField(max_length=64)  # 파일의 해시값 (SHA-256 기준)
+    data_count = models.IntegerField()  # 업로드된 데이터 갯수
+
+    def __str__(self):
+        return f"{self.file_name} - {self.upload_time}"
 
 class ProductionPlan(models.Model):
     sales_order = models.ForeignKey(SalesOrder, on_delete=models.CASCADE)
