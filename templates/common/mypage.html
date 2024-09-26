@@ -1,0 +1,155 @@
+{% extends 'common/main.html' %}
+{% load static %}
+{% load custom_filters %}
+{% load i18n %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">{% trans "My Page" %}</h2>
+    
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="account-tab" data-bs-toggle="tab" data-bs-target="#account" type="button" role="tab" aria-controls="account" aria-selected="true">{% trans "Account Settings" %}</button>
+        </li>
+        <!--
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="interests-tab" data-bs-toggle="tab" data-bs-target="#interests" type="button" role="tab" aria-controls="interests" aria-selected="false">{% trans "Interests" %}</button>
+        </li>
+        -->
+    </ul>
+    
+    <div class="tab-content mt-3" id="myTabContent">
+        <div class="tab-pane fade show active" id="account" role="tabpanel" aria-labelledby="account-tab">
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="{{ form.language.id_for_label }}" class="form-label">{% trans "Language" %}</label>
+                    <select name="{{ form.language.name }}" id="{{ form.language.id_for_label }}" class="form-select">
+                        {% for value, label in form.language.field.choices %}
+                            <option value="{{ value }}" {% if form.language.value == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+            </form>
+        </div>
+        <div class="tab-pane fade" id="interests" role="tabpanel" aria-labelledby="interests-tab">
+            <div class="report-container">
+                <div aria-live="polite" aria-atomic="true" class="position-relative">
+                    <!-- Toast 메시지를 담을 컨테이너 -->
+                    <div class="toast-container position-absolute top-0 end-0 p-0" style="z-index: 1050;">
+                        <!-- 메모 저장 성공 Toast -->
+                        <div id="saveMemoSuccessToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="toast-header">
+                            <strong class="me-auto">Notification</strong>
+                            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                        <div class="toast-body">
+                            Memo has been saved successfully.
+                        </div>
+                        </div>
+                    </div>
+                </div>
+                {% if my_list %}
+                <div class="scrollable-tbody">
+                    <table class="table table-report" style="width:80%">
+                        <thead>
+                            <tr>
+                                <th>Order No</th>
+                                <th>Customer</th>
+                                <th>Order Type</th>
+                                <th>Brand</th>
+                                <th>Item</th>
+                                <th>Color</th>
+                                <th>Pattern</th>
+                                <th>Order Q'ty</th>
+                                <th>Unit</th>
+                                <th>Finish</th>
+                                <th>Update</th>
+                                <th>NextStep</th>
+                                <th>Memo</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order, status in my_list %}
+                            <tr data-order="{{ order }}"
+                                data-status="{{ status|json_str }}"
+                                data-order-number="{{ order.order_number }}">
+                                <td>{{ order.sales_order.order_no|slice:":10" }}-{{ order.sales_order.order_no|slice:"11:" }}</td>
+                                <td>{{ order.sales_order.order_information.customer }}</td>
+                                <td>{{ order.sales_order.order_information.order_type }}</td>
+                                <td>{{ order.sales_order.order_information.brand }}</td>
+                                {% if order.sales_order.spec|slice:"3:4" == '0' %}
+                                    <td>{{ order.sales_order.item_name }} {{ order.sales_order.spec|slice:":3" }}</td>
+                                {% else%}
+                                    <td>{{ order.sales_order.item_name }} {{ order.sales_order.spec|slice:":4" }}</td>
+                                {% endif %}
+                                <td>{{ order.sales_order.color_code }}</td>
+                                <td>{{ order.sales_order.pattern }}</td>
+                                <td>{{ order.sales_order.order_qty }}</td>
+                                <td>{{ order.sales_order.qty_unit }}</td>
+                                {% if status.latest_process %}
+                                    <td>{{ status.latest_process }} {{ status.latest_machine|slice:"-1:" }}</td>
+                                    <td>{{ status.latest_create_date|slice:"5:16"  }} {% if status.latest_create_date %} ({{ status.latest_create_date|elapsed_time }}) {% endif %}</td>
+                                    {% if status.latest_process == 'DryPlan' %}
+                                        <td style="background-color: #FF4500;"><b>MIXING</b></td>
+                                    {% elif status.latest_process == 'DryMix' %}
+                                        <td style="background-color: #FFC107;"><b>PRODUCTION</b></td>
+                                    {% elif status.latest_process == 'DryLine' %}
+                                        {% if status.latest_machine == "bsvdl01" %}
+                                            <td style="background-color: #5986c9;"><b>RP</b></td>
+                                        {% elif status.latest_machine == "bsvdl02" %}
+                                            <td style="background-color: #5986c9;"><b>RP</b></td>
+                                        {% elif status.latest_machine == "bsvdl03" %}
+                                            <td style="background-color: #5986c9;"><b>INSPECTION</b></td>
+                                        {% elif status.latest_machine == "bsvdl04" %}
+                                            <td style="background-color: #5986c9;"><b>INSPECTION</b></td>
+                                        {% else %}
+                                            <td></td>
+                                        {% endif %}
+                                    {% elif status.latest_process == 'RP' %}
+                                        <td style="background-color: #5986c9;"><b>INSPECTION</b></td>
+                                    {% elif status.latest_process == 'Inspection' %}
+                                        {% if status.bal_qty > 0 %}
+                                            <td><b>Add-Plan</b></td>
+                                        {% else %}
+                                            <td style="background-color: #3CB371;"><b>SHIPMENT</b></td>
+                                        {% endif %}
+                                    {% else %}
+                                        <td></td>
+                                    {% endif %}
+                                {% else %}
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                {% endif %}
+                                <td><input type="text" class="memo-input" value="{{ order.memo }}" data-order-id="{{ order.id }}"><button class="btn btn-success btn-sm" onclick="saveMemo('{{ order.id }}');">Save</button></td>
+                                <td><button class="btn btn-danger btn-sm ml-2" onclick="deleteMyList('{{ order.production_order.order_number }}');">(-)</button></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p>{% trans "No items in your list." %}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 부트스트랩 탭 초기화
+    var triggerTabList = [].slice.call(document.querySelectorAll('#myTab button'))
+    triggerTabList.forEach(function (triggerEl) {
+        var tabTrigger = new bootstrap.Tab(triggerEl)
+        triggerEl.addEventListener('click', function (event) {
+            event.preventDefault()
+            tabTrigger.show()
+        })
+    })
+</script>
+{% endblock %}
