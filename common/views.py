@@ -241,7 +241,8 @@ def upload_file(request):
         except ClientError as e:
             return render(request, 'common/error.html', {'error': str(e)})
         
-    return redirect('common:list_files')
+    # 현재 경로를 유지하면서 리다이렉트
+    return redirect(f"{reverse('common:list_files')}?path={quote(path)}")
 
 @login_required
 def delete_file(request, file_path):
