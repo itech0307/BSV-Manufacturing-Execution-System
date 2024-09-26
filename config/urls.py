@@ -27,6 +27,8 @@ urlpatterns = [
     path('inventory_management/', include('inventory_management.urls')),
     path('data_monitoring/', include('data_monitoring.urls')),
     path('production_management/', include('production_management.urls')),
+
+    path('i18n/', include('django.conf.urls.i18n')),
     
     # Celery progress
     path('celery-progress/', include('celery_progress.urls')),

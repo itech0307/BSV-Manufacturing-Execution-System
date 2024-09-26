@@ -15,8 +15,16 @@ class Profile(models.Model):
         ('SM', 'Sales Manager'),
         ('SS', 'Sales Staff'),
     ]
+
+    LANGUAGE_CHOICES = [
+        ('en', 'English'),
+        ('ko', '한국어'),
+        ('vi', 'Tiếng Việt'),
+    ]
     
     position = models.CharField(max_length=3, choices=POSITION_CHOICES, blank=True)
+    language = models.CharField(max_length=5, choices=LANGUAGE_CHOICES, default='en')
+
     email_confirmed = models.BooleanField(default=False)
     activation_token = models.UUIDField(default=uuid.uuid4, editable=False)
 

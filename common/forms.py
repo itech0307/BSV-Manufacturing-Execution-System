@@ -1,4 +1,5 @@
 from django import forms
+from common.models import Profile
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 import re
@@ -43,3 +44,11 @@ class UserRegistrationForm(forms.ModelForm):
         if commit:
             user.save()
         return user
+
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = ['language']
+        labels = {
+            'language': 'language',
+        }

@@ -1,0 +1,177 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-09-26 11:41+0700\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+msgid "Manufacturing Execution System"
+msgstr "Hệ thống Thực thi Sản xuất"
+
+#: config/settings/base.py:140
+msgid "English"
+msgstr "Tiếng Anh"
+
+#: config/settings/base.py:141
+msgid "Korean"
+msgstr "Tiếng Hàn"
+
+#: config/settings/base.py:142
+msgid "Vietnamese"
+msgstr "Tiếng Việt"
+
+#: templates/common/mypage.html:6
+msgid "Account Settings"
+msgstr "Cài đặt Tài khoản"
+
+#: templates/common/mypage.html:13
+msgid "Save"
+msgstr "Lưu"
+
+#: templates/common/navi-bar.html:17
+msgid "Orders"
+msgstr "Đơn hàng"
+
+#: templates/common/navi-bar.html:29
+msgid "Search"
+msgstr "Tìm kiếm"
+
+#: templates/common/navi-bar.html:30
+msgid "Process"
+msgstr "Quy trình"
+
+#: templates/common/navi-bar.html:31
+msgid "Import"
+msgstr "Nhập"
+
+#: templates/common/navi-bar.html:32
+msgid "Export"
+msgstr "Xuất"
+
+#: templates/common/navi-bar.html:29
+msgid "Library"
+msgstr "Thư viện"
+
+#: templates/common/navi-bar.html:39
+msgid "Item"
+msgstr "Mục"
+
+#: templates/common/navi-bar.html:40
+msgid "Color"
+msgstr "Màu sắc"
+
+#: templates/common/navi-bar.html:41
+msgid "Pattern"
+msgstr "Mẫu"
+
+#: templates/common/navi-bar.html:40
+msgid "Inventory"
+msgstr "Hàng tồn kho"
+
+#: templates/common/navi-bar.html:52
+msgid "Planing"
+msgstr "Lập kế hoạch"
+
+msgid "Dry Plan Import"
+msgstr "Nhập Kế hoạch Khô"
+
+msgid "Wet Plan Import"
+msgstr "Nhập Kế hoạch Ướt"
+
+msgid "Dry Line Plan"
+msgstr "Kế hoạch Dây chuyền Khô"
+
+msgid "Wet Line Plan"
+msgstr "Kế hoạch Dây chuyền Ướt"
+
+msgid "Report"
+msgstr "Báo cáo"
+
+msgid "Dry Mix"
+msgstr "Trộn Khô"
+
+msgid "Wet Mix"
+msgstr "Trộn Ướt"
+
+msgid "Dry Line"
+msgstr "Dây chuyền Khô"
+
+msgid "Wet Line"
+msgstr "Dây chuyền Ướt"
+
+msgid "RP"
+msgstr "RP"
+
+#: templates/common/navi-bar.html:63
+msgid "Production"
+msgstr "Sản xuất"
+
+#: templates/common/navi-bar.html:76
+msgid "Post-Process"
+msgstr "Hậu xử lý"
+
+msgid "Buffing"
+msgstr "Đánh bóng"
+
+msgid "Color-Printing"
+msgstr "In màu"
+
+msgid "WEL"
+msgstr "WEL"
+
+#: templates/common/navi-bar.html:87
+msgid "Final-Process"
+msgstr "Quy trình Cuối cùng"
+
+msgid "Inspection"
+msgstr "Kiểm tra"
+
+msgid "QA/QC"
+msgstr "Đảm bảo Chất lượng/Kiểm soát Chất lượng"
+
+msgid "Shipment"
+msgstr "Vận chuyển"
+
+#: templates/common/navi-bar.html:98
+msgid "Board"
+msgstr "Bảng"
+
+#: templates/common/navi-bar.html:109
+msgid "File Browser"
+msgstr "Trình duyệt Tệp"
+
+msgid "Discussion"
+msgstr "Thảo luận"
+
+msgid "Q&A"
+msgstr "Hỏi đáp"
+
+#: templates/common/navi-bar.html:120
+msgid "Development"
+msgstr "Phát triển"
+
+msgid "List"
+msgstr "Danh sách"
+
+msgid "My Page"
+msgstr "Trang cá nhân"
+
+msgid "Change Password"
+msgstr "Đổi mật khẩu"
+
+msgid "Logout"
+msgstr "Đăng xuất"
+
+msgid "Language"
+msgstr "Ngôn ngữ"

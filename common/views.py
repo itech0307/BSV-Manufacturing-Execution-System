@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from urllib.parse import quote, unquote
 from django.contrib.auth import authenticate, login, get_user_model
-from .forms import UserRegistrationForm
+from .forms import UserRegistrationForm, ProfileForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib import messages
@@ -16,6 +16,7 @@ from django.core.mail import EmailMessage
 from .models import Profile
 from django.contrib.auth.models import User
 from django.conf import settings
+from django.utils.translation import gettext as _
 
 import boto3
 from botocore.exceptions import ClientError
@@ -30,7 +31,7 @@ logger = logging.getLogger('common')
 
 @login_required
 def main_page(request):
-    logger.info('main_page')
+    logger.info('main_page')    
     return render(request, 'common/mes.html')
 
 def login_view(request):
@@ -98,6 +99,19 @@ def activate(request, uidb64, token):
         return redirect('common:main')
     else:
         return render(request, 'common/account_activation_invalid.html')
+
+@login_required
+def mypage(request):
+    if request.method == 'POST':
+        form = ProfileForm(request.POST, instance=request.user.profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Profile updated successfully.')
+            return redirect('common:mypage')
+    else:
+        form = ProfileForm(instance=request.user.profile)
+    
+    return render(request, 'common/mypage.html', {'form': form})
 
 @login_required
 def change_password(request):

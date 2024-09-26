@@ -1,0 +1,179 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-09-26 11:41+0700\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "Manufacturing Execution System"
+msgstr "제조 실행 시스템"
+
+#: config/settings/base.py:140
+msgid "English"
+msgstr "영어"
+
+#: config/settings/base.py:141
+msgid "Korean"
+msgstr "한국어"
+
+#: config/settings/base.py:142
+msgid "Vietnamese"
+msgstr "베트남어"
+
+#: templates/common/mypage.html:6
+msgid "Account Settings"
+msgstr "계정 설정"
+
+#: templates/common/mypage.html:13
+msgid "Save"
+msgstr "저장"
+
+#: templates/common/navi-bar.html:17
+msgid "Orders"
+msgstr "오더"
+
+#: templates/common/navi-bar.html:29
+msgid "Search"
+msgstr "검색"
+
+#: templates/common/navi-bar.html:30
+msgid "Process"
+msgstr "공정"
+
+#: templates/common/navi-bar.html:31
+msgid "Import"
+msgstr "업로드"
+
+#: templates/common/navi-bar.html:32
+msgid "Export"
+msgstr "다운로드"
+
+#: templates/common/navi-bar.html:29
+msgid "Library"
+msgstr "자료"
+
+#: templates/common/navi-bar.html:39
+msgid "Item"
+msgstr "아이템"
+
+#: templates/common/navi-bar.html:40
+msgid "Color"
+msgstr "컬러"
+
+#: templates/common/navi-bar.html:41
+msgid "Pattern"
+msgstr "패턴"
+
+#: templates/common/navi-bar.html:40
+msgid "Inventory"
+msgstr "재고"
+
+#: templates/common/navi-bar.html:52
+msgid "Planing"
+msgstr "계획"
+
+msgid "Dry Plan Import"
+msgstr "건식 계획 업로드"
+
+msgid "Wet Plan Import"
+msgstr "습식 계획 업로드"
+
+msgid "Dry Line Plan"
+msgstr "건식 라인 계획"
+
+msgid "Wet Line Plan"
+msgstr "습식 라인 계획"
+
+msgid "Report"
+msgstr "보고서"
+
+msgid "Dry Mix"
+msgstr "건식 배합"
+
+msgid "Wet Mix"
+msgstr "습식 배합"
+
+msgid "Dry Line"
+msgstr "건식 라인"
+
+msgid "Wet Line"
+msgstr "습식 라인"
+
+msgid "RP"
+msgstr "박리"
+
+#: templates/common/navi-bar.html:63
+msgid "Production"
+msgstr "생산"
+
+#: templates/common/navi-bar.html:76
+msgid "Post-Process"
+msgstr "후처리"
+
+msgid "Buffing"
+msgstr "버핑"
+
+msgid "Color-Printing"
+msgstr "컬러 처리"
+
+msgid "WEL"
+msgstr "WEL 합포"
+
+#: templates/common/navi-bar.html:87
+msgid "Final-Process"
+msgstr "최종 단계"
+
+msgid "Inspection"
+msgstr "외관검사"
+
+msgid "QA/QC"
+msgstr "품질보증"
+
+msgid "Shipment"
+msgstr "출고"
+
+#: templates/common/navi-bar.html:98
+msgid "Board"
+msgstr "게시판"
+
+#: templates/common/navi-bar.html:109
+msgid "File Browser"
+msgstr "파일 브라우저"
+
+msgid "Discussion"
+msgstr "논의"
+
+msgid "Q&A"
+msgstr "질의응답"
+
+#: templates/common/navi-bar.html:120
+msgid "Development"
+msgstr "개발"
+
+msgid "List"
+msgstr "목록"
+
+msgid "My Page"
+msgstr "마이 페이지"
+
+msgid "Change Password"
+msgstr "비밀번호 변경"
+
+msgid "Logout"
+msgstr "로그아웃"
+
+msgid "Language"
+msgstr "언어"
