@@ -20,6 +20,12 @@ class Profile(models.Model):
     email_confirmed = models.BooleanField(default=False)
     activation_token = models.UUIDField(default=uuid.uuid4, editable=False)
 
+    def is_production_team(self):
+        return self.position in ['PD', 'PM', 'PS']
+    
+    def is_sales_team(self):
+        return self.position in ['SD', 'SM', 'SS']
+
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:

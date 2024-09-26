@@ -103,6 +103,7 @@
             <a href="#" class="submenu-item">Q&A</a>
         </div>
     </div>
+    {% if user.profile.is_production_team %}
     <div class="navi-menu">
         <div class="menu-button" data-submenu="development-submenu">
             <div class="icon-placeholder"></div>
@@ -122,7 +123,7 @@
             <a href="#" class="submenu-item">Staff</a>
         </div>
     </div>
-
+    {% endif %}
     <!-- 사용자 정보 섹션을 nav-container의 끝으로 이동 -->
     <div class="user-info">
         {% if user.is_authenticated %}
