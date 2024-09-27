@@ -623,9 +623,8 @@ def order_search(request):
                 DryMix.objects.filter(production_plan__sales_order=order),
                 DryLine.objects.filter(production_plan__sales_order=order),
                 Delamination.objects.filter(production_plan__sales_order=order),
-                Inspection.objects.filter(production_plan__sales_order=order)
+                Inspection.objects.filter(Q(production_plan__sales_order=order) | Q(sales_order=order))
             ))
-            
             bal_qty = int(order.order_qty)
             agrade_qty, delami_qty, pd_qty = 0, 0, 0
             sub_pd_qty = 0
