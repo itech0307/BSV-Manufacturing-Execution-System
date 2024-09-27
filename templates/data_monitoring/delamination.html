@@ -1,4 +1,5 @@
 {% extends 'data_monitoring/base.html' %}
+{% load i18n %}
 {% load static %}
 {% load custom_filters %}
 {% block content %}
@@ -7,7 +8,7 @@
     <div class="report-container">
         <div class="report-row row" style="padding:10px">
             <div class="col">
-                <h2>[RP] REPORT</h2>
+                <h2>{% trans "RP" %} {% trans "Report" %}</h2>
             </div>
             <div class="col">
                 <button class="btn btn-outline-success" onclick="location.href='{% url 'data_monitoring:create_lot_no' %}'">Số Cuộn</button>

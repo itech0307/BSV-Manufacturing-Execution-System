@@ -1,6 +1,7 @@
 {% extends 'data_monitoring/base.html' %}
+{% load i18n %}
 {% load custom_filters %}
-{% block header %}DRYLINE REPORT{% endblock %}
+{% block header %}{% trans "Dry Line" %} {% trans "Report" %}{% endblock %}
 {% block checkbox %}
 <div class="col">
     <input class="form-check-input" type="checkbox" id="toggleOrderDateColumn" checked onchange="toggleColumn('OrderDate');">

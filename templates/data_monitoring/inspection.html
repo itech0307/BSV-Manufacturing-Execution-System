@@ -1,6 +1,7 @@
 {% extends 'data_monitoring/base.html' %}
+{% load i18n %}
 {% load custom_filters %}
-{% block header %}[INSPECTION] REPORT{% endblock %}
+{% block header %}{% trans "Inspection" %} {% trans "Report" %}{% endblock %}
 {% block url_search_popup %}{% url 'data_monitoring:inspection' %}{% endblock %}
 {% block url_list_search %}{% url 'data_monitoring:inspection' %}{% endblock %}
 {% block table %}
