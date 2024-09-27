@@ -47,7 +47,14 @@
                 <th>Bal.Qty</th>
                 <th>Finish</th>
                 <th>Update</th>
-                <th>NextStep</th>
+                <th>
+                    <span class="filter-header" onclick="toggleFilter('nextStepFilter', event)">NextStep</span>
+                    <div id="nextStepFilter" class="filter-dropdown" style="display: none;">
+                        <div class="filter-options" id="filterOptions">
+                            <!-- 체크박스들이 여기에 동적으로 추가 -->
+                        </div>
+                    </div>
+                </th>
             </tr>
         </thead>
         <tbody>
@@ -184,4 +191,117 @@ function generateQRCode() {
     });
 }
 </script>
+<script>
+    function toggleFilter(filterId, event) {
+        event.stopPropagation();
+        const filter = document.getElementById(filterId);
+        filter.style.display = filter.style.display === 'none' ? 'block' : 'none';
+    }
+    
+    function filterTable() {
+        const table = document.querySelector('.table-report');
+        const rows = table.querySelectorAll('tbody tr');
+        const checkboxes = document.querySelectorAll('#nextStepFilter input[type="checkbox"]:checked');
+        const selectedValues = Array.from(checkboxes).map(cb => cb.value);
+    
+        rows.forEach(row => {
+            const nextStepCell = row.querySelector('td:last-child');
+            if (nextStepCell) {
+                const nextStepValue = nextStepCell.textContent.trim();
+                if (selectedValues.length === 0 || selectedValues.some(value => {
+                    if (value === '(공백)') {
+                        return nextStepValue === '';
+                    }
+                    return nextStepValue.includes(value);
+                })) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            }
+        });
+    }
+
+    function populateFilterOptions() {
+        const table = document.querySelector('.table-report');
+        const rows = table.querySelectorAll('tbody tr');
+        const nextStepValues = new Set();
+
+        rows.forEach(row => {
+            const nextStepCell = row.querySelector('td:last-child');
+            if (nextStepCell) {
+                const nextStepValue = nextStepCell.textContent.trim();
+                if (nextStepValue === '') {
+                    nextStepValues.add('(N/A)');
+                } else {
+                    nextStepValues.add(nextStepValue);
+                }
+            }
+        });
+
+        const filterOptions = document.getElementById('filterOptions');
+        filterOptions.innerHTML = ''; // 기존 옵션들을 모두 제거
+
+        nextStepValues.forEach(value => {
+            const label = document.createElement('label');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = value;
+            checkbox.onclick = filterTable;
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode(` ${value}`));
+            filterOptions.appendChild(label);
+        });
+    }
+
+    // 페이지 로드 시 필터링 함수 연결 및 문서 클릭 이벤트 리스너 추가
+    document.addEventListener('DOMContentLoaded', function() {
+        populateFilterOptions(); // 페이지 로드 시 필터 옵션 생성
+
+        // 문서 클릭 시 필터 창 닫기
+        document.addEventListener('click', function(event) {
+            const filterDropdown = document.getElementById('nextStepFilter');
+            if (filterDropdown.style.display === 'block' && !filterDropdown.contains(event.target)) {
+                filterDropdown.style.display = 'none';
+            }
+        });
+
+        // 필터 드롭다운 내부 클릭 시 이벤트 전파 중지
+        const filterDropdown = document.getElementById('nextStepFilter');
+        filterDropdown.addEventListener('click', function(event) {
+            event.stopPropagation();
+        });
+    });
+</script>
+    
+<style>
+.filter-header {
+    cursor: pointer;
+}
+
+.filter-dropdown {
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    padding: 12px;
+    z-index: 1;
+}
+
+.filter-dropdown input[type="text"] {
+    width: 100%;
+    padding: 5px;
+    margin-bottom: 10px;
+}
+
+.filter-options {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.filter-options label {
+    display: block;
+    margin-bottom: 5px;
+}
+</style>
 {% endblock %}

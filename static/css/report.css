@@ -37,7 +37,6 @@
 }
 .table-report th, .table td {
     box-sizing: border-box; /* 패딩과 테두리가 너비에 포함되도록 설정 */
-    overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
