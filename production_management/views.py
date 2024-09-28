@@ -45,19 +45,17 @@ def order_sheet_upload(request):
                 file_hash=file_hash,
                 data_count=len(df)
             )
-
-            context = {
-                'upload_logs': upload_logs,
-            }
             
-            return render(request, 'production_management/order_sheet_upload.html', {'task_id': task_id}, context)
+            return render(request, 'production_management/order_sheet_upload.html', {'task_id': task_id})
 
     except Exception as e:
         # 디버깅을 위해 예외를 로그에 출력
         print(f"에러가 발생했습니다: {e}")
         return JsonResponse({"error": "파일 처리 중 에러가 발생했습니다."})
 
-    content = {}
+    content = {
+        'upload_logs': upload_logs,
+    }
     return render(request, 'production_management/order_sheet_upload.html', content)
 
 def dryplan_import(request):
