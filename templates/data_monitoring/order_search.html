@@ -209,7 +209,7 @@ function generateQRCode() {
             if (nextStepCell) {
                 const nextStepValue = nextStepCell.textContent.trim();
                 if (selectedValues.length === 0 || selectedValues.some(value => {
-                    if (value === '(공백)') {
+                    if (value === '(N/A)') {
                         return nextStepValue === '';
                     }
                     return nextStepValue.includes(value);
@@ -221,12 +221,11 @@ function generateQRCode() {
             }
         });
     }
-
     function populateFilterOptions() {
         const table = document.querySelector('.table-report');
         const rows = table.querySelectorAll('tbody tr');
         const nextStepValues = new Set();
-
+    
         rows.forEach(row => {
             const nextStepCell = row.querySelector('td:last-child');
             if (nextStepCell) {
@@ -238,15 +237,16 @@ function generateQRCode() {
                 }
             }
         });
-
+    
         const filterOptions = document.getElementById('filterOptions');
         filterOptions.innerHTML = ''; // 기존 옵션들을 모두 제거
-
+    
         nextStepValues.forEach(value => {
             const label = document.createElement('label');
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.value = value;
+            checkbox.checked = true; // 기본적으로 체크된 상태로 설정
             checkbox.onclick = filterTable;
             label.appendChild(checkbox);
             label.appendChild(document.createTextNode(` ${value}`));
