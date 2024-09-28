@@ -25,9 +25,11 @@
 </div>
 {% endblock %}
 {% block forms %}
+{% if user.profile.is_production_team %}
 <div class="col">
     <button class="btn btn-outline-success" onclick="location.href='{% url 'data_monitoring:aging_room' %}'">Phòng Sấy</button>
 </div>
+{% endif %}
 {% endblock %}
 {% block url_search_popup %}{% url 'data_monitoring:dryline' %}{% endblock %}
 {% block url_list_search %}{% url 'data_monitoring:dryline' %}{% endblock %}

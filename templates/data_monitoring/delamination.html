@@ -10,9 +10,11 @@
             <div class="col">
                 <h2>{% trans "RP" %} {% trans "Report" %}</h2>
             </div>
+            {% if user.profile.is_production_team %}
             <div class="col">
                 <button class="btn btn-outline-success" onclick="location.href='{% url 'data_monitoring:create_lot_no' %}'">Số Cuộn</button>
             </div>
+            {% endif %}
             <div class="col title-buttons">
                 <button onclick="toggleSearchPopup()" title="Search" style="background: none; border: none; cursor: pointer; margin: 0 10px;">
                     <i class="fas fa-search"></i>

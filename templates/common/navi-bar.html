@@ -20,8 +20,10 @@
         <div class="submenu" id="orders-submenu">
             <a href="{% url 'data_monitoring:order_search' %}" class="submenu-item">{% trans "Search" %}</a>
             <a href="#" class="submenu-item">{% trans "Process" %}</a>
+            {% if user.profile.is_production_team %}
             <a href="{% url 'production_management:order_sheet_upload' %}" class="submenu-item">{% trans "Import" %}</a>
             <a href="#" class="submenu-item">{% trans "Export" %}</a>
+            {% endif %}
         </div>
     </div>
     <div class="navi-menu">
@@ -42,8 +44,10 @@
         </div>
         <div class="submenu" id="inventory-submenu">
             <a href="{% url 'inventory_management:view_raw_materials' %}" class="submenu-item">{% trans "Search" %}</a>
+            {% if user.profile.is_production_team %}
             <a href="#" class="submenu-item">{% trans "Import" %}</a>
             <a href="#" class="submenu-item">{% trans "Export" %}</a>
+            {% endif %}
         </div>
     </div>
     <div class="navi-menu">
@@ -52,8 +56,10 @@
             <div class="text-wrapper">{% trans "Planing" %}</div>
         </div>
         <div class="submenu" id="planning-submenu">
+            {% if user.profile.is_production_team %}
             <a href="{% url 'production_management:dryplan_import' %}" class="submenu-item">{% trans "Dry Plan Import" %}</a>
             <a href="#" class="submenu-item">{% trans "Wet Plan Import" %}</a>
+            {% endif %}
             <a href="#" class="submenu-item">{% trans "Dry Line Plan" %}</a>
             <a href="#" class="submenu-item">{% trans "Wet Line Plan" %}</a>
         </div>
