@@ -4,14 +4,37 @@
 {% block header %}{% trans "Orders" %} {% trans "Search" %}{% endblock %}
 {% block checkbox %}
 <!-- 열 표시 제어 체크 박스 -->
-<input class="form-check-input" type="checkbox" id="toggleOrderDateColumn" checked onchange="toggleColumn('OrderDate');">
-<label for="toggleOrderDateColumn">OrderDate</label>           
-<input class="form-check-input" type="checkbox" id="toggleRTDColumn" checked onchange="toggleColumn('RTD');">
-<label for="toggleRTDColumn">RTD</label>            
-<input class="form-check-input" type="checkbox" id="toggleETDColumn" checked onchange="toggleColumn('ETD');">
-<label for="toggleETDColumn">ETD</label>            
-<input class="form-check-input" type="checkbox" id="toggleSpecColumn" checked onchange="toggleColumn('Spec');">
-<label for="toggleSpecColumn">Spec</label>
+<div class="dropdown d-inline-block me-2">
+    <button class="btn btn-secondary dropdown-toggle" type="button" id="columnToggleDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+      Columns
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="columnToggleDropdown">
+      <li>
+        <label class="dropdown-item">
+          <input class="form-check-input me-2 column-toggle" type="checkbox" id="toggleOrderDateColumn" data-column="OrderDate">
+          OrderDate
+        </label>
+      </li>
+      <li>
+        <label class="dropdown-item">
+          <input class="form-check-input me-2 column-toggle" type="checkbox" id="toggleRTDColumn" data-column="RTD">
+          RTD
+        </label>
+      </li>
+      <li>
+        <label class="dropdown-item">
+          <input class="form-check-input me-2 column-toggle" type="checkbox" id="toggleETDColumn" data-column="ETD">
+          ETD
+        </label>
+      </li>
+      <li>
+        <label class="dropdown-item">
+          <input class="form-check-input me-2 column-toggle" type="checkbox" id="toggleSpecColumn" data-column="Spec">
+          Spec
+        </label>
+      </li>
+    </ul>
+</div>
 {% endblock %}
 {% block forms %}
 <form method="post" action="{% url 'data_monitoring:order_search' %}" onsubmit="return validateOrderNumber();" style="display: flex; align-items: center; width: 100%;">

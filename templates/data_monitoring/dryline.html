@@ -3,25 +3,55 @@
 {% load custom_filters %}
 {% block header %}{% trans "Dry Line" %} {% trans "Report" %}{% endblock %}
 {% block checkbox %}
-<div class="col">
-    <input class="form-check-input" type="checkbox" id="toggleOrderDateColumn" checked onchange="toggleColumn('OrderDate');">
-    <label for="toggleOrderDateColumn">OrderDate</label>           
-    <input class="form-check-input" type="checkbox" id="toggleRTDColumn" checked onchange="toggleColumn('RTD');">
-    <label for="toggleRTDColumn">RTD</label>
-    <input class="form-check-input" type="checkbox" id="toggleETDColumn" checked onchange="toggleColumn('ETD');">
-    <label for="toggleETDColumn">ETD</label>
-    <input class="form-check-input" type="checkbox" id="toggleBrandColumn" checked onchange="toggleColumn('Brand');">
-    <label for="toggleBrandColumn">Brand</label>
-    <input class="form-check-input" type="checkbox" id="toggleBaseColumn" checked onchange="toggleColumn('Base');">
-    <label for="toggleBaseColumn">Base</label>                    
-</div>
-<div class="col">
-    <input class="form-check-input" type="checkbox" id="toggleSpecColumn" checked onchange="toggleColumn('Spec');">
-    <label for="toggleSpecColumn">Spec</label>
-    <input class="form-check-input" type="checkbox" id="toggleSkinBinderColumn" checked onchange="toggleColumn('SkinBinder');">
-    <label for="toggleSkinBinderColumn">Skin/Binder</label>
-    <input class="form-check-input" type="checkbox" id="togglePositionColumn" checked onchange="toggleColumn('Position');">
-    <label for="togglePositionColumn">Position</label>
+<!-- 열 표시 제어 체크 박스 -->
+<div class="dropdown d-inline-block me-2">
+    <button class="btn btn-secondary dropdown-toggle" type="button" id="columnToggleDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+      {% trans "Select Columns" %}
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="columnToggleDropdown">
+      <li>
+        <label class="dropdown-item">
+          <input class="form-check-input me-2 column-toggle" type="checkbox" id="toggleOrderDateColumn" data-column="OrderDate">
+          OrderDate
+        </label>
+      </li>
+      <li>
+        <label class="dropdown-item">
+          <input class="form-check-input me-2 column-toggle" type="checkbox" id="toggleRTDColumn" data-column="RTD">
+          RTD
+        </label>
+      </li>
+      <li>
+        <label class="dropdown-item">
+          <input class="form-check-input me-2 column-toggle" type="checkbox" id="toggleETDColumn" data-column="ETD">
+          ETD
+        </label>
+      </li>
+      <li>
+        <label class="dropdown-item">
+          <input class="form-check-input me-2 column-toggle" type="checkbox" id="toggleSpecColumn" data-column="Spec">
+          Spec
+        </label>
+      </li>
+      <li>
+        <label class="dropdown-item">
+          <input class="form-check-input me-2 column-toggle" type="checkbox" id="toggleBaseColumn" data-column="Base">
+          Base
+        </label>
+      </li>
+      <li>
+        <label class="dropdown-item">
+          <input class="form-check-input me-2 column-toggle" type="checkbox" id="toggleSkinBinderColumn" data-column="SkinBinder">
+          Skin/Binder
+        </label>
+      </li>
+      <li>
+        <label class="dropdown-item">
+          <input class="form-check-input me-2 column-toggle" type="checkbox" id="togglePositionColumn" data-column="Position">
+          Position
+        </label>
+      </li>
+    </ul>
 </div>
 {% endblock %}
 {% block forms %}

@@ -3,6 +3,38 @@
 {% load custom_filters %}
 {% block header %}{% trans "Dry Mix" %} {% trans "Report" %}{% endblock %}
 {% block checkbox %}
+<!-- 열 표시 제어 체크 박스 -->
+<div class="dropdown d-inline-block me-2">
+    <button class="btn btn-secondary dropdown-toggle" type="button" id="columnToggleDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+      {% trans "Select Columns" %}
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="columnToggleDropdown">
+      <li>
+        <label class="dropdown-item">
+          <input class="form-check-input me-2 column-toggle" type="checkbox" id="toggleOrderDateColumn" data-column="OrderDate">
+          OrderDate
+        </label>
+      </li>
+      <li>
+        <label class="dropdown-item">
+          <input class="form-check-input me-2 column-toggle" type="checkbox" id="toggleRTDColumn" data-column="RTD">
+          RTD
+        </label>
+      </li>
+      <li>
+        <label class="dropdown-item">
+          <input class="form-check-input me-2 column-toggle" type="checkbox" id="toggleETDColumn" data-column="ETD">
+          ETD
+        </label>
+      </li>
+      <li>
+        <label class="dropdown-item">
+          <input class="form-check-input me-2 column-toggle" type="checkbox" id="toggleSpecColumn" data-column="Spec">
+          Spec
+        </label>
+      </li>
+    </ul>
+</div>
 {% endblock %}
 {% block forms %}
 {% endblock %}
@@ -15,11 +47,16 @@
             <tr>
                 <th>OrderNo</th>
                 <th>OrderType</th>
+                <th class="orderdate-col">OrderDate</th>
+                <th class="rtd-col">RTD</th>
+                <th class="etd-col">ETD</th>
+                <th class="brand-col">Brand</th>
                 <th>Customer</th>
                 <th>Item</th>
                 <th>ColorCode</th>
                 <th>Pattern</th>
-                <th>Qty</th>
+                <th class="spec-col">Spec</th>
+                <th>OrderQty</th>
                 <th>DateTime</th>
                 <th>WorkerCode</th>
             </tr>
@@ -29,6 +66,10 @@
             <tr>
                 <td>{{ data.production_plan.sales_order.order_no }}</td>
                 <td>{{ data.production_plan.sales_order.order_type }}</td>
+                <td class="orderdate-col">{{ data.production_plan.sales_order.order_date }}</td>
+                <td class="rtd-col">{{ data.production_plan.sales_order.rtd }}</td>
+                <td class="etd-col">{{ data.production_plan.sales_order.etd }}</td>
+                <td class="brand-col">{{ data.production_plan.sales_order.brand }}</td>
                 <td>{{ data.production_plan.sales_order.customer_name }}</td>
                 <td>
                     {{ data.production_plan.sales_order.item_name }}
@@ -40,6 +81,7 @@
                 </td>
                 <td>{{ data.production_plan.sales_order.color_code }}</td>
                 <td>{{ data.production_plan.sales_order.pattern }}</td>
+                <td class="spec-col">{{ data.production_plan.sales_order.spec }}</td>
                 <td>{{ data.production_plan.sales_order.order_qty }}</td>
                 <td>{{ data.create_date | date:"Y-m-d H:i"}}</td>
                 <td>{{ data.worker_code }}</td>
