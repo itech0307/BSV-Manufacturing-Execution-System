@@ -181,3 +181,6 @@ msgstr "Ngôn ngữ"
 
 msgid "Select Columns"
 msgstr "Chọn cột"
+
+msgid "Order List Search"
+msgstr "Tìm kiếm đơn hàng"

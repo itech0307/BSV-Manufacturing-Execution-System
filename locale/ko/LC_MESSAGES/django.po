@@ -183,3 +183,6 @@ msgstr "언어"
 
 msgid "Select Columns"
 msgstr "열 선택"
+
+msgid "Order List Search"
+msgstr "오더 리스트 검색"
