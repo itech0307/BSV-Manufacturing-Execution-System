@@ -42,9 +42,6 @@
     <input class="form-control" type="text" placeholder="order number" aria-label="order number" id="order_number" name="order_number" style="width:30%; margin-right: 10px;" required>
     <button class="btn btn-outline-success" type="submit">{% trans "Search" %}</button>
 </form>
-<button onclick="generateQRCode()" title="QR" style="background: none; border: none; cursor: pointer; margin: 0 10px;">
-    <i class="fas fa-qrcode"></i>
-</button>
 {% endblock %}
 {% block url %}{% url 'data_monitoring:order_search' %}{% endblock %}
 {% block table %}
@@ -172,48 +169,6 @@
 {% endif %}
 {% endblock %}
 {% block extra_js %}
-<script>
-function generateQRCode() {
-    const table = document.querySelector('.table-report');
-    const rows = table.querySelectorAll('tbody tr');
-    const orderNumbers = Array.from(rows).map(row => row.cells[0].textContent.trim());
-
-    const csrftoken = getCookie('csrftoken');
-    const payload = {
-        action: 'download_to_qrcard',
-        order_numbers: orderNumbers.join(',')
-    };
-
-    fetch('/data_monitoring/order_search/', {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': csrftoken,
-            'Content-Type': 'application/json; charset=utf-8'
-        },
-        body: JSON.stringify(payload)
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.blob();
-    })
-    .then(blob => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = "qrcard.xlsx";
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
-    })
-    .catch(error => {
-        console.error("Error:", error);
-        alert("Failed to download file.");
-    });
-}
-</script>
 <script>
     function toggleFilter(filterId, event) {
         event.stopPropagation();

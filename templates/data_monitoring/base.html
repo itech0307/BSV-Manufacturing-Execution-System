@@ -4,20 +4,20 @@
 {% block content %}
 <link rel="stylesheet" type="text/css" href="{% static 'css/report.css' %}">
 <body>
-<div class="loader" id="loader"></div> <!-- 로딩 애니메이션 요소 추가 -->
 <div class="report-container" id="dataContainer">
     <div class="report-row row" style="padding:10px">
         <div class="col-3">
             <h2>{% block header %}{% endblock %}</h2>
-        </div>
-        <div class="col-3">
             {% block checkbox %}
             {% endblock %}
         </div>
-        <div class="col-4 title-buttons" style="width:50%;">
+        <div class="col-9">
             {% block forms %}
             {% endblock %}
-            <div class="col title-buttons">
+            <div class="title-buttons" style="text-align: left;">
+                <button onclick="generateQRCode()" title="QR" style="background: none; border: none; cursor: pointer; margin: 0 10px;">
+                    <i class="fas fa-qrcode"></i>
+                </button>
                 <button onclick="toggleSearchPopup()" title="Search" style="background: none; border: none; cursor: pointer; margin: 0 10px;">
                     <i class="fas fa-search"></i>
                 </button>
@@ -83,21 +83,13 @@
     <div class="modal fade" id="listSearchModal" tabindex="-1" role="dialog" aria-labelledby="listSearchModalLabel" aria-hidden="true" style="z-index: 9999;">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="listSearchModalLabel">{% trans 'Order List Search' %}</h5>
-                </div>
-                <div class="modal-body">
-                    <form id="listOrderForm" method="post" action="{% block url_list_search %}{% endblock %}">
-                        {% csrf_token %}
-                        <div class="form-group">
-                        <textarea class="form-control" name="order_numbers" id="listOrderInput" rows="10" placeholder="Enter order numbers, one per line"></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
+                <h5 class="modal-title" id="listSearchModalLabel">{% trans 'Order List Search' %}</h5>
+                <form id="listOrderForm" method="post" action="{% block url_list_search %}{% endblock %}">
+                    {% csrf_token %}
+                    <textarea class="form-control" name="order_numbers" id="listOrderInput" rows="10" placeholder="Enter order numbers, one per line"></textarea>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="closeListSearchModal()">{% trans 'Close' %}</button>
                     <button type="button" class="btn btn-primary" onclick="searchListOrders();">{% trans 'Search' %}</button>
-                </div>
+                </form>
             </div>
         </div>
     </div>
@@ -130,6 +122,48 @@
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.0/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js"></script>
+<script>
+    function generateQRCode() {
+        const table = document.querySelector('.table-report');
+        const rows = table.querySelectorAll('tbody tr');
+        const orderNumbers = Array.from(rows).map(row => row.cells[0].textContent.trim());
+    
+        const csrftoken = getCookie('csrftoken');
+        const payload = {
+            action: 'download_to_qrcard',
+            order_numbers: orderNumbers.join(',')
+        };
+    
+        fetch('/data_monitoring/order_search/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'Content-Type': 'application/json; charset=utf-8'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = "qrcard.xlsx";
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            alert("Failed to download file.");
+        });
+    }
+    </script>
 <script>
     function handleColumnToggle() {
         const checkboxes = document.querySelectorAll('.column-toggle');
@@ -243,12 +277,14 @@
         }
     
         const orderLines = input.split('\n');
-        const orderNumbers = orderLines.map(line => line.replace(/\t/g, '-'));
-        document.getElementById('listOrderInput').value = orderNumbers.join('\n');
-        
-        const form = document.getElementById('listOrderForm');
-        form.submit();
-        closeListSearchModal();
+        const orderNumbers = orderLines.map(line => {
+            const orderNumberList = line.replace(/\t/g, '-');
+            return orderNumberList;
+        });
+        document.getElementById('listOrderInput').value = orderNumbers;
+        const form = document.getElementById('listOrderForm');  // form 객체를 올바르게 참조
+        form.submit();  // form  제출
+        closeListSearchModal('listSearchModal');
     }
 
     function validateOrderNumber() {
