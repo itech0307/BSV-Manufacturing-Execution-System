@@ -1,10 +1,11 @@
 {% extends 'common/main.html' %}
+{% load i18n %}
 {% load static %}
 {% block content %}
 <link rel="stylesheet" type="text/css" href="{% static 'css/report.css' %}">
 <body>
 <div class="loader" id="loader"></div> <!-- 로딩 애니메이션 요소 추가 -->
-<div class="report-container hidden" id="dataContainer">
+<div class="report-container" id="dataContainer">
     <div class="report-row row" style="padding:10px">
         <div class="col-3">
             <h2>{% block header %}{% endblock %}</h2>
@@ -77,16 +78,27 @@
             </div>
         </form>
     </div>
-    <!-- List Search 모달 창에 form 요소 추가 -->
-    <div id="listSearchModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeListSearchModal()">&times;</span>
-            <h2>List Order Search</h2>
-            <form id="listOrderForm" method="post" action="{% block url_list_search %}{% endblock %}">
-                {% csrf_token %}
-                <textarea name="order_numbers" id="listOrderInput" style="width: 100%; height: 200px;"></textarea>
-                <button type="button" onclick="searchListOrders();">Search Orders</button>
-            </form>
+
+    <!-- List Search Modal -->
+    <div class="modal fade" id="listSearchModal" tabindex="-1" role="dialog" aria-labelledby="listSearchModalLabel" aria-hidden="true" style="z-index: 9999;">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="listSearchModalLabel">{% trans 'Order List Search' %}</h5>
+                </div>
+                <div class="modal-body">
+                    <form id="listOrderForm" method="post" action="{% block url_list_search %}{% endblock %}">
+                        {% csrf_token %}
+                        <div class="form-group">
+                        <textarea class="form-control" name="order_numbers" id="listOrderInput" rows="10" placeholder="Enter order numbers, one per line"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="closeListSearchModal()">{% trans 'Close' %}</button>
+                    <button type="button" class="btn btn-primary" onclick="searchListOrders();">{% trans 'Search' %}</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -119,11 +131,6 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js"></script>
 <script>
-    $(document).ready(function() {            
-        // 페이지 로드 시 로딩 애니메이션 숨기기
-        document.getElementById('loader').style.display = 'none';
-        document.getElementById('dataContainer').classList.remove('hidden');
-    });
     function handleColumnToggle() {
         const checkboxes = document.querySelectorAll('.column-toggle');
         const currentPage = window.location.pathname;
@@ -220,31 +227,28 @@
     var popupVisible = false; // 팝업 창의 상태를 나타내는 변수 추가
 
     function openListSearchModal() {
-        document.getElementById('listSearchModal').style.display = 'block';
+        $('#listSearchModal').modal('show');
     }
     
     function closeListSearchModal() {
-        document.getElementById('listSearchModal').style.display = 'none';
+        $('#listSearchModal').modal('hide');
     }
     
     function searchListOrders() {
         const input = document.getElementById('listOrderInput').value.trim();
     
-        // 입력이 공백일 경우 경고 메시지 출력 및 함수 종료
         if (input === "") {
             alert('Please enter at least one order number.');
             return;
         }
     
         const orderLines = input.split('\n');
-        const orderNumbers = orderLines.map(line => {
-            const orderNumberList = line.replace(/\t/g, '-');
-            return orderNumberList;
-        });
-        document.getElementById('listOrderInput').value = orderNumbers;
-        const form = document.getElementById('listOrderForm');  // form 객체를 올바르게 참조
-        form.submit();  // form  제출
-        closeListSearchModal('listSearchModal');
+        const orderNumbers = orderLines.map(line => line.replace(/\t/g, '-'));
+        document.getElementById('listOrderInput').value = orderNumbers.join('\n');
+        
+        const form = document.getElementById('listOrderForm');
+        form.submit();
+        closeListSearchModal();
     }
 
     function validateOrderNumber() {
