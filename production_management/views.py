@@ -4,8 +4,12 @@ import pandas as pd
 from .tasks import ordersheet_upload_celery, dryplan_convert_to_qrcard
 from .models import SalesOrderUploadLog
 import hashlib
+from django.utils import timezone
+from datetime import timedelta
 
 def order_sheet_upload(request):
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    upload_logs = SalesOrderUploadLog.objects.filter(upload_time__gte=thirty_days_ago).order_by('-upload_time')
     try:
         if request.method == 'POST':
             # 사용자가 업로드한 파일을 가져옴
@@ -41,8 +45,12 @@ def order_sheet_upload(request):
                 file_hash=file_hash,
                 data_count=len(df)
             )
+
+            context = {
+                'upload_logs': upload_logs,
+            }
             
-            return render(request, 'production_management/order_sheet_upload.html', {'task_id': task_id})
+            return render(request, 'production_management/order_sheet_upload.html', {'task_id': task_id}, context)
 
     except Exception as e:
         # 디버깅을 위해 예외를 로그에 출력
