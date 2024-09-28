@@ -83,12 +83,18 @@
     <div class="modal fade" id="listSearchModal" tabindex="-1" role="dialog" aria-labelledby="listSearchModalLabel" aria-hidden="true" style="z-index: 9999;">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
-                <h5 class="modal-title" id="listSearchModalLabel">{% trans 'Order List Search' %}</h5>
+                <div class="modal-header">
+                    <h5 class="modal-title" id="listSearchModalLabel">{% trans 'Order List Search' %}</h5>
+                </div>
                 <form id="listOrderForm" method="post" action="{% block url_list_search %}{% endblock %}">
                     {% csrf_token %}
-                    <textarea class="form-control" name="order_numbers" id="listOrderInput" rows="10" placeholder="Enter order numbers, one per line"></textarea>
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="closeListSearchModal()">{% trans 'Close' %}</button>
-                    <button type="button" class="btn btn-primary" onclick="searchListOrders();">{% trans 'Search' %}</button>
+                    <div class="modal-body">
+                        <textarea class="form-control" name="order_numbers" id="listOrderInput" rows="10" placeholder="Enter order numbers, one per line"></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans 'Close' %}</button>
+                        <button type="button" class="btn btn-primary" onclick="searchListOrders();">{% trans 'Search' %}</button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -277,14 +283,11 @@
         }
     
         const orderLines = input.split('\n');
-        const orderNumbers = orderLines.map(line => {
-            const orderNumberList = line.replace(/\t/g, '-');
-            return orderNumberList;
-        });
+        const orderNumbers = orderLines.map(line => line.replace(/\t/g, '-').trim());
         document.getElementById('listOrderInput').value = orderNumbers;
         const form = document.getElementById('listOrderForm');  // form 객체를 올바르게 참조
         form.submit();  // form  제출
-        closeListSearchModal('listSearchModal');
+        $('#listSearchModal').modal('hide');
     }
 
     function validateOrderNumber() {
