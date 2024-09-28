@@ -166,6 +166,9 @@ msgstr "개발"
 msgid "List"
 msgstr "목록"
 
+msgid "HRM"
+msgstr "직원 관리"
+
 msgid "My Page"
 msgstr "마이 페이지"
 

@@ -164,6 +164,9 @@ msgstr "Phát triển"
 msgid "List"
 msgstr "Danh sách"
 
+msgid "HRM"
+msgstr "Quản lý Nhân viên"
+
 msgid "My Page"
 msgstr "Trang cá nhân"
 
