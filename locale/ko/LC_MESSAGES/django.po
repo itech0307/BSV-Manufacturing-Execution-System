@@ -180,3 +180,6 @@ msgstr "로그아웃"
 
 msgid "Language"
 msgstr "언어"
+
+msgid "Select Columns"
+msgstr "열 선택"
