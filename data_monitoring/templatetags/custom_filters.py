@@ -128,5 +128,7 @@ def d_day(value):
 @register.filter
 def custom_date_format(value):
     if value:
-        return value.strftime("%-m-%d")
+        month = value.month
+        day = value.day
+        return f"{month}-{day}"
     return ""

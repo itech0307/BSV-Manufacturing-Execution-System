@@ -39,7 +39,7 @@
 {% block forms %}
 <form method="post" action="{% url 'data_monitoring:order_search' %}" onsubmit="return validateOrderNumber();" style="display: flex; align-items: center; width: 100%;">
     {% csrf_token %}
-    <input class="form-control" type="text" placeholder="order number" aria-label="order number" id="order_number" name="order_number" style="width:30%; margin-right: 10px;" required>
+    <input class="form-control" type="search" placeholder="order number" aria-label="order number" id="order_number" name="order_number" style="width:30%; margin-right: 10px;" required autocomplete="off">
     <button class="btn btn-outline-success" type="submit">{% trans "Search" %}</button>
 </form>
 {% endblock %}
