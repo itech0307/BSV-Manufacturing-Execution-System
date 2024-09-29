@@ -45,35 +45,35 @@
             <div class="popup-content">
                 <div>
                     <h5>OrderNo</h5>
-                    <input type="text" id="orderNoInput" name="order_no" placeholder="Enter OrderNo">
+                    <input type="search" id="orderNoInput" name="order_no" autocomplete="off" placeholder="Enter OrderNo">
                 </div>
                 <div>
                     <h5>Item</h5>
-                    <input type="text" id="itemInput" name="item" placeholder="Enter Item">
+                    <input type="search" id="itemInput" name="item" autocomplete="off" placeholder="Enter Item">
                 </div>
                 <div>
                     <h5>ColorCode</h5>
-                    <input type="text" id="colorCodeInput" name="color_code" placeholder="Enter ColorCode">
+                    <input type="search" id="colorCodeInput" name="color_code" autocomplete="off" placeholder="Enter ColorCode">
                 </div>
                 <div>
                     <h5>Pattern</h5>
-                    <input type="text" id="patternInput" name="pattern" placeholder="Enter Pattern">
+                    <input type="search" id="patternInput" name="pattern" autocomplete="off" placeholder="Enter Pattern">
                 </div>
                 <div>
                     <h5>Customer</h5>
-                    <input type="text" id="customerInput" name="customer" placeholder="Enter Customer">
+                    <input type="search" id="customerInput" name="customer" autocomplete="off" placeholder="Enter Customer">
                 </div>
                 <div>
                     <h5>OrderType</h5>
-                    <input type="text" id="orderTypeInput" name="order_type" placeholder="Enter OrderType">
+                    <input type="search" id="orderTypeInput" name="order_type" autocomplete="off" placeholder="Enter OrderType">
                 </div>
                 <div>
                     <h5>Start Date</h5>
-                    <input type="date" id="startDateInput" name="start_date" value="{{ 30daysago|date:'Y-m-d' }}">
+                    <input type="date" id="startDateInput" name="start_date" autocomplete="off" value="{{ 30daysago|date:'Y-m-d' }}">
                 </div>
                 <div>
                     <h5>End Date</h5>
-                    <input type="date" id="endDateInput" name="end_date" value="{{ today|date:'Y-m-d' }}">
+                    <input type="date" id="endDateInput" name="end_date" autocomplete="off" value="{{ today|date:'Y-m-d' }}">
                 </div>
             </div>
         </form>
@@ -303,13 +303,12 @@
         if (startDateInput && endDateInput) {
             var startDate = new Date(startDateInput);
             var endDate = new Date(endDateInput);
-            var sixMonths = 6 * 30; // 대략 6개월을 일수로 환산
-    
+            var sixtyDays = 60 * 24 * 60 * 60 * 1000; // 60일을 밀리초로 환산
+
             var timeDiff = endDate - startDate;
-            var daysDiff = timeDiff / (1000 * 3600 * 24); // 밀리초 차이를 일수로 환산
-    
-            if (daysDiff > sixMonths) {
-                alert("Date range cannot exceed 6 months.");
+
+            if (timeDiff > sixtyDays) {
+                alert("Date range cannot exceed 60 days.");
                 return false;
             }
         }
@@ -672,7 +671,7 @@
                 return;
             }
             
-            // 필요할 때만 html2canvas 로드 및 사���
+            // 필요할 때만 html2canvas 로드 및 사
             if (typeof html2canvas !== 'function') {
                 const script = document.createElement('script');
                 script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js';
