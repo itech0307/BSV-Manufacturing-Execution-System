@@ -572,6 +572,7 @@ def create_lot_no(request):
 		
 	return render(request, 'data_monitoring/create_lot_no.html', context)
 
+@login_required
 def order_search(request):
     order_and_status = []
     count = 0
@@ -735,6 +736,71 @@ def order_search(request):
     }
     return render(request, 'data_monitoring/order_search.html', context)
 
+@login_required
+def dryplan(request):
+    today = datetime.date.today()
+    now = datetime.datetime.now()
+    _3daysago = now+datetime.timedelta(days=-3)
+    _30daysago = today - datetime.timedelta(days=30)
+    order_numbers = []
+    list = []  # 검색 결과를 저장할 리스트를 초기화합니다.
+
+    if request.method == 'POST':
+        order_numbers = request.POST.get('order_numbers', '')
+        if order_numbers:
+            order_numbers = order_numbers.split(',')
+            list = ProductionPlan.objects.filter(Q(item_group="Dry")&Q(sales_order__order_no__in=order_numbers)).select_related('sales_order').order_by('-create_date')
+
+        else:
+            # POST 요청을 받아 OrderNo를 검색합니다.
+            order_no = request.POST.get('order_no', '')  # 폼에서 입력한 OrderNo를 가져옵니다.
+            item = request.POST.get('item', '')  # Item 입력값을 받습니다.
+            color_code = request.POST.get('color_code', '')
+            pattern = request.POST.get('pattern', '')
+            start_date_str = request.POST.get('start_date', '')
+            end_date_str = request.POST.get('end_date', '')
+            customer = request.POST.get('customer', '')
+            order_type = request.POST.get('order_type', '')
+
+            # OrderNo와 Item을 조합하여 데이터를 검색합니다.
+            query = Q(item_group="Dry")
+            if order_no:
+                query &= Q(sales_order__order_no__icontains=order_no)
+            if item:
+                query &= Q(sales_order__item_name__icontains=item)
+            if color_code:
+                query &= Q(sales_order__color_code__icontains=color_code)
+            if pattern:
+                query &= Q(sales_order__pattern__icontains=pattern)
+            
+            if customer:
+                query &= Q(sales_order__customer_name__icontains=customer)
+            
+            if order_type:
+                query &= Q(sales_order__order_type__icontains=order_type)
+            
+            if start_date_str and end_date_str:
+                start_date = parse_date(start_date_str)
+                end_date = parse_date(end_date_str)
+                if start_date and end_date:
+                    start_of_day = datetime.datetime.combine(start_date, datetime.time.min)
+                    end_of_day = datetime.datetime.combine(end_date, datetime.time.max)
+                    query &= Q(create_date__range=(start_of_day, end_of_day))
+
+            list = ProductionPlan.objects.filter(query).select_related('sales_order').order_by('-create_date')
+    else:
+        # GET 요청의 경우, 최근 3일 동안의 DryLine 데이터를 표시합니다.
+        list = ProductionPlan.objects.filter(
+            item_group="Dry", create_date__range=(_3daysago, now)
+        ).select_related('sales_order').order_by('-create_date')
+
+    context = {'list': list,
+               'today': today,  # 오늘 날짜를 컨텍스트에 추가
+               '30daysago':_30daysago
+               }
+    return render(request, 'data_monitoring/dryplan.html', context)
+
+@login_required
 def drymix(request):
     today = datetime.date.today()
     now = datetime.datetime.now()
@@ -797,6 +863,7 @@ def drymix(request):
                }
     return render(request, 'data_monitoring/drymix.html', context)
 
+@login_required
 def dryline(request):
     today = datetime.date.today()
     now = datetime.datetime.now()
@@ -872,6 +939,7 @@ def dryline(request):
                }
     return render(request, 'data_monitoring/dryline.html', context)
 
+@login_required
 def delamination(request):
     today = datetime.date.today()
     now = datetime.datetime.now()
@@ -934,6 +1002,7 @@ def delamination(request):
                }
     return render(request, 'data_monitoring/delamination.html', context)
 
+@login_required
 def inspection(request):
     today = datetime.date.today()
     now = datetime.datetime.now()

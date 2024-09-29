@@ -13,6 +13,7 @@ urlpatterns = [
     path('create_lot_no/', views.create_lot_no, name='create_lot_no'),
     
     path('order_search/', views.order_search, name='order_search'),
+    path('dryplan/', views.dryplan, name='dryplan'),
     path('drymix/', views.drymix, name='drymix'),
     path('dryline/', views.dryline, name='dryline'),
     path('delamination/', views.delamination, name='delamination'),

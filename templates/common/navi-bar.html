@@ -60,7 +60,7 @@
             <a href="{% url 'production_management:dryplan_import' %}" class="submenu-item">{% trans "Dry Plan Import" %}</a>
             <a href="#" class="submenu-item">{% trans "Wet Plan Import" %}</a>
             {% endif %}
-            <a href="#" class="submenu-item">{% trans "Dry Line Plan" %}</a>
+            <a href="{% url 'data_monitoring:dryplan' %}" class="submenu-item">{% trans "Dry Line Plan" %}</a>
             <a href="#" class="submenu-item">{% trans "Wet Line Plan" %}</a>
         </div>
     </div>

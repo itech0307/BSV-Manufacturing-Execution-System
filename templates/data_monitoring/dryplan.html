@@ -1,0 +1,107 @@
+{% extends 'data_monitoring/base.html' %}
+{% load i18n %}
+{% load static %}
+{% load custom_filters %}
+{% block header %}{% trans "Dry Line Plan" %} {% trans "Report" %}{% endblock %}
+{% block checkbox %}
+<!-- 열 표시 제어 체크 박스 -->
+<div class="dropdown d-inline-block me-2">
+    <button class="btn btn-secondary dropdown-toggle" type="button" id="columnToggleDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+      {% trans "Select Columns" %}
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="columnToggleDropdown">
+      <li>
+        <label class="dropdown-item">
+          <input class="form-check-input me-2 column-toggle" type="checkbox" id="toggleOrderDateColumn" data-column="OrderDate">
+          OrderDate
+        </label>
+      </li>
+      <li>
+        <label class="dropdown-item">
+          <input class="form-check-input me-2 column-toggle" type="checkbox" id="toggleRTDColumn" data-column="RTD">
+          RTD
+        </label>
+      </li>
+      <li>
+        <label class="dropdown-item">
+          <input class="form-check-input me-2 column-toggle" type="checkbox" id="toggleETDColumn" data-column="ETD">
+          ETD
+        </label>
+      </li>
+      <li>
+        <label class="dropdown-item">
+          <input class="form-check-input me-2 column-toggle" type="checkbox" id="toggleBrandColumn" data-column="Brand">
+          Brand
+        </label>
+      </li>
+      <li>
+        <label class="dropdown-item">
+          <input class="form-check-input me-2 column-toggle" type="checkbox" id="toggleSpecColumn" data-column="Spec">
+          Spec
+        </label>
+      </li>
+    </ul>
+</div>
+{% endblock %}
+{% block forms %}
+{% endblock %}
+{% block url_search_popup %}{% url 'data_monitoring:dryplan' %}{% endblock %}
+{% block url_list_search %}{% url 'data_monitoring:dryplan' %}{% endblock %}
+{% block table %}
+<div class="scrollable-tbody">
+    <table class="table table-report">
+        <thead>
+            <tr>
+                <th>Line</th>
+                <th>Plan Date</th>
+                <th>No</th>
+                <th>OrderNo</th>
+                <th>OrderType</th>
+                <th class="orderdate-col">OrderDate</th>
+                <th class="rtd-col">RTD</th>
+                <th class="etd-col">ETD</th>
+                <th class="brand-col">Brand</th>
+                <th>Customer</th>
+                <th>Item</th>
+                <th>ColorCode</th>
+                <th>Pattern</th>
+                <th>Qty</th>
+                <th>Plan Qty</th>
+            </tr>
+        </thead>
+        <tbody class="data-tbody">
+            {% for data in list %}
+            <tr>
+                <td>{{ data.line_no }}</td>
+                <td>{{ data.plan_date | date:"Y-m-d" }}</td>
+                <td>{{ data.plan_no }}</td>
+                <td>{{ data.order_no }}</td>
+                <td>{{ data.order_type }}</td>
+                <td class="orderdate-col">{{ data.order_date }}</td>
+                <td class="rtd-col">{{ data.rtd }}</td>
+                <td class="etd-col">{{ data.etd }}</td>
+                <td class="brand-col">{{ data.brand }}</td>
+                <td>{{ data.customer_name }}</td>
+                <td>
+                    {{ data.item_name }}
+                    {% if data.spec|slice:"3:4" == '0' %}
+                        {{ data.spec|slice:":3" }}
+                    {% elif data.spec|slice:"3:4" != '0' %}
+                        {{ data.spec|slice:":4" }}
+                    {% endif %}
+                </td>
+                <td>{{ data.color_code }}</td>
+                <td>{{ data.pattern }}</td>
+                <td>{{ data.order_qty }}</td>
+                <td>{{ data.plan_qty }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">Report not found</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+{% block extra_js %}{% endblock %}
