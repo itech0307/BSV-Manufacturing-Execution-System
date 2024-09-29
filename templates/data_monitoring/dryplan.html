@@ -75,24 +75,24 @@
                 <td>{{ data.line_no }}</td>
                 <td>{{ data.plan_date | date:"Y-m-d" }}</td>
                 <td>{{ data.plan_no }}</td>
-                <td>{{ data.order_no }}</td>
-                <td>{{ data.order_type }}</td>
-                <td class="orderdate-col">{{ data.order_date }}</td>
-                <td class="rtd-col">{{ data.rtd }}</td>
-                <td class="etd-col">{{ data.etd }}</td>
-                <td class="brand-col">{{ data.brand }}</td>
-                <td>{{ data.customer_name }}</td>
+                <td>{{ data.sales_order.order_no }}</td>
+                <td>{{ data.sales_order.order_type }}</td>
+                <td class="orderdate-col">{{ data.sales_order.order_date }}</td>
+                <td class="rtd-col">{{ data.sales_order.rtd }}</td>
+                <td class="etd-col">{{ data.sales_order.etd }}</td>
+                <td class="brand-col">{{ data.sales_order.brand }}</td>
+                <td>{{ data.sales_order.customer_name }}</td>
                 <td>
-                    {{ data.item_name }}
-                    {% if data.spec|slice:"3:4" == '0' %}
-                        {{ data.spec|slice:":3" }}
-                    {% elif data.spec|slice:"3:4" != '0' %}
-                        {{ data.spec|slice:":4" }}
+                    {{ data.sales_order.item_name }}
+                    {% if data.sales_order.spec|slice:"3:4" == '0' %}
+                        {{ data.sales_order.spec|slice:":3" }}
+                    {% elif data.sales_order.spec|slice:"3:4" != '0' %}
+                        {{ data.sales_order.spec|slice:":4" }}
                     {% endif %}
                 </td>
-                <td>{{ data.color_code }}</td>
-                <td>{{ data.pattern }}</td>
-                <td>{{ data.order_qty }}</td>
+                <td>{{ data.sales_order.color_code }}</td>
+                <td>{{ data.sales_order.pattern }}</td>
+                <td>{{ data.sales_order.order_qty }}</td>
                 <td>{{ data.plan_qty }}</td>
             </tr>
             {% empty %}
