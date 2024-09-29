@@ -2,12 +2,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const navContainer = document.querySelector('.nav-container');
     const mainContent = document.getElementById('main-content');
     const toggleBtn = document.querySelector('.toggle-btn');
+    const hoverArea = document.querySelector('.hover-area');
     let isNavExpanded = true;
     let isNavLocked = true;
 
     toggleBtn.addEventListener('click', function() {
-        navContainer.classList.toggle('collapsed');
-        mainContent.classList.toggle('expanded');
+        toggleNav();
     });
 
     function toggleNav() {
@@ -26,12 +26,27 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateNavState() {
         if (isNavExpanded) {
             navContainer.classList.remove('collapsed');
+            mainContent.classList.remove('expanded');
             toggleBtn.style.right = '10px';
         } else {
             navContainer.classList.add('collapsed');
+            mainContent.classList.add('expanded');
             toggleBtn.style.right = '0px';
         }
     }
+
+    // 호버 기능 추가
+    hoverArea.addEventListener('mouseenter', function() {
+        if (!isNavLocked && !isNavExpanded) {
+            navContainer.classList.add('temp-expanded');
+        }
+    });
+
+    navContainer.addEventListener('mouseleave', function() {
+        if (!isNavLocked && !isNavExpanded) {
+            navContainer.classList.remove('temp-expanded');
+        }
+    });
 
     document.querySelectorAll('.menu-button').forEach(button => {
         button.addEventListener('click', () => {
@@ -57,10 +72,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     document.body.addEventListener('click', function(event) {
         if (event.target.matches('.toggle-btn')) {
-            const naviBar = document.querySelector('.nav-container');
-            if (naviBar) {
-                naviBar.classList.toggle('collapsed');
-            }
+            toggleNav();
         }
     });
 });

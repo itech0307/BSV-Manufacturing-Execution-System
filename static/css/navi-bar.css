@@ -186,3 +186,8 @@
         transform: none; /* 모바일에서는 변형 제거 */
     }
 }
+
+.nav-container.collapsed:hover,
+.nav-container.collapsed.temp-expanded {
+    transform: translateX(0);
+}
