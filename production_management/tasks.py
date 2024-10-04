@@ -254,13 +254,13 @@ def dryplan_convert_to_qrcard(df_json):
             ws['F5'] = row_data.iloc[6]  # pattern
             ws['A6'] = f"{row_data.iloc[0]}-{row_data.iloc[1]}"   # order number
             ws['G6'] = row_data.iloc[7]  # Base
-            #ws['D6'] = row_data[8]  # order qty
+            ws['D6'] = row_data[8]  # order qty
             ws['C9'] = row_data.iloc[9]  # Remark
             ws['C11'] = row_data.iloc[16]  # Plan Remark
 
             ws['A17'] = f'D{row_data.iloc[10]}-{row_data.iloc[12]}'  # Line
             ws['F17'] = row_data.iloc[11][5:10]  # plan date
-            ws['D6'] = row_data.iloc[13]  # plan qty
+            ws['G7'] = f"Plan Qty: {row_data.iloc[13]} M"  # plan qty
             ws['A7'] = row_data.iloc[17]  # order type
             
             qr_str = f"!BSVPD!{row_data.iloc[0]}!{row_data.iloc[1]}!"
