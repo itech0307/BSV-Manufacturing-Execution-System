@@ -1079,24 +1079,7 @@ def inspection(request):
         if dryline_phases:
             quantity = dryline_phases.pd_qty
         else:
-            quantity = 0
-        
-        for phase in phases:
-            phase_info_list = phase.ins_information  # JSON 리스트
-            # 리스트 내부의 각 항목에서 'quantity' 값을 추출하여 합산합니다.
-            
-            for item in phase_info_list:
-                if phase_info_list[-1].get("roll_lot", ""):
-                    quantity_str = item.get('quantity')
-                
-                    if quantity_str:
-                        try:
-                            # 문자열을 숫자로 변환
-                            quantity = int(quantity_str)
-                            break
-                        except (ValueError, TypeError):
-                            # 변환에 실패하면 기본값 0을 사용
-                            quantity = 0                        
+            quantity = 0                   
 
         # 리스트와 quantity 값을 함께 저장합니다.
         list_and_quantity.append((inspection, quantity))
