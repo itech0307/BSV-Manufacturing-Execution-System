@@ -50,8 +50,8 @@
                 <td></td>
                 {% endif %}
                 <td>{{ data.ins_information|sum_defect_quantities }}</td>
+                <td>{{ data.ins_qty }}</td>
                 <td>{{ data.position}}</td>
-                <td></td>
             </tr>
             {% else %}
             <tr>
@@ -77,8 +77,8 @@
                 <td></td>
                 {% endif %}
                 <td>{{ data.ins_information|sum_defect_quantities }}</td>
+                <td>{{ data.ins_qty }}</td>
                 <td>{{ data.position}}</td>
-                <td></td>
             </tr>
             {% endif %}
             {% empty %}
