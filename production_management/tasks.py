@@ -260,7 +260,7 @@ def dryplan_convert_to_qrcard(df_json):
 
             ws['A17'] = f'D{row_data.iloc[10]}-{row_data.iloc[12]}'  # Line
             ws['F17'] = row_data.iloc[11][5:10]  # plan date
-            ws['G7'] = f"Plan Qty: {row_data.iloc[13]} M"  # plan qty
+            ws['G7'] = f"Plan Qty: {int(row_data.iloc[13])} M"  # plan qty
             ws['A7'] = row_data.iloc[17]  # order type
             
             qr_str = f"!BSVPD!{row_data.iloc[0]}!{row_data.iloc[1]}!"
