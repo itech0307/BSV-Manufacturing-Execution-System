@@ -1072,7 +1072,15 @@ def inspection(request):
         ).order_by('create_date')
 
         # quantity 값을 합산합니다.
-        quantity = 0
+        dryline_phases = DryLine.objects.filter(
+            production_plan=production_plan
+        ).order_by('create_date').first()
+
+        if dryline_phases:
+            quantity = dryline_phases.pd_qty
+        else:
+            quantity = 0
+        
         for phase in phases:
             phase_info_list = phase.ins_information  # JSON 리스트
             # 리스트 내부의 각 항목에서 'quantity' 값을 추출하여 합산합니다.
