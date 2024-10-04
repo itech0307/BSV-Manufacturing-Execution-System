@@ -111,44 +111,44 @@
                     </td>
                     {% if status.latest_process == 'DryPlan' %}
                         <td>
-                            <span style="background-color: #FF4500; color: black; padding: 5px 10px; border-radius: 5px;"><b>MIXING</b></span>
+                            <span id="next_step" style="background-color: #FF4500; color: black; padding: 5px 10px; border-radius: 5px;"><b>MIXING</b></span>
                         </td>
                     {% elif status.latest_process == 'DryMix' %}
                         <td>
-                            <span style="background-color: #FFC107; color: black; padding: 5px 10px; border-radius: 5px;"><b>PRODUCTION</b></span>
+                            <span id="next_step" style="background-color: #FFC107; color: black; padding: 5px 10px; border-radius: 5px;"><b>PRODUCTION</b></span>
                         </td>
                     {% elif status.latest_process == 'DryLine' %}
                         {% if status.latest_machine == "bsvdl01" %}
                             <td>
-                                <span style="background-color: #5986c9; color: black; padding: 5px 10px; border-radius: 5px;"><b>RP{% if status.line_shortage < 0 %} ({{ status.line_shortage }}M) {% endif %}</b></span>
+                                <span id="next_step" style="background-color: #5986c9; color: black; padding: 5px 10px; border-radius: 5px;"><b>RP{% if status.line_shortage < 0 %} ({{ status.line_shortage }}M) {% endif %}</b></span>
                             </td>
                         {% elif status.latest_machine == "bsvdl02" %}
                             <td>
-                                <span style="background-color: #5986c9; color: black; padding: 5px 10px; border-radius: 5px;"><b>RP{% if status.line_shortage < 0 %} ({{ status.line_shortage }}M) {% endif %}</b></span>
+                                <span id="next_step" style="background-color: #5986c9; color: black; padding: 5px 10px; border-radius: 5px;"><b>RP{% if status.line_shortage < 0 %} ({{ status.line_shortage }}M) {% endif %}</b></span>
                             </td>
                         {% elif status.latest_machine == "bsvdl03" %}
                             <td>
-                                <span style="background-color: #5986c9; color: black; padding: 5px 10px; border-radius: 5px;"><b>INSPECTION{% if status.line_shortage < 0 %} ({{ status.line_shortage }}M) {% endif %}</b></span>
+                                <span id="next_step" style="background-color: #5986c9; color: black; padding: 5px 10px; border-radius: 5px;"><b>INSPECTION{% if status.line_shortage < 0 %} ({{ status.line_shortage }}M) {% endif %}</b></span>
                             </td>
                         {% elif status.latest_machine == "bsvdl04" %}
                             <td>
-                                <span style="background-color: #5986c9; color: black; padding: 5px 10px; border-radius: 5px;"><b>INSPECTION{% if status.line_shortage < 0 %} ({{ status.line_shortage }}M) {% endif %}</b></span>
+                                <span id="next_step" style="background-color: #5986c9; color: black; padding: 5px 10px; border-radius: 5px;"><b>INSPECTION{% if status.line_shortage < 0 %} ({{ status.line_shortage }}M) {% endif %}</b></span>
                             </td>
                         {% else %}
                             <td></td>
                         {% endif %}
                     {% elif status.latest_process == 'RP' %}
                         <td>
-                            <span style="background-color: #5986c9; color: black; padding: 5px 10px; border-radius: 5px;"><b>INSPECTION{% if status.line_shortage < 0 %} ({{ status.line_shortage }}M) {% endif %}</b></span>
+                            <span id="next_step" style="background-color: #5986c9; color: black; padding: 5px 10px; border-radius: 5px;"><b>INSPECTION{% if status.line_shortage < 0 %} ({{ status.line_shortage }}M) {% endif %}</b></span>
                         </td>
                     {% elif status.latest_process == 'Inspection' %}
                         {% if status.bal_qty > 0 %}
                             <td>
-                                <span style="background-color: #FFC107; color: black; padding: 5px 10px; border-radius: 5px;"><b>Add-Plan</b></span>
+                                <span id="next_step" style="background-color: #FFC107; color: black; padding: 5px 10px; border-radius: 5px;"><b>Add-Plan</b></span>
                             </td>
                         {% else %}
                             <td>
-                                <span style="background-color: #3CB371; color: black; padding: 5px 10px; border-radius: 5px;"><b>SHIPMENT</b></span>
+                                <span id="next_step" style="background-color: #3CB371; color: black; padding: 5px 10px; border-radius: 5px;"><b>SHIPMENT</b></span>
                             </td>
                         {% endif %}
                     {% else %}

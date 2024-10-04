@@ -572,7 +572,7 @@ def create_lot_no(request):
 		
 	return render(request, 'data_monitoring/create_lot_no.html', context)
 
-@login_required
+@csrf_exempt
 def order_search(request):
     order_and_status = []
     count = 0
