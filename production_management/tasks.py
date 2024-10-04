@@ -148,8 +148,7 @@ def ordersheet_upload_celery(self,df_json):
                         'sample_step': df['Sample Step'][i],
                         'production_location': df['Order To Company'][i],
                         'product_group': df['Prod Group'][i],
-                        'product_type': df['Custom No'][i],
-                        'status': True
+                        'product_type': df['Custom No'][i]
                     }
         
                     for key, value in order_data.items():
@@ -265,6 +264,88 @@ def dryplan_convert_to_qrcard(df_json):
             ws['A7'] = row_data.iloc[17]  # order type
             
             qr_str = f"!BSVPD!{row_data.iloc[0]}!{row_data.iloc[1]}!"
+            qr_img = qrcode.make(qr_str).resize((160, 160))
+            
+            # QR 코드 이미지를 BytesIO 스트림에 저장합니다.
+            img_stream = io.BytesIO()
+            qr_img.save(img_stream, format='PNG')
+            
+            # 스트림 위치를 처음으로 돌립니다.
+            img_stream.seek(0)
+            
+            # openpyxl 이미지 객체를 생성합니다.
+            qr_img_openpyxl = Image(img_stream)
+            
+            # 워크시트에 QR 코드 이미지를 추가합니다.
+            ws.add_image(qr_img_openpyxl, "G22")
+
+            qr_img_2 = qrcode.make(qr_str).resize((160, 160))
+
+            # QR 코드 이미지를 BytesIO 스트림에 저장합니다.
+            img_stream_2 = io.BytesIO()
+            qr_img_2.save(img_stream_2, format='PNG')
+            
+            # 스트림 위치를 처음으로 돌립니다.
+            img_stream_2.seek(0)
+            
+            # openpyxl 이미지 객체를 생성합니다.
+            qr_img_openpyxl_2 = Image(img_stream_2)
+            
+            # 워크시트에 QR 코드 이미지를 추가합니다.
+            ws.add_image(qr_img_openpyxl_2, "A22")
+        
+        # 워크북을 저장하고 응답을 반환합니다.
+        del wb['Sheet']
+        wb.save(response)
+        return response
+    
+    except Exception as e:
+        # 에러가 발생하면 JSON 형식으로 에러 메시지를 반환합니다.
+        return JsonResponse({'error': str(e)})
+
+def dev_order_convert_to_qrcard(development_and_orders):
+    try:
+        # 엑셀 파일로 응답을 생성합니다.
+        response = HttpResponse(content_type='application/ms-excel')
+        response['Content-Disposition'] = 'attachment; filename="dev_qrcard_.xlsx"'
+        
+        # JSON 데이터를 pandas DataFrame으로 변환합니다.
+        # df = pd.read_json(df_json)
+        
+        # 새 워크북을 생성하고 기존의 'qrcard.xlsx' 파일을 로드합니다.
+        wb = openpyxl.Workbook()
+        
+        # S3에서 파일 가져오기
+        excel_file = get_s3_file('forms/qrcard.xlsx')
+
+        # openpyxl로 워크북 로드
+        qrcard = openpyxl.load_workbook(excel_file)
+        
+        # 각 행에 대해 새 워크시트를 생성하고 데이터를 채웁니다.
+        for development, order in development_and_orders:
+            order_no = order.order_no
+            order_info = order.order_information
+            ws = wb.create_sheet(str(order_no))
+            copy_sheet(qrcard['DEV'], ws)
+            # 워크시트에 데이터를 채웁니다.
+            
+            ws['A3'] = str(development.category)
+            #ws['F3'] = str(development.deadline)[2:]
+            ws['A4'] = order_info['item']
+            ws['A5'] = order_info['color']
+            ws['F5'] = order_info['pattern']
+            ws['A6'] = str(order_no)
+            ws['G6'] = order_info['base']  # Base
+            ws['A7'] = order_info['skin_resin']  # Base
+            ws['G7'] = order_info['binder_resin']  # Base
+            ws['D6'] = order_info['order_qty']  # order qty
+            ws['C9'] = str(development.title)  # subject
+            ws['C10'] = str(development.purpose)  # purpose
+            ws['C11'] = str(development.content)  # Remark
+
+            order_no.split('-')
+            
+            qr_str = f"!BSVPD!{order_no.split('-')[0]}!{order_no.split('-')[1]}!"
             qr_img = qrcode.make(qr_str).resize((160, 160))
             
             # QR 코드 이미지를 BytesIO 스트림에 저장합니다.
