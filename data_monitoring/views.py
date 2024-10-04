@@ -305,7 +305,7 @@ def input_inspection(request):
             if order['order_number'][:3] == 'SOV':
                 try:
                     sales_order = SalesOrder.objects.exclude(status=False).get(order_no=order['order_number'])
-                    last_phase = Inspection.objects.filter(production_plan__sales_order=sales_order).order_by('-create_date').first()
+                    last_phase = DryLine.objects.filter(production_plan__sales_order=sales_order).order_by('-create_date').first()
                     
                     if last_phase:
                         last_phase_plan = last_phase.production_plan
@@ -1061,6 +1061,7 @@ def inspection(request):
     
     # DryLine 단계의 quantity 합계 계산
     list_and_quantity = []
+    
     for inspection in list:
         sales_order = inspection.sales_order
         production_plan = inspection.production_plan
