@@ -1,0 +1,277 @@
+{% extends 'common/main.html' %}
+{% load forum_filters %}
+{% block content %}
+<div class="container my-3" data-development-id="{{ development.id }}">
+    <!-- message 표시 -->
+    {% if messages %}
+    <div class="alert alert-danger my-3" role="alert">
+    {% for message in messages %}
+        <strong>{{ message.tags }}</strong>
+        <ul><li>{{ message.message }}</li></ul>
+    {% endfor %}
+    </div>
+    {% endif %}
+    <!-- 내용 -->
+    <h2 class="border-bottom py-2">[DEV-{{ development.id }}] {{ development.title }}</h2>
+    <div class="card my-3">
+        <div class="card-body">
+            <div class="card-text">
+                <p><b>[Purpose]</b> {{ development.purpose }}</p>
+                <p><b>[Category]</b> {{ development.category }}</p>
+                <p><b>[Deadline]</b> {{ development.deadline }}</p>
+                <p><b>[Content]</b> {{ development.content|mark }}</p>
+            </div>
+            <h5 class="border-bottom py-2">Development Orders</h5>
+            
+            <!-- Dry 타입 아이템 -->
+            <h6 class="mt-4">Dry Items</h6>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>OrderNo</th>
+                        <th>Item</th>
+                        <th>Color</th>
+                        <th>Pattern</th>
+                        <th>Base</th>
+                        <th>Qty(M)</th>
+                        <th>Speed</th>
+                        <th>Skin Resin</th>
+                        <th>Binder Resin</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    {% if order.order_information.product_group == 'Dry' %}
+                    <tr>
+                        <td>{{ order.order_no }}</td>
+                        <td>{{ order.order_information.item }}</td>
+                        <td>{{ order.order_information.color }}</td>
+                        <td>{{ order.order_information.pattern }}</td>
+                        <td>{{ order.order_information.base }}</td>
+                        <td>{{ order.order_information.order_qty }}</td>
+                        <td>{{ order.order_information.speed }} M/min</td>
+                        <td>{{ order.order_information.skin_resin }}</td>
+                        <td>{{ order.order_information.binder_resin }}</td>
+                        <td></td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Wet 타입 아이템 -->
+            <h6 class="mt-4">Wet Items</h6>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>OrderNo</th>
+                        <th>Item</th>
+                        <th>Color</th>
+                        <th>Pattern</th>
+                        <th>Base</th>
+                        <th>Qty(M)</th>
+                        <th>Speed</th>
+                        <th>Dipping Resin</th>
+                        <th>Coating Resin</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    {% if order.order_information.product_group == 'Wet' %}
+                    <tr>
+                        <td>{{ order.order_no }}</td>
+                        <td>{{ order.order_information.item }}</td>
+                        <td>{{ order.order_information.color }}</td>
+                        <td>{{ order.order_information.pattern }}</td>
+                        <td>{{ order.order_information.base }}</td>
+                        <td>{{ order.order_information.order_qty }}</td>
+                        <td>{{ order.order_information.speed }} M/min</td>
+                        <td>{{ order.order_information.dipping_resin }}</td>
+                        <td>{{ order.order_information.coating_resin }}</td>
+                        <td></td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <button onclick="generateQRCode()" title="QR" style="background: none; border: none; cursor: pointer; margin: 0 10px;">
+                <i class="fas fa-qrcode"></i>
+            </button>
+            <div class="d-flex justify-content-end">
+                {% if development.modify_date %}
+                <div class="badge bg-light text-dark p-2 text-start mx-3">
+                    <div class="mb-2">modified at</div>
+                    <div>{{ development.modify_date }}</div>
+                </div>
+                {% endif %}
+                <div class="badge bg-light text-dark p-2 text-start">
+                    <div class="mb-2">{{ development.user.username }}</div>
+                    <div>{{ development.create_date }}</div>
+                </div>
+            </div>
+            <div class="my-3">
+                {% if request.user == development.developer %}
+                <a href="{% url 'production_management:development_modify' development.id  %}" 
+                    class="btn btn-sm btn-outline-secondary">Modify</a>
+                <a href="javascript:void(0)" class="delete btn btn-sm btn-outline-secondary"
+                    data-uri="{% url 'production_management:development_delete' development.id  %}">Delete</a>
+                {% if development.status == 'Progress' %}
+                <a href="javascript:void(0)" class="btn btn-sm btn-outline-success" onclick="updateStatus('{{ development.id }}', 'Complete')">Complete</a>
+                {% elif development.status == 'Complete' %}
+                <a href="javascript:void(0)" class="btn btn-sm btn-outline-warning" onclick="updateStatus('{{ development.id }}', 'Progress')">Re-Processing</a>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <!-- 코멘트 -->
+    <h5 class="border-bottom my-3 py-2">There are {{ development.development_comment_set.count }} comments.</h5>
+    {% for development_comment in development.development_comment_set.all %}
+    <a id="comment_{{ development_comment.id }}"></a>
+    <div class="card my-3">
+        <div class="card-body">
+            <div class="card-text">{{ development_comment.content|mark }}</div>
+            <div class="d-flex justify-content-end">
+                {% if development_comment.modify_date %}
+                <div class="badge bg-light text-dark p-2 text-start mx-3">
+                    <div class="mb-2">modified at</div>
+                    <div>{{ development_comment.modify_date }}</div>
+                </div>
+                {% endif %}
+                <div class="badge bg-light text-dark p-2 text-start">
+                    <div class="mb-2">{{ development_comment.user.username }}</div>
+                    <div>{{ development_comment.create_date }}</div>
+                </div>
+            </div>
+            <div class="my-3">
+                {% if request.user == development_comment.user %}
+                <a href="{% url 'production_management:development_comment_modify' development_comment.id %}" 
+                   class="btn btn-sm btn-outline-secondary">Modify</a>
+                <a href="#" class="delete btn btn-sm btn-outline-secondary"
+                   data-uri="{% url 'production_management:development_comment_delete' development_comment.id %}">Delete</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    <!-- 코멘트 등록 -->
+    <form action="{% url 'production_management:development_comment_create' development.id %}" method="post" enctype="multipart/form-data" class="my-3">
+        {% csrf_token %}
+        <!-- 오류표시 Start -->
+        {% include "form_errors.html" %}
+        <!-- 오류표시 End -->
+        <div class="mb-3">
+            <label for="content" class="form-label">Content</label>
+            <textarea {% if not user.is_authenticated %}disabled{% endif %}
+            name="content" id="content" class="form-control" rows="3"></textarea>
+        </div>
+        <input type="submit" value="Comment" class="btn btn-primary" {% if not user.is_authenticated %}disabled{% endif %}>
+    </form>
+</div>
+{% endblock %}
+{% block script %}
+<script type='text/javascript'>
+const delete_elements = document.getElementsByClassName("delete");
+Array.from(delete_elements).forEach(function(element) {
+    element.addEventListener('click', function() {
+        if(confirm("Are you sure you want to delete it?")) {
+            location.href = this.dataset.uri;
+        };
+    });
+});
+function generateQRCode() {
+    const container = document.querySelector('.container');  // 컨테이너 요소 선택
+    const developmentId = container.getAttribute('data-development-id');  // data-development-id 속성 값 가져오기
+    
+    const table = document.querySelector('.table');  // 주문 테이블 선택
+    const rows = table.querySelectorAll('tbody tr');  // 모든 행 선택
+    let orderNumbers = [];
+
+    rows.forEach(row => {
+        const orderNoCell = row.cells[0];  // 'Order No' 열이 첫 번째 열임
+        const orderNo = orderNoCell.textContent.trim();
+        orderNumbers.push(orderNo);  // 주문 번호를 배열에 추가
+    });
+
+    const csrftoken = getCookie('csrftoken');  // CSRF 토큰 가져오기
+    const payload = {
+        action: 'download_to_qrcard',
+        order_numbers: orderNumbers.join(',')  // 배열을 문자열로 변환하여 전송
+    };
+
+    $.ajax({
+        url: `/production_management/development/list/${developmentId}/`,  // URL 확인
+        type: 'POST',
+        headers: {'X-CSRFToken': csrftoken},
+        data: JSON.stringify(payload),
+        contentType: "application/json; charset=utf-8",
+        xhrFields: {
+            responseType: 'blob'  // 응답을 blob으로 받음
+        },
+        success: function(blob) {
+            if (blob instanceof Blob) {  // blob 객체인지 확인
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = "dev_qrcard_.xlsx"; // 다운로드 파일명 설정
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+            } else {
+                console.error("Received response is not a Blob object");
+                alert("Failed to download file. The response is not a valid Blob object.");
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error("Error:", error);
+            alert("Failed to download file.");
+        }
+    });
+}
+// CSRF 토큰을 쿠키에서 가져오는 함수
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function updateStatus(developmentId, newStatus) {
+    const csrftoken = getCookie('csrftoken');
+    const payload = {
+        status: newStatus
+    };
+
+    $.ajax({
+        url: `/production_management/development/update_status/${developmentId}/`,
+        type: 'POST',
+        headers: {'X-CSRFToken': csrftoken},
+        data: JSON.stringify(payload),
+        contentType: "application/json; charset=utf-8",
+        success: function(response) {
+            if (response.success) {
+                location.reload();
+            } else {
+                alert("Failed to update status.");
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error("Error:", error);
+            alert("Failed to update status.");
+        }
+    });
+}
+</script>
+{% endblock %}

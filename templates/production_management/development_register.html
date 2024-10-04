@@ -1,0 +1,161 @@
+{% extends 'common/main.html' %}
+{% block content %}
+<div class="container">
+    <h5 class="my-3 border-bottom pb-2">Development Register</h5>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <!-- 오류표시 Start -->
+        {% include "common/form_errors.html" %}
+        <!-- 오류표시 End -->
+        <div class="mb-3">
+            <label for="subject" class="form-label">Title</label>
+            <input type="text" class="form-control" name="title" id="title"
+                   value="{{ form.title.value|default_if_none:'' }}">
+        </div>
+        <div class="row mb-3">
+            <div class="col-3">
+                <label for="category" class="form-label">Category</label>
+                <select class="form-control" name="category" id="category">
+                    <option value="NewMaterial" {% if form.category.value == "NewMaterial" %}selected{% endif %}>New Material</option>
+                    <option value="Improvement" {% if form.category.value == "Improvement" %}selected{% endif %}>Improvement</option>
+                    <option value="Sample" {% if form.category.value == "Sample" %}selected{% endif %}>Sample</option>
+                </select>
+            </div>
+            <div class="col-3">
+                <label for="deadline" class="form-label">Deadline</label>
+                <input type="date" class="form-control" name="deadline" id="deadline" value="{{ form.deadline.value|date:"Y-m-d" }}">
+            </div>
+            <div class="col-6">
+                <label for="purpose" class="form-label">Purpose</label>
+                <input type="text" class="form-control" name="purpose" id="purpose" value="{{ form.purpose.value|default_if_none:'' }}">
+            </div>
+        </div>
+        <!-- Item, Color, Pattern 행을 담을 컨테이너 -->
+        <div id="item-container">
+            {% for order in orders %}
+            <div class="item-row mb-3">
+                <div class="row mb-3">
+                    <div class="col-3">
+                        <label for="item_name" class="form-label">Item Name</label>
+                        <input type="text" class="form-control" name="item_name[]" id="item_name" value="{{ order.item_name }}">
+                    </div>
+                    <div class="col-2">
+                        <label for="color_code" class="form-label">Color Code</label>
+                        <input type="text" class="form-control" name="color_code[]" id="color_code" value="{{ order.color_code }}">
+                    </div>
+                    <div class="col-2">
+                        <label for="pattern" class="form-label">Pattern</label>
+                        <input type="text" class="form-control" name="pattern[]" id="pattern" value="{{ order.pattern }}">
+                    </div>
+                    <div class="col-2">
+                        <label for="spec" class="form-label">Spec</label>
+                        <input type="text" class="form-control" name="spec[]" id="spec" value="{{ order.spec }}">
+                    </div>
+                    <div class="col-1">
+                        <label for="order_qty" class="form-label">Order Qty</label>
+                        <input type="text" class="form-control" name="order_qty[]" id="order_qty" value="{{ order.order_qty }}">
+                    </div>
+                    <div class="col-2">
+                        <label for="product_group" class="form-label">Product Group</label>
+                        <input type="text" class="form-control" name="product_group[]" id="product_group" value="{{ order.product_group }}" readonly>
+                    </div>
+                    <div class="col-2 d-flex align-items-end">
+                        <button type="button" class="btn btn-danger btn-sm del-item ms-2">Del</button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <!-- Add 버튼 -->
+        <div class="mb-3">
+            <button type="button" class="btn btn-secondary" id="add-item">Add Item</button>
+            <select id="item-type" class="form-select" style="display: inline-block; width: auto; margin-left: 10px;">
+                <option value="dry">Dry</option>
+                <option value="wet">Wet</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="content" class="form-label">Remark</label>
+            <textarea class="form-control" name="content" id="content" rows="10">{{ form.content.value|default_if_none:'' }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Save</button>
+    </form>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 필드 정보를 배열로 정의
+        var fields = [
+            { name: 'item', col: '3' },
+            { name: 'color', col: '2' },
+            { name: 'pattern', col: '2' },
+            { name: 'spec', col: '1' },
+            { name: 'order_qty', col: '1' },
+            { name: 'speed', col: '1' },
+            { name: 'product_group', col: '1', readonly: true }
+        ];
+
+        function addItem() {
+            // 새로운 행을 담을 div 생성
+            var newItemRow = document.createElement('div');
+            newItemRow.className = 'item-row mb-3';
+
+            var newRow = document.createElement('div');
+            newRow.className = 'row mb-3';
+            
+            // 각 필드를 생성하여 행에 추가
+            fields.forEach(function(field) {
+                var colDiv = document.createElement('div');
+                colDiv.className = 'col-' + field.col;
+                
+                var label = document.createElement('label');
+                label.className = 'form-label';
+                label.innerHTML = field.name.charAt(0).toUpperCase() + field.name.slice(1);
+                label.htmlFor = field.name;
+                
+                var input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'form-control';
+                input.name = field.name + '[]';
+                input.id = field.name;
+
+                if (field.name === 'product_group') {
+                    var itemType = document.getElementById('item-type').value;
+                    input.value = itemType.charAt(0).toUpperCase() + itemType.slice(1);
+                    input.readOnly = true;
+                }
+
+                if (field.readonly) {
+                    input.readOnly = true;
+                }
+                
+                colDiv.appendChild(label);
+                colDiv.appendChild(input);
+                newRow.appendChild(colDiv);
+            });
+
+            // Del 버튼 생성 및 추가
+            var delCol = document.createElement('div');
+            delCol.className = 'col-1 d-flex align-items-end';
+            var delButton = document.createElement('button');
+            delButton.type = 'button';
+            delButton.className = 'btn btn-danger btn-sm del-item';
+            delButton.innerHTML = 'Del';
+            delCol.appendChild(delButton);
+            newRow.appendChild(delCol);
+
+            newItemRow.appendChild(newRow);
+
+            // item-container에 새로운 행을 추가
+            document.getElementById('item-container').appendChild(newItemRow);
+            
+            // 삭제 버튼에 이벤트 리스너 추가
+            delButton.addEventListener('click', function() {
+                newItemRow.remove();
+            });
+        }
+
+        // Add 버튼 클릭 이벤트에 addItem 함수 연결
+        document.getElementById('add-item').addEventListener('click', addItem);
+    });
+</script>
+{% endblock %}

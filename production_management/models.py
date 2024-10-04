@@ -92,7 +92,15 @@ class Development(models.Model):
 class DevelopmentOrder(models.Model):
     development = models.ForeignKey(Development, on_delete=models.CASCADE)
     order_no = models.CharField(max_length=14, unique=True, editable=False)
-    order_information = models.JSONField()
+    item_name = models.CharField(max_length=50)
+    color_code = models.CharField(max_length=50)
+    pattern = models.CharField(max_length=50)
+    base_color = models.CharField(max_length=10, null=True)
+    spec = models.CharField(max_length=50)
+    order_qty = models.IntegerField()
+    qty_unit = models.CharField(max_length=10)
+    order_remark = models.TextField(null=True)
+    product_group = models.CharField(max_length=10)
     status = models.BooleanField(null=True)  # 등록 시 null, 완료 시 True, 삭제 시 false
     create_date = models.DateTimeField(default=timezone.now)
     modify_date = models.DateTimeField(auto_now=True)

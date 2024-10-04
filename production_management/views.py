@@ -1,11 +1,36 @@
-from django.shortcuts import render
-from django.http import JsonResponse
+from django.shortcuts import render, get_object_or_404, redirect, resolve_url
+from django.http import JsonResponse, HttpResponseNotAllowed
 import pandas as pd
-from .tasks import ordersheet_upload_celery, dryplan_convert_to_qrcard
-from .models import SalesOrderUploadLog
+from .tasks import ordersheet_upload_celery, dryplan_convert_to_qrcard, dev_order_convert_to_qrcard
+from .models import SalesOrderUploadLog, Development, DevelopmentOrder, DevelopmentComment
 import hashlib
 from django.utils import timezone
 from datetime import timedelta
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.contrib import messages
+from .forms import DevelopmentForm, DevelopmentCommentForm
+from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
+import json
+
+import boto3
+from botocore.exceptions import ClientError
+from botocore.config import Config
+
+# 레포지토리 루트 설정
+REPOSITORY_ROOT = 'development/'  # S3 버킷 내의 레포지토리 경로
+
+# S3 클라이언트 설정
+s3_config = Config(
+    region_name=settings.AWS_S3_REGION_NAME,
+    signature_version='s3v4',
+    retries={
+        'max_attempts': 10,
+        'mode': 'standard'
+    }
+)
+s3 = boto3.client('s3', config=s3_config)
 
 def order_sheet_upload(request):
     thirty_days_ago = timezone.now() - timedelta(days=30)
@@ -98,3 +123,328 @@ def dryplan_import(request):
             return JsonResponse({'error': str(e)})
 
     return render(request, 'production_management/dryplan_import.html')
+
+@login_required
+def development_list(request):
+    kw = request.GET.get('kw', '')
+    field = request.GET.get('field', 'title')
+    page = request.GET.get('page', '1')
+
+    if field == 'dev_no':
+        development_list = Development.objects.filter(id__icontains=kw)
+    elif field == 'purpose':
+        development_list = Development.objects.filter(purpose__icontains=kw)
+    elif field == 'title':
+        development_list = Development.objects.filter(title__icontains=kw)
+    elif field == 'developer':
+        development_list = Development.objects.filter(developer__username__icontains=kw)
+    else:
+        development_list = Development.objects.all()
+
+    # id 역순으로 정렬
+    development_list = development_list.order_by('-id')
+
+    paginator = Paginator(development_list, 10)  # 페이지당 10개씩 보여주기
+    page_obj = paginator.get_page(page)
+    context = {'development_list': page_obj, 'page': page, 'kw': kw, 'field': field}
+    return render(request, 'production_management/development.html', context)
+
+@login_required
+def development_detail(request, development_id):
+    if request.method == 'POST':
+        # request.body가 비어있는지 확인
+        if not request.body:
+            return JsonResponse({'error': 'Empty request body'}, status=400)
+        
+        # JSON 데이터 파싱
+        try:
+            data = json.loads(request.body)
+            action = data.get('action')
+            if action == 'download_to_qrcard':
+                order_numbers = data.get('order_numbers').split(',')
+                development = Development.objects.get(id=development_id)
+                development_orders = DevelopmentOrder.objects.filter(order_no__in=order_numbers)
+                development_and_orders = zip([development] * len(development_orders), development_orders)
+                response = dev_order_convert_to_qrcard(development_and_orders)
+                
+                return response
+        except:
+            pass
+    
+    development = get_object_or_404(Development, pk=development_id)
+    
+    # DevelopmentOrder에서 아이템, 컬러, 패턴 정보 가져오기
+    orders = DevelopmentOrder.objects.filter(development=development)
+    
+    context = {
+        'development': development,
+        'orders': orders
+    }
+    return render(request, 'production_management/development_detail.html', context)
+
+@login_required
+def development_register(request):
+    if request.method == 'POST':
+        form = DevelopmentForm(request.POST)
+        if form.is_valid():
+            development = form.save(commit=False)
+            development.developer = request.user  # developer 속성에 로그인 계정 저장
+            development.content = request.POST['content']
+
+            development.save()
+
+            # S3 버킷에 폴더 생성
+            folder_name = f"{REPOSITORY_ROOT}{development.id}/"
+            try:
+                s3.put_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=folder_name)
+            except ClientError as e:
+                print(f"Error creating folder: {e}")
+            
+            items = request.POST.getlist('item[]')
+            colors = request.POST.getlist('color[]')
+            patterns = request.POST.getlist('pattern[]')
+            order_qtys = request.POST.getlist('order_qty[]')
+            speeds = request.POST.getlist('speed[]')
+            product_groups = request.POST.getlist('product_group[]')
+            bases = request.POST.getlist('base[]')
+            skin_resins = request.POST.getlist('skin_resin[]')
+            binder_resins = request.POST.getlist('binder_resin[]')
+            dipping_resins = request.POST.getlist('dipping_resin[]')
+            coating_resins = request.POST.getlist('coating_resin[]')
+            
+            # 각 정보를 하나의 배열로 묶기
+            combined_info = zip(items, colors, patterns, order_qtys, speeds, product_groups, bases, skin_resins, binder_resins, dipping_resins, coating_resins)
+            
+            for info in combined_info:
+                item, color, pattern, order_qty, speed, product_group, base, skin_resin, binder_resin, dipping_resin, coating_resin = info
+                order_information = {
+                    "developer": f"{request.user}",
+                    "title": f"{request.POST['title']}",
+                    "category": f"{request.POST['category']}",
+                    "deadline": f"{request.POST['deadline']}",
+                    "purpose": f"{request.POST['purpose']}",
+                    "item": f"{item}",
+                    "color": f"{color}",
+                    "pattern": f"{pattern}",
+                    "order_qty": f"{order_qty}",
+                    "speed": f"{speed}",
+                    "product_group": f"{product_group}",
+                    "base": f"{base}",
+                    "skin_resin": f"{skin_resin}" if f"{product_group}" == 'Dry' else None,
+                    "binder_resin": f"{binder_resin}" if f"{product_group}" == 'Dry' else None,
+                    "dipping_resin": f"{dipping_resin}" if f"{product_group}" == 'Wet' else None,
+                    "coating_resin": f"{coating_resin}" if f"{product_group}" == 'Wet' else None,
+                    "content": f"{request.POST['content']}"
+                }
+                order = DevelopmentOrder(
+                    development=development,
+                    order_information=order_information
+                    )
+                order.save()            
+            
+            return redirect('production_management:development_list')
+        else:
+            # Form 데이터가 유효하지 않으면, 에러 메시지와 함께 다시 form을 보여줍니다.
+            return render(request, 'production_management/development_register.html', {'form': form})
+    else:
+        form = DevelopmentForm()  # GET 요청 시 빈 폼을 생성
+        return render(request, 'production_management/development_register.html', {'form': form})
+
+@login_required
+def upload_file(request, development_id):
+    if request.method == 'POST' and request.FILES['file']:
+        file = request.FILES['file']
+        development = get_object_or_404(Development, pk=development_id)
+        
+        # S3에 파일 업로드
+        file_key = f"{REPOSITORY_ROOT}{development.id}/{file.name}"
+        try:
+            s3.upload_fileobj(file, settings.AWS_STORAGE_BUCKET_NAME, file_key)
+            messages.success(request, 'This file is uploaded')
+        except ClientError as e:
+            messages.error(request, f'This file is not uploaded: {e}')
+        
+        return redirect('production_management:development_detail', development_id=development.id)
+
+@login_required
+def download_file(request, development_id, file_name):
+    development = get_object_or_404(Development, pk=development_id)
+    file_key = f"{REPOSITORY_ROOT}{development.id}/{file_name}"
+    
+    try:
+        # S3에서 파일 다운로드 URL 생성
+        url = s3.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': settings.AWS_STORAGE_BUCKET_NAME, 'Key': file_key},
+            ExpiresIn=300  # URL 유효 시간 (초)
+        )
+        return redirect(url)
+    except ClientError as e:
+        messages.error(request, f'This file is not downloaded: {e}')
+        return redirect('production_management:development_detail', development_id=development.id)
+
+@login_required
+def list_files(request, development_id):
+    development = get_object_or_404(Development, pk=development_id)
+    folder_name = f"{REPOSITORY_ROOT}{development.id}/"
+    
+    try:
+        response = s3.list_objects_v2(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Prefix=folder_name)
+        files = [obj['Key'].split('/')[-1] for obj in response.get('Contents', []) if obj['Key'] != folder_name]
+        
+        context = {
+            'development': development,
+            'files': files
+        }
+        return render(request, 'production_management/development_files.html', context)
+    except ClientError as e:
+        messages.error(request, f'This file list is not found: {e}')
+        return redirect('production_management:development_detail', development_id=development.id)
+
+@login_required
+def development_modify(request, development_id):
+    development = get_object_or_404(Development, pk=development_id)
+    if request.user != development.developer:
+        messages.error(request, 'You do not have permission to edit')
+        return redirect('production_management:development_detail', development_id=development.id)
+    
+    # orders 변수를 초기화
+    orders = DevelopmentOrder.objects.filter(development=development)
+    
+    if request.method == "POST":
+        form = DevelopmentForm(request.POST, instance=development)
+        if form.is_valid():
+            development = form.save(commit=False)
+            development.save()
+
+            # 기존 order 삭제 및 새로운 order 저장
+            DevelopmentOrder.objects.filter(development=development).delete()
+            
+            items = request.POST.getlist("item[]")
+            colors = request.POST.getlist("color[]")
+            patterns = request.POST.getlist("pattern[]")
+            order_qtys = request.POST.getlist("order_qty[]")
+            speeds = request.POST.getlist("speed[]")
+            bases = request.POST.getlist("base[]")
+            skin_resins = request.POST.getlist("skin_resin[]")
+            skin_temps = request.POST.getlist("skin_temp[]")
+            binder_resins = request.POST.getlist("binder_resin[]")
+            binder_temps = request.POST.getlist("binder_temp[]")
+            
+            # 각 정보를 하나의 배열로 묶기
+            combined_info = zip(items, colors, patterns, order_qtys, speeds, bases, skin_resins, skin_temps, binder_resins, binder_temps)
+            
+            for info in combined_info:
+                item, color, pattern, order_qty, speed, base, skin_resin, skin_temp, binder_resin, binder_temp = info
+                order_information = {
+                    "developer": f"{request.user}",
+                    "title": f"{request.POST['title']}",
+                    "category": f"{request.POST['category']}",
+                    "deadline": f"{request.POST['deadline']}",
+                    "purpose": f"{request.POST['purpose']}",
+                    "item": f"{item}",
+                    "color": f"{color}",
+                    "pattern": f"{pattern}",
+                    "order_qty": f"{order_qty}",
+                    "speed": f"{speed}",
+                    "base": f"{base}",
+                    "skin_resin": f"{skin_resin}",
+                    "skin_temp": f"{skin_temp}",
+                    "binder_resin": f"{binder_resin}",
+                    "binder_temp": f"{binder_temp}",
+                    "content": f"{request.POST['content']}"
+                }
+                order = DevelopmentOrder(
+                    development=development,
+                    order_information=order_information
+                )
+                order.save()
+
+            return redirect('production_management:development_detail', development_id=development.id)
+    else:
+        form = DevelopmentForm(instance=development)
+    
+    context = {
+        'development':development,
+        'form': form,
+        'orders': orders,
+        'purpose': development.purpose,
+        'remark': development.content,
+    }
+    return render(request, 'production_management/development_register.html', context)
+
+@login_required
+def development_delete(request, development_id):
+    development = get_object_or_404(Development, pk=development_id)
+    if request.user != development.developer:
+        messages.error(request, 'You do not have permission to delete')
+        return redirect('production_management:development_detail', development_id=development.id)
+    development.delete()
+    return redirect('production_management:development_list')
+
+@login_required
+def development_comment_create(request, development_id):
+    development = get_object_or_404(Development, pk=development_id)
+    if request.method == "POST":
+        form = DevelopmentCommentForm(request.POST)
+        if form.is_valid():
+            development_comment = form.save(commit=False)
+            development_comment.user = request.user  # user 속성에 로그인 계정 저장
+            development_comment.development = development
+            
+            development_comment.save()
+            
+            return redirect('{}#comment_{}'.format(
+                resolve_url('production_management:development_detail', development_id=development_comment.development.id), development_comment.id))
+    else:
+        return HttpResponseNotAllowed('Only POST is possible.')
+    context = {'development': development, 'form': form}
+    return render(request, 'production_management/development_detail.html', context)
+
+@login_required
+def development_comment_modify(request, development_comment_id):
+    development_comment = get_object_or_404(DevelopmentComment, pk=development_comment_id)
+    if request.user != development_comment.user:
+        messages.error(request, 'This is not your comment')
+        return redirect('production_management:development_detail', development_id=development_comment.development.id)
+    if request.method == "POST":
+        form = DevelopmentCommentForm(request.POST, instance=development_comment)
+        if form.is_valid():
+            development_comment = form.save(commit=False)
+            
+            development_comment.save()
+            return redirect('{}#comment_{}'.format(
+                resolve_url('production_management:development_detail', development_id=development_comment.development.id), development_comment.id))
+    else:
+        form = DevelopmentCommentForm(instance=development_comment)
+    context = {'development_comment': development_comment, 'form': form}
+    return render(request, 'production_management/comment.html', context)
+
+@login_required
+def development_comment_delete(request, development_comment_id):
+    development_comment = get_object_or_404(DevelopmentComment, pk=development_comment_id)
+    if request.user != development_comment.user:
+        messages.error(request, 'This is not your comment')
+    else:
+        development_comment.delete()
+    return redirect('production_management:development_detail', development_id=development_comment.development.id)
+
+@csrf_exempt
+def update_status(request, development_id):
+    if request.method == 'POST':
+        try:
+            development = Development.objects.get(id=development_id)
+            if request.user == development.author:
+                data = json.loads(request.body)
+                new_status = data.get('status')
+                if new_status in ['Progress', 'Complete']:
+                    development.status = new_status
+                    development.save()
+                    return JsonResponse({'success': True})
+                else:
+                    return JsonResponse({'success': False, 'error': 'Invalid status'})
+            else:
+                return JsonResponse({'success': False, 'error': 'Unauthorized'})
+        except Development.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Development not found'})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})

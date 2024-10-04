@@ -1,0 +1,151 @@
+{% extends 'common/main.html' %}
+{% load i18n %}
+{% load forum_filters %}
+{% block content %}
+<div class="forum-container my-3" style="margin:15px;">
+    <div class="row my-3">
+        <div class="col-6">
+            <a href="{% url 'production_management:development_register' %}" class="btn btn-primary">Register</a>
+        </div>
+        <div class="col-6">
+            <div class="input-group">
+                <select id="search_field" class="form-select" style="width: 150px; margin-right: 10px;">
+                    <option value="dev_no">DevNo</option>
+                    <option value="purpose">Purpose</option>
+                    <option value="subject">Subject</option>
+                    <option value="author">Author</option>
+                </select>
+                <input type="text" id="search_kw" class="form-control" value="{{ kw|default_if_none:'' }}">
+                <div class="input-group-append">
+                    <button class="btn btn-outline-secondary" type="button" id="btn_search">Search</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <table class="table table-report">
+        <thead>
+        <tr class="text-center table-dark">
+            <th>No</th>
+            <th>Dev.No</th>            
+            <th>Status</th> 
+            <th>Category</th>
+            <th>Purpose</th>
+            <th>Subject</th>
+            <th>Author</th>
+            <th>Date time</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% if development_list %}
+        {% for development in development_list %}
+        <tr class="text-center">
+            <td>
+                <!-- 번호 = 전체건수 - 시작인덱스 - 현재인덱스 + 1 -->
+                {{ development_list.paginator.count|sub:development_list.start_index|sub:forloop.counter0|add:1 }}
+            </td>
+            <td>Dev-{{ development.id }}</td>
+            {% if development.status == 'Complete' %}
+            <td>
+                <span style="background-color: #3CB371; color: black; padding: 5px 10px; border-radius: 5px;">{{ development.status }}</span>
+            </td>
+            {% else %}
+            <td>
+                <span style="background-color: #FFC107; color: black; padding: 5px 10px; border-radius: 5px;">{{ development.status }}</span>
+            </td>
+            {% endif %}
+            <td>{{ development.category }}</td>
+            <td>{{ development.purpose }}</td>
+            <td class="text-start">
+                <a href="{% url 'production_management:development_detail' development.id %}">{{ development.title }}</a>
+                {% if development.development_comment_set.count > 0 %}
+                <span class="text-danger small mx-2">{{ development.development_comment_set.count }}</span>
+                {% endif %}
+            </td>
+            <td>{{ development.developer.username }}</td>  <!-- 글쓴이 추가 -->
+            <td>{{ development.create_date }}</td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr>
+            <td colspan="4">There is no status.</td>
+        </tr>
+        {% endif %}
+        </tbody>
+    </table>
+    <!-- 페이징처리 시작 -->
+    <ul class="pagination justify-content-center">
+        <!-- 이전페이지 -->
+        {% if development_list.has_previous %}
+        <li class="page-item">
+            <a class="page-link" data-page="{{ development_list.previous_page_number }}"
+                href="javascript:void(0)">Prev</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <a class="page-link" tabindex="-1" aria-disabled="true" href="#">Prev</a>
+        </li>
+        {% endif %}
+        <!-- 페이지리스트 -->
+        {% for page_number in development_list.paginator.page_range %}
+        {% if page_number >= development_list.number|add:-5 and page_number <= development_list.number|add:5 %}
+        {% if page_number == development_list.number %}
+        <li class="page-item active" aria-current="page">
+            <a class="page-link" data-page="{{ page_number }}"
+                href="javascript:void(0)">{{ page_number }}</a>
+        </li>
+        {% else %}
+        <li class="page-item">
+            <a class="page-link" data-page="{{ page_number }}"
+                href="javascript:void(0)">{{ page_number }}</a>
+        </li>
+        {% endif %}
+        {% endif %}
+        {% endfor %}
+        <!-- 다음페이지 -->
+        {% if development_list.has_next %}
+        <li class="page-item">
+            <a class="page-link" data-page="{{ development_list.next_page_number }}"
+                href="javascript:void(0)">다음</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <a class="page-link" tabindex="-1" aria-disabled="true" href="#">Next</a>
+        </li>
+        {% endif %}
+    </ul>
+    <!-- 페이징처리 끝 -->
+</div>
+<form id="searchForm" method="get" action="{% url 'production_management:development_list' %}">
+    <input type="hidden" id="kw" name="kw" value="{{ kw|default_if_none:'' }}">
+    <input type="hidden" id="field" name="field" value="{{ field|default_if_none:'title' }}">
+    <input type="hidden" id="page" name="page" value="{{ page }}">
+</form>
+{% endblock %}
+{% block script %}
+<script type='text/javascript'>
+const page_elements = document.getElementsByClassName("page-link");
+Array.from(page_elements).forEach(function(element) {
+    element.addEventListener('click', function() {
+        document.getElementById('page').value = this.dataset.page;
+        document.getElementById('searchForm').submit();
+    });
+});
+const btn_search = document.getElementById("btn_search");
+const search_input = document.getElementById("search_kw");
+const search_field = document.getElementById("search_field");
+
+btn_search.addEventListener('click', function() {
+    document.getElementById('kw').value = search_input.value;
+    document.getElementById('field').value = search_field.value;
+    document.getElementById('page').value = 1;  // 검색버튼을 클릭할 경우 1페이지부터 조회한다.
+    document.getElementById('searchForm').submit();
+});
+
+search_input.addEventListener('keydown', function(event) {
+    if (event.key === "Enter") {
+        event.preventDefault();  // 기본 이벤트를 취소한다. (엔터로 인한 폼 제출 방지)
+        btn_search.click();  // Search 버튼을 프로그래매틱하게 클릭한다.
+    }
+});
+</script>
+{% endblock %}
