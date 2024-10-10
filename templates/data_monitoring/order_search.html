@@ -228,6 +228,7 @@
             checkbox.onclick = filterTable;
             label.appendChild(checkbox);
             label.appendChild(document.createTextNode(` ${value}`));
+            label.style.color = 'black'; // 필터 텍스트 색상을 검정색으로 설정
             filterOptions.appendChild(label);
         });
     }
