@@ -14,9 +14,8 @@ urlpatterns = [
     path('development/modify/<int:development_id>/', views.development_modify, name='development_modify'),
     path('development/delete/<int:development_id>/', views.development_delete, name='development_delete'),
 
-    path('development/<int:development_id>/upload/', views.upload_file, name='upload_file'),
-    path('development/<int:development_id>/download/<str:file_name>/', views.download_file, name='download_file'),
-    path('development/<int:development_id>/files/', views.list_files, name='list_files'),
+    path('development/<int:development_id>/upload/', views.upload_development_file, name='upload_development_file'),
+    path('development/<int:development_id>/delete/<str:file_name>/', views.delete_development_file, name='delete_development_file'),
 
     path('development_comment/create/<int:development_id>/', views.development_comment_create, name='development_comment_create'),
     path('development_comment/modify/<int:development_comment_id>/', views.development_comment_modify, name='development_comment_modify'),

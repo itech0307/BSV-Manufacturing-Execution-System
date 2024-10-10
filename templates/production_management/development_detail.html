@@ -80,6 +80,52 @@
             </div>
         </div>
     </div>
+
+    <!-- 파일 목록 및 업로드 섹션 추가 -->
+    <div class="card my-3">
+        <div class="card-body">
+            <!-- 파일 업로드 폼 -->
+            <form action="{% url 'production_management:upload_development_file' development.id %}" method="post" enctype="multipart/form-data" class="mb-3">
+                {% csrf_token %}
+                <div class="input-group">
+                    <input type="file" name="file" class="form-control" required>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </div>
+            </form>
+            
+            <!-- 파일 목록 -->
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>File Name</th>
+                        <th>Size</th>
+                        <th>Last Modified</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in files %}
+                    <tr>
+                        <td>{{ file.name }}</td>
+                        <td>{{ file.size|filesizeformat }}</td>
+                        <td>{{ file.last_modified|date:"Y-m-d H:i" }}</td>
+                        <td>
+                            <a href="{{ file.url }}" class="btn btn-sm btn-info" target="_blank">Download</a>
+                            <a href="{% url 'production_management:delete_development_file' development.id file.name %}" 
+                               class="btn btn-sm btn-danger" 
+                               onclick="return confirm('Are you sure you want to delete this file?');">Delete</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">No files found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <!-- 코멘트 -->
     <h5 class="border-bottom my-3 py-2">There are {{ development.development_comment_set.count }} comments.</h5>
     {% for development_comment in development.development_comment_set.all %}

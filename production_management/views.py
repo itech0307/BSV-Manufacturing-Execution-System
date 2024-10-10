@@ -149,6 +149,8 @@ def development_list(request):
     context = {'development_list': page_obj, 'page': page, 'kw': kw, 'field': field}
     return render(request, 'production_management/development.html', context)
 
+DEVELOPMENT_ROOT = 'development/'
+
 @login_required
 def development_detail(request, development_id):
     if request.method == 'POST':
@@ -175,10 +177,33 @@ def development_detail(request, development_id):
     
     # DevelopmentOrder에서 아이템, 컬러, 패턴 정보 가져오기
     orders = DevelopmentOrder.objects.filter(development=development)
+
+    # 파일 목록 가져오기
+    path = f"{DEVELOPMENT_ROOT}{development_id}/"
+    files = []
+    try:
+        response = s3.list_objects_v2(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Prefix=path, Delimiter='/')
+        if 'Contents' in response:
+            for obj in response['Contents']:
+                if obj['Key'] != path:  # 현재 디렉토리 자체는 제외
+                    file_name = obj['Key'][len(path):]
+                    url = s3.generate_presigned_url('get_object',
+                                                    Params={'Bucket': settings.AWS_STORAGE_BUCKET_NAME, 'Key': obj['Key']},
+                                                    ExpiresIn=3600)
+                    files.append({
+                        'name': file_name,
+                        'size': obj['Size'],
+                        'last_modified': obj['LastModified'],
+                        'url': url
+                    })
+    except ClientError as e:
+        # 에러 처리 (예: 로그 기록)
+        print(f"Error fetching files: {str(e)}")
     
     context = {
         'development': development,
-        'orders': orders
+        'orders': orders,
+        'files': files,
     }
     return render(request, 'production_management/development_detail.html', context)
 
@@ -233,57 +258,6 @@ def development_register(request):
     else:
         form = DevelopmentForm()  # GET 요청 시 빈 폼을 생성
         return render(request, 'production_management/development_register.html', {'form': form})
-
-@login_required
-def upload_file(request, development_id):
-    if request.method == 'POST' and request.FILES['file']:
-        file = request.FILES['file']
-        development = get_object_or_404(Development, pk=development_id)
-        
-        # S3에 파일 업로드
-        file_key = f"{REPOSITORY_ROOT}{development.id}/{file.name}"
-        try:
-            s3.upload_fileobj(file, settings.AWS_STORAGE_BUCKET_NAME, file_key)
-            messages.success(request, 'This file is uploaded')
-        except ClientError as e:
-            messages.error(request, f'This file is not uploaded: {e}')
-        
-        return redirect('production_management:development_detail', development_id=development.id)
-
-@login_required
-def download_file(request, development_id, file_name):
-    development = get_object_or_404(Development, pk=development_id)
-    file_key = f"{REPOSITORY_ROOT}{development.id}/{file_name}"
-    
-    try:
-        # S3에서 파일 다운로드 URL 생성
-        url = s3.generate_presigned_url(
-            'get_object',
-            Params={'Bucket': settings.AWS_STORAGE_BUCKET_NAME, 'Key': file_key},
-            ExpiresIn=300  # URL 유효 시간 (초)
-        )
-        return redirect(url)
-    except ClientError as e:
-        messages.error(request, f'This file is not downloaded: {e}')
-        return redirect('production_management:development_detail', development_id=development.id)
-
-@login_required
-def list_files(request, development_id):
-    development = get_object_or_404(Development, pk=development_id)
-    folder_name = f"{REPOSITORY_ROOT}{development.id}/"
-    
-    try:
-        response = s3.list_objects_v2(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Prefix=folder_name)
-        files = [obj['Key'].split('/')[-1] for obj in response.get('Contents', []) if obj['Key'] != folder_name]
-        
-        context = {
-            'development': development,
-            'files': files
-        }
-        return render(request, 'production_management/development_files.html', context)
-    except ClientError as e:
-        messages.error(request, f'This file list is not found: {e}')
-        return redirect('production_management:development_detail', development_id=development.id)
 
 @login_required
 def development_modify(request, development_id):
@@ -432,3 +406,34 @@ def update_status(request, development_id):
         except Development.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Development not found'})
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@login_required
+def upload_development_file(request, development_id):
+    if request.method == 'POST' and request.FILES['file']:
+        file = request.FILES['file']
+        path = f"{DEVELOPMENT_ROOT}{development_id}/{file.name}"
+        
+        try:
+            s3.upload_fileobj(
+                file, 
+                settings.AWS_STORAGE_BUCKET_NAME, 
+                path,
+                ExtraArgs={
+                    'Metadata': {'uploader': request.user.username}
+                }
+            )
+        except ClientError as e:
+            return render(request, 'common/error.html', {'error': str(e)})
+        
+    return redirect('production_management:development_detail', development_id=development_id)
+
+@login_required
+def delete_development_file(request, development_id, file_name):
+    path = f"{DEVELOPMENT_ROOT}{development_id}/{file_name}"
+    
+    try:
+        s3.delete_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=path)
+    except ClientError as e:
+        return render(request, 'common/error.html', {'error': str(e)})
+    
+    return redirect('production_management:development_detail', development_id=development_id)
