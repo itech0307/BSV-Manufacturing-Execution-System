@@ -34,7 +34,7 @@
         <div id="item-container">
             {% for order in orders %}
             <div class="item-row mb-3">
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-3">
                         <label for="item_name" class="form-label">Item Name</label>
                         <input type="text" class="form-control" name="item_name[]" id="item_name" value="{{ order.item_name }}">
@@ -58,6 +58,12 @@
                     <div class="col-2">
                         <label for="product_group" class="form-label">Product Group</label>
                         <input type="text" class="form-control" name="product_group[]" id="product_group" value="{{ order.product_group }}" readonly>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-10">
+                        <label for="order_remark" class="form-label">Order Remark</label>
+                        <input type="text" class="form-control" name="order_remark[]" id="order_remark" value="{{ order.order_remark }}">
                     </div>
                     <div class="col-2 d-flex align-items-end">
                         <button type="button" class="btn btn-danger btn-sm del-item ms-2">Del</button>
@@ -85,13 +91,15 @@
     document.addEventListener('DOMContentLoaded', function() {
         // 필드 정보를 배열로 정의
         var fields = [
-            { name: 'item', col: '3' },
-            { name: 'color', col: '2' },
+            { name: 'item_name', col: '3' },
+            { name: 'color_code', col: '2' },
             { name: 'pattern', col: '2' },
-            { name: 'spec', col: '1' },
+            { name: 'spec', col: '2' },
             { name: 'order_qty', col: '1' },
-            { name: 'speed', col: '1' },
-            { name: 'product_group', col: '1', readonly: true }
+            { name: 'product_group', col: '2', readonly: true }
+        ];
+        var fields2 = [
+            { name: 'order_remark', col: '10' },
         ];
 
         function addItem() {
@@ -133,17 +141,44 @@
                 newRow.appendChild(colDiv);
             });
 
+            newItemRow.appendChild(newRow);
+
+            // 두 번째 행 생성
+            var secondRow = document.createElement('div');
+            secondRow.className = 'row mb-3';
+
+            // 각 필드를 생성하여 두 번째 행에 추가
+            fields2.forEach(function(field) {
+                var colDiv = document.createElement('div');
+                colDiv.className = 'col-' + field.col;
+                
+                var label = document.createElement('label');
+                label.className = 'form-label';
+                label.innerHTML = field.name.charAt(0).toUpperCase() + field.name.slice(1);
+                label.htmlFor = field.name;
+
+                var input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'form-control';
+                input.name = field.name + '[]';
+                input.id = field.name;
+
+                colDiv.appendChild(label);
+                colDiv.appendChild(input);
+                secondRow.appendChild(colDiv);
+            });
+
+            newItemRow.appendChild(secondRow);
+
             // Del 버튼 생성 및 추가
             var delCol = document.createElement('div');
-            delCol.className = 'col-1 d-flex align-items-end';
+            delCol.className = 'col-2 d-flex align-items-end';
             var delButton = document.createElement('button');
             delButton.type = 'button';
             delButton.className = 'btn btn-danger btn-sm del-item';
             delButton.innerHTML = 'Del';
             delCol.appendChild(delButton);
-            newRow.appendChild(delCol);
-
-            newItemRow.appendChild(newRow);
+            secondRow.appendChild(delCol);
 
             // item-container에 새로운 행을 추가
             document.getElementById('item-container').appendChild(newItemRow);

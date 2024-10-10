@@ -22,9 +22,6 @@
                 <p><b>[Content]</b> {{ development.content|mark }}</p>
             </div>
             <h5 class="border-bottom py-2">Development Orders</h5>
-            
-            <!-- Dry 타입 아이템 -->
-            <h6 class="mt-4">Dry Items</h6>
             <table class="table table-bordered">
                 <thead>
                     <tr>
@@ -32,71 +29,27 @@
                         <th>Item</th>
                         <th>Color</th>
                         <th>Pattern</th>
-                        <th>Base</th>
+                        <th>Spec</th>
                         <th>Qty(M)</th>
-                        <th>Speed</th>
-                        <th>Skin Resin</th>
-                        <th>Binder Resin</th>
+                        <th>Group</th>
                         <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for order in orders %}
-                    {% if order.order_information.product_group == 'Dry' %}
                     <tr>
                         <td>{{ order.order_no }}</td>
-                        <td>{{ order.order_information.item }}</td>
-                        <td>{{ order.order_information.color }}</td>
-                        <td>{{ order.order_information.pattern }}</td>
-                        <td>{{ order.order_information.base }}</td>
-                        <td>{{ order.order_information.order_qty }}</td>
-                        <td>{{ order.order_information.speed }} M/min</td>
-                        <td>{{ order.order_information.skin_resin }}</td>
-                        <td>{{ order.order_information.binder_resin }}</td>
+                        <td>{{ order.item_name }}</td>
+                        <td>{{ order.color_code }}</td>
+                        <td>{{ order.pattern }}</td>
+                        <td>{{ order.spec }}</td>
+                        <td>{{ order.order_qty }}</td>
+                        <td>{{ order.product_group}}</td>
                         <td></td>
                     </tr>
-                    {% endif %}
                     {% endfor %}
                 </tbody>
             </table>
-
-            <!-- Wet 타입 아이템 -->
-            <h6 class="mt-4">Wet Items</h6>
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>OrderNo</th>
-                        <th>Item</th>
-                        <th>Color</th>
-                        <th>Pattern</th>
-                        <th>Base</th>
-                        <th>Qty(M)</th>
-                        <th>Speed</th>
-                        <th>Dipping Resin</th>
-                        <th>Coating Resin</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for order in orders %}
-                    {% if order.order_information.product_group == 'Wet' %}
-                    <tr>
-                        <td>{{ order.order_no }}</td>
-                        <td>{{ order.order_information.item }}</td>
-                        <td>{{ order.order_information.color }}</td>
-                        <td>{{ order.order_information.pattern }}</td>
-                        <td>{{ order.order_information.base }}</td>
-                        <td>{{ order.order_information.order_qty }}</td>
-                        <td>{{ order.order_information.speed }} M/min</td>
-                        <td>{{ order.order_information.dipping_resin }}</td>
-                        <td>{{ order.order_information.coating_resin }}</td>
-                        <td></td>
-                    </tr>
-                    {% endif %}
-                    {% endfor %}
-                </tbody>
-            </table>
-
             <button onclick="generateQRCode()" title="QR" style="background: none; border: none; cursor: pointer; margin: 0 10px;">
                 <i class="fas fa-qrcode"></i>
             </button>
@@ -161,7 +114,7 @@
     <form action="{% url 'production_management:development_comment_create' development.id %}" method="post" enctype="multipart/form-data" class="my-3">
         {% csrf_token %}
         <!-- 오류표시 Start -->
-        {% include "form_errors.html" %}
+        {% include "common/form_errors.html" %}
         <!-- 오류표시 End -->
         <div class="mb-3">
             <label for="content" class="form-label">Content</label>

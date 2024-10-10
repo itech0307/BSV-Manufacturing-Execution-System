@@ -200,47 +200,31 @@ def development_register(request):
             except ClientError as e:
                 print(f"Error creating folder: {e}")
             
-            items = request.POST.getlist('item[]')
-            colors = request.POST.getlist('color[]')
+            item_names = request.POST.getlist('item_name[]')
+            color_codes = request.POST.getlist('color_code[]')
             patterns = request.POST.getlist('pattern[]')
+            specs = request.POST.getlist('spec[]')
             order_qtys = request.POST.getlist('order_qty[]')
-            speeds = request.POST.getlist('speed[]')
+            order_remarks = request.POST.getlist('order_remark[]')
             product_groups = request.POST.getlist('product_group[]')
-            bases = request.POST.getlist('base[]')
-            skin_resins = request.POST.getlist('skin_resin[]')
-            binder_resins = request.POST.getlist('binder_resin[]')
-            dipping_resins = request.POST.getlist('dipping_resin[]')
-            coating_resins = request.POST.getlist('coating_resin[]')
             
             # 각 정보를 하나의 배열로 묶기
-            combined_info = zip(items, colors, patterns, order_qtys, speeds, product_groups, bases, skin_resins, binder_resins, dipping_resins, coating_resins)
+            combined_info = zip(item_names, color_codes, patterns, specs, order_qtys, order_remarks, product_groups)
             
             for info in combined_info:
-                item, color, pattern, order_qty, speed, product_group, base, skin_resin, binder_resin, dipping_resin, coating_resin = info
-                order_information = {
-                    "developer": f"{request.user}",
-                    "title": f"{request.POST['title']}",
-                    "category": f"{request.POST['category']}",
-                    "deadline": f"{request.POST['deadline']}",
-                    "purpose": f"{request.POST['purpose']}",
-                    "item": f"{item}",
-                    "color": f"{color}",
-                    "pattern": f"{pattern}",
-                    "order_qty": f"{order_qty}",
-                    "speed": f"{speed}",
-                    "product_group": f"{product_group}",
-                    "base": f"{base}",
-                    "skin_resin": f"{skin_resin}" if f"{product_group}" == 'Dry' else None,
-                    "binder_resin": f"{binder_resin}" if f"{product_group}" == 'Dry' else None,
-                    "dipping_resin": f"{dipping_resin}" if f"{product_group}" == 'Wet' else None,
-                    "coating_resin": f"{coating_resin}" if f"{product_group}" == 'Wet' else None,
-                    "content": f"{request.POST['content']}"
-                }
+                item_name, color_code, pattern, spec, order_qty, order_remark, product_group = info
                 order = DevelopmentOrder(
                     development=development,
-                    order_information=order_information
+                    item_name=item_name,
+                    color_code=color_code,
+                    pattern=pattern,
+                    spec=spec,
+                    order_qty=order_qty,
+                    qty_unit='m',
+                    order_remark=order_remark,
+                    product_group=product_group
                     )
-                order.save()            
+                order.save()
             
             return redirect('production_management:development_list')
         else:
