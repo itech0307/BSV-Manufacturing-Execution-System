@@ -20,6 +20,12 @@
                 <p><b>[Category]</b> {{ development.category }}</p>
                 <p><b>[Deadline]</b> {{ development.deadline }}</p>
                 <p><b>[Content]</b> {{ development.content|mark }}</p>
+                {% with first_image=files|first_image %}
+                    {% if first_image %}
+                    <p><b>[Thumbnail]</b></p>
+                    <img src="{{ first_image.url }}" alt="{{ first_image.name }}" class="img-fluid my-2" style="max-width: 400px;">
+                    {% endif %}
+                {% endwith %}
             </div>
             <h5 class="border-bottom py-2">Development Orders</h5>
             <table class="table table-bordered">
