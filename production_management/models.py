@@ -124,7 +124,7 @@ class DevelopmentOrder(models.Model):
         return self.order_no
 
 class DevelopmentComment(models.Model):
-    development = models.ForeignKey(Development, on_delete=models.CASCADE)
+    development = models.ForeignKey(Development, related_name='development_comment_set', on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.TextField()
     create_date = models.DateTimeField(default=timezone.now)
