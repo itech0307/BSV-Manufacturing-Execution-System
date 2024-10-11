@@ -110,12 +110,21 @@ class DevelopmentOrder(models.Model):
             # 현재 날짜를 'YYMMDD' 형식으로 가져옵니다.
             date_str = self.create_date.strftime('%y%m%d')
             prefix = 'DEV0'
-            # 해당 날짜에 생성된 마지막 오더를 찾아서 순서 번호를 증가시킵니다.
+
+            # 트랜잭션 내에서 마지막 주문 번호를 찾고 새 번호를 생성합니다
             last_order = DevelopmentOrder.objects.filter(order_no__startswith=f'{prefix}{date_str}').order_by('order_no').last()
             if last_order:
                 seq_no = int(last_order.order_no.split('-')[-1]) + 1
             else:
                 seq_no = 1
+            
+            while True:
+                new_order_no = f'{prefix}{date_str}-{seq_no}'
+                if not DevelopmentOrder.objects.filter(order_no=new_order_no).exists():
+                    self.order_no = new_order_no
+                    break
+                seq_no += 1
+            
             # 새 주문 번호를 생성합니다.
             self.order_no = f'{prefix}{date_str}-{seq_no}'
         super(DevelopmentOrder, self).save(*args, **kwargs)
