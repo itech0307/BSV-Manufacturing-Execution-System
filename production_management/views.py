@@ -11,6 +11,7 @@ from django.core.paginator import Paginator
 from django.contrib import messages
 from .forms import DevelopmentForm, DevelopmentCommentForm
 from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponseForbidden
 from django.conf import settings
 import json
 
@@ -278,44 +279,30 @@ def development_modify(request, development_id):
             # 기존 order 삭제 및 새로운 order 저장
             DevelopmentOrder.objects.filter(development=development).delete()
             
-            items = request.POST.getlist("item[]")
-            colors = request.POST.getlist("color[]")
+            items = request.POST.getlist("item_name[]")
+            colors = request.POST.getlist("color_code[]")
             patterns = request.POST.getlist("pattern[]")
             order_qtys = request.POST.getlist("order_qty[]")
-            speeds = request.POST.getlist("speed[]")
-            bases = request.POST.getlist("base[]")
-            skin_resins = request.POST.getlist("skin_resin[]")
-            skin_temps = request.POST.getlist("skin_temp[]")
-            binder_resins = request.POST.getlist("binder_resin[]")
-            binder_temps = request.POST.getlist("binder_temp[]")
+            specs = request.POST.getlist("spec[]")
+            order_remarks = request.POST.getlist("order_remark[]")
+            product_groups = request.POST.getlist("product_group[]")
             
             # 각 정보를 하나의 배열로 묶기
-            combined_info = zip(items, colors, patterns, order_qtys, speeds, bases, skin_resins, skin_temps, binder_resins, binder_temps)
+            combined_info = zip(items, colors, patterns, order_qtys, specs, order_remarks, product_groups)
             
             for info in combined_info:
-                item, color, pattern, order_qty, speed, base, skin_resin, skin_temp, binder_resin, binder_temp = info
-                order_information = {
-                    "developer": f"{request.user}",
-                    "title": f"{request.POST['title']}",
-                    "category": f"{request.POST['category']}",
-                    "deadline": f"{request.POST['deadline']}",
-                    "purpose": f"{request.POST['purpose']}",
-                    "item": f"{item}",
-                    "color": f"{color}",
-                    "pattern": f"{pattern}",
-                    "order_qty": f"{order_qty}",
-                    "speed": f"{speed}",
-                    "base": f"{base}",
-                    "skin_resin": f"{skin_resin}",
-                    "skin_temp": f"{skin_temp}",
-                    "binder_resin": f"{binder_resin}",
-                    "binder_temp": f"{binder_temp}",
-                    "content": f"{request.POST['content']}"
-                }
+                item_name, color_code, pattern, order_qty, spec, order_remark, product_group = info
                 order = DevelopmentOrder(
                     development=development,
-                    order_information=order_information
-                )
+                    item_name=item_name,
+                    color_code=color_code,
+                    pattern=pattern,
+                    spec=spec,
+                    order_qty=order_qty,
+                    qty_unit='m',
+                    order_remark=order_remark,
+                    product_group=product_group
+                    )
                 order.save()
 
             return redirect('production_management:development_detail', development_id=development.id)
@@ -432,6 +419,13 @@ def delete_development_file(request, development_id, file_name):
     path = f"{DEVELOPMENT_ROOT}{development_id}/{file_name}"
     
     try:
+        # 파일 메타데이터를 가져와 업로더 확인
+        response = s3.head_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=path)
+        uploader = response['Metadata'].get('uploader')
+        
+        if uploader != request.user.username:
+            return HttpResponseForbidden("You don't have permission to delete this file.")
+        
         s3.delete_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=path)
     except ClientError as e:
         return render(request, 'common/error.html', {'error': str(e)})
