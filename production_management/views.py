@@ -379,7 +379,7 @@ def update_status(request, development_id):
     if request.method == 'POST':
         try:
             development = Development.objects.get(id=development_id)
-            if request.user == development.author:
+            if request.user == development.developer:
                 data = json.loads(request.body)
                 new_status = data.get('status')
                 if new_status in ['Progress', 'Complete']:
