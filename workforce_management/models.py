@@ -1,4 +1,6 @@
 from django.db import models
+from django.utils import timezone
+from django.contrib.auth.models import User
 
 class Worker(models.Model):
     DEPARTMENT_CHOICES = [
@@ -50,3 +52,10 @@ class Worker(models.Model):
 
     def __str__(self):
         return f"{self.worker_code}-{self.name}"
+
+class WorkerComment(models.Model):
+    worker = models.ForeignKey(Worker, related_name='worker_comment_set', on_delete=models.CASCADE)
+    author = models.ForeignKey(User, related_name='author_worker_comment', on_delete=models.CASCADE)
+    content = models.TextField()
+    create_date = models.DateTimeField(default=timezone.now)
+    modify_date = models.DateTimeField(auto_now=True)
