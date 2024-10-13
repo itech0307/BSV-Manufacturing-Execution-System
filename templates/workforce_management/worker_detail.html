@@ -1,0 +1,76 @@
+{% extends 'common/main.html' %}
+{% load forum_filters %}
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <!-- 프로필 사진 -->
+                        <h2 class="mt-3">{{ worker.name }}</h2>
+                        <h4 class="text-success">{{ worker.get_department_display }} {{ worker.get_position_display }}</h4>
+                    </div>
+
+                    <!-- 인적사항 -->
+                    <div class="border p-3 mb-4">
+                        <p><strong>[Worker Code]</strong> {{ worker.worker_code }}</p>
+                        <p><strong>[Join Date]</strong> {{ worker.join_date }}</p>
+                        <p><strong>[Phone Number]</strong> {{ worker.phone_number }}</p>
+                        <p><strong>[Remark]</p>
+                    </div>
+                    <!-- 코멘트 -->
+                    {% for worker_comment in worker.worker_comment_set.all %}
+                    <div class="border p-3 mb-4">                        
+                        <a id="comment_{{ worker_comment.id }}"></a>
+                        <div class="card-body">
+                            <div class="card-text">{{ worker_comment.content|mark }}</div>
+                            <div class="d-flex justify-content-end">
+                                {% if worker_comment.modify_date %}
+                                <div class="badge bg-light text-dark p-2 text-start mx-3">
+                                    <div class="mb-2">modified at</div>
+                                    <div>{{ worker_comment.modify_date }}</div>
+                                </div>
+                                {% endif %}
+                                <div class="badge bg-light text-dark p-2 text-start">
+                                    <div class="mb-2">{{ worker_comment.author.username }}</div>
+                                    <div>{{ worker_comment.create_date }}</div>
+                                </div>
+                            </div>
+                            <div class="my-3">
+                                {% if request.user == worker_comment.author %}
+                                <a href="#" 
+                                class="btn btn-sm btn-outline-secondary">Modify</a>
+                                <a href="#" class="delete btn btn-sm btn-outline-secondary"
+                                data-uri="#">Delete</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    <!-- 코멘트 등록 -->
+                    <form action="{% url 'workforce_management:worker_comment_create' worker.id %}" method="post" enctype="multipart/form-data" class="my-3">
+                        {% csrf_token %}
+                        <!-- 오류표시 Start -->
+                        {% include "common/form_errors.html" %}
+                        <!-- 오류표시 End -->
+                        <div class="mb-3">
+                            <label for="content" class="form-label">Content</label>
+                            <textarea {% if not user.is_authenticated %}disabled{% endif %}
+                            name="content" id="content" class="form-control" rows="3"></textarea>
+                        </div>
+                        <input type="submit" value="Comment" class="btn btn-primary" {% if not user.is_authenticated %}disabled{% endif %}>
+                    </form>
+                    {% if user.is_superuser %}
+                    <!-- 버튼 -->
+                    <div class="text-center mt-4">
+                        <a href="{% url 'workforce_management:worker_modify' worker.id %}" class="btn btn-primary">Modify</a>
+                        <a href="#" class="btn btn-danger">Delete</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

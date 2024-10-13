@@ -126,7 +126,7 @@
             <div class="text-wrapper">{% trans "HRM" %}</div>
         </div>
         <div class="submenu" id="hrm-submenu">
-            <a href="#" class="submenu-item">{% trans "List" %}</a>
+            <a href="{% url 'workforce_management:worker_list' %}" class="submenu-item">{% trans "List" %}</a>
         </div>
     </div>
     {% endif %}

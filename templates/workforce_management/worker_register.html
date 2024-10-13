@@ -1,0 +1,76 @@
+{% extends "common/main.html" %}
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header text-center bg-success text-white">
+                    <h3 class="mb-0">WORKER REGISTER</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <!-- 오류표시 Start -->
+                        {% include "common/form_errors.html" %}
+                        <!-- 오류표시 End -->
+                        <!-- 프로필 사진 -->
+                        <div class="text-center mb-4">
+                            
+                        </div>
+                        <!-- worker code -->
+                        <div class="form-group">
+                          <label for="worker_code" class="form-label">Worker Code</label>
+                          <input type="text" class="form-control" id="worker_code" name="worker_code" value="{{ form.worker_code.value|default_if_none:'' }}" {% if form.worker_code.value %}readonly{% endif %}>
+                        </div>
+                        <!-- 이름 -->
+                        <div class="form-group">
+                            <label for="name">Name</label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ form.name.value|default_if_none:'' }}">
+                        </div>                        
+                        <!-- 부서 -->
+                        <div class="form-group">
+                          <label for="department">Department</label>
+                          <select class="form-control" id="department" name="department">
+                                {% for department, department_name in form.department.field.choices %}
+                                    <option value="{{ department }}" {% if form.department.value == department %}selected{% endif %}>{{ department_name }}</option>
+                                {% endfor %}
+                          </select>
+                        </div>                        
+                        <!-- 입사일 -->
+                        <div class="form-group">
+                          <label for="join_date">Join Date</label>
+                          <input type="date" class="form-control" id="join_date" name="join_date" value="{{ form.join_date.value|date:"Y-m-d" }}">
+                        </div>
+                        <!-- 직급 -->
+                        <div class="form-group">
+                          <label for="position">Position</label>
+                          <select class="form-control" id="position" name="position">
+                              {% for position, position_name in form.position.field.choices %}
+                                  <option value="{{ position }}" {% if form.position.value == position %}selected{% endif %}>{{ position_name }}</option>
+                              {% endfor %}
+                          </select>
+                        </div>  
+                        <!-- 전화번호 -->
+                        <div class="form-group">
+                          <label for="phone_number">Phone Number</label>
+                          <input type="tel" class="form-control" id="phone_number" name="phone_number">
+                        </div>
+                        <br>
+                        <!-- 제출 버튼 -->
+                        <div class="text-center">
+                          <button type="submit" class="btn btn-success">Save</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var loadFile = function(event) {
+        var image = document.getElementById('profile-pic-preview');
+        image.src = URL.createObjectURL(event.target.files[0]);
+    };
+</script>
+{% endblock %}
