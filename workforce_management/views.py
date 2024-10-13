@@ -136,7 +136,7 @@ def worker_detail(request, worker_code):
     
 @login_required
 def worker_modify(request, worker_code):
-    worker = get_object_or_404(Worker, worker_code=worker_code)
+    worker = get_object_or_404(Worker, pk=worker_code)
     
     # 관리자 권한을 확인합니다.
     if not request.user.is_superuser:  # 일반적으로 admin 대신 superuser 체크를 사용
@@ -149,7 +149,7 @@ def worker_modify(request, worker_code):
             worker = form.save(commit=False)
             worker.save()
 
-            return redirect('workforce_management:worker_detail', worker_code=worker_code)
+            return redirect('workforce_management:worker_detail', worker_code=worker.worker_code)
     else:
         form = WorkerForm(instance=worker)
     
