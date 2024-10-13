@@ -50,7 +50,9 @@
                 {% endif %}
                 <td style="font-size:16px; vertical-align: middle;"></td>
                 <td style="font-size:16px; vertical-align: middle;">
-                    <!-- TODO: 프로필 사진 추가 -->
+                    {% if worker.profile_image_url %}
+                    <img src="{{ worker.profile_image_url }}" class="img-fluid my-2" style="max-width: 50px;">
+                    {% endif %}
                 </td>
             </tr>
         {% endfor %}

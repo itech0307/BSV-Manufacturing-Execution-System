@@ -8,6 +8,9 @@
                 <div class="card-body p-5">
                     <div class="text-center mb-4">
                         <!-- 프로필 사진 -->
+                        {% if worker.profile_image_url %}
+                        <img src="{{ worker.profile_image_url }}" class="rounded-circle" width="150" height="150">
+                        {% endif %}
                         <h2 class="mt-3">{{ worker.name }}</h2>
                         <h4 class="text-success">{{ worker.get_department_display }} {{ worker.get_position_display }}</h4>
                     </div>
