@@ -107,13 +107,13 @@ def worker_register(request):
         return render(request, 'workforce_management/worker_register.html', {'form': form})
 
 @login_required
-def worker_detail(request, worker_code):
+def worker_detail(request, worker_id):
     if request.method == 'POST':
         # request.body가 비어있는지 확인
         if not request.body:
             return JsonResponse({'error': 'Empty request body'}, status=400)
     
-    worker = get_object_or_404(Worker, pk=worker_code)
+    worker = get_object_or_404(Worker, pk=worker_id)
     
     # 프로필 이미지 URL 생성
     try:
@@ -135,21 +135,39 @@ def worker_detail(request, worker_code):
     return render(request, 'workforce_management/worker_detail.html', context)
     
 @login_required
-def worker_modify(request, worker_code):
-    worker = get_object_or_404(Worker, pk=worker_code)
+def worker_modify(request, worker_id):
+    worker = get_object_or_404(Worker, pk=worker_id)
     
     # 관리자 권한을 확인합니다.
     if not request.user.is_superuser:  # 일반적으로 admin 대신 superuser 체크를 사용
         messages.error(request, 'You do not have permission to edit.')
-        return redirect('workforce_management:worker_detail', worker_code=worker_code)
+        return redirect('workforce_management:worker_detail', worker_id=worker_id)
     
     if request.method == "POST":
         form = WorkerForm(request.POST, request.FILES, instance=worker)
         if form.is_valid():
             worker = form.save(commit=False)
-            worker.save()
+            
+            # 프로필 사진 처리
+            if 'profile_image' in request.FILES:
+                image = request.FILES['profile_image']
+                img = Image.open(image)
+                img.thumbnail((400, 400))
+                
+                buffer = io.BytesIO()
+                img.save(buffer, format='JPEG')
+                buffer.seek(0)
 
-            return redirect('workforce_management:worker_detail', worker_code=worker.worker_code)
+                file_name = f'{REPOSITORY_ROOT}{worker.worker_code}.jpg'
+                try:
+                    s3.upload_fileobj(buffer, settings.AWS_STORAGE_BUCKET_NAME, file_name)
+                    worker.profile_image = file_name
+                except ClientError as e:
+                    print(f"S3 업로드 오류: {e}")
+                    messages.error(request, '프로필 이미지 업로드 중 오류가 발생했습니다.')
+            
+            worker.save()
+            return redirect('workforce_management:worker_detail', worker_id=worker.id)
     else:
         form = WorkerForm(instance=worker)
     
