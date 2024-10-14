@@ -97,7 +97,7 @@ def input_drymix(request):
             'status': 'success',
             'message': 'Order found'
         }
-    except order.DoesNotExist:
+    except SalesOrder.DoesNotExist:
         data = {
             'status': 'fail',
             'message': 'Order not found'
@@ -181,7 +181,7 @@ def input_dryline(request):
             'status': 'success',
             'message': 'Order found'
         }
-    except order.DoesNotExist:
+    except SalesOrder.DoesNotExist:
         data = {
             'status': 'fail',
             'message': 'Order not found'
@@ -271,7 +271,7 @@ def input_rp(request):
             'status': 'success',
             'message': 'Order found'
         }
-    except order.DoesNotExist:
+    except SalesOrder.DoesNotExist:
         data = {
             'status': 'fail',
             'message': 'Order not found'
@@ -376,7 +376,7 @@ def input_inspection(request):
             'status': 'success',
             'message': 'Order found'
         }
-    except order.DoesNotExist:
+    except SalesOrder.DoesNotExist:
         data = {
             'status': 'fail',
             'message': 'Order not found'
