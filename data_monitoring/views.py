@@ -619,14 +619,16 @@ def order_search(request):
             process = []
             
             # 여러 모델에서 sales_order로 검색
-            production_phases = list(chain(
+            production_phases = sorted(chain(
                 ProductionPlan.objects.filter(sales_order=order),
                 DryMix.objects.filter(production_plan__sales_order=order),
                 DryLine.objects.filter(production_plan__sales_order=order),
                 Delamination.objects.filter(production_plan__sales_order=order),
                 Inspection.objects.filter(Q(production_plan__sales_order=order) | Q(sales_order=order))
-            ))
+            ), key=lambda x: x.create_date)
+            
             bal_qty = int(order.order_qty)
+            
             agrade_qty, delami_qty, pd_qty = 0, 0, 0
             sub_pd_qty = 0
             defect, chemical = {}, {}
