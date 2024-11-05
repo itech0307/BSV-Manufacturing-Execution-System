@@ -153,6 +153,7 @@ def ordersheet_upload_celery(self,df_json):
         
                     for key, value in order_data.items():
                         setattr(sales_order, key, value)
+                    sales_order.status = None
                     sales_order.save()
             else:
                 if int(df['Quantity'][i]) > 0:
