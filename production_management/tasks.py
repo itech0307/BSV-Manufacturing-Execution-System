@@ -112,9 +112,9 @@ def ordersheet_upload_celery(self,df_json):
             if df['Sales order'][i] == "" and df['Line number'][i] == "":
                 continue
         
-            sales_order = SalesOrder.objects.get(
+            sales_order = SalesOrder.objects.filter(
                 order_no = f"{df['Sales order'][i]}-{(df['Line number'][i])}"
-            )
+            ).first()
             
             if sales_order:
                 # 객체의 order_quantity 필드에서 값을 비교 합니다
@@ -125,8 +125,8 @@ def ordersheet_upload_celery(self,df_json):
                     sales_order.save()  # 변경 사항을 저장합니다.
                 
                 elif (int(df['Quantity'][i])) > 0:
-                    # order_status 필드 True로 변경
-                    sales_order.status = True
+                    # order_status 필드 None으로 변경
+                    sales_order.status = None
                     sales_order.save()  # 변경 사항을 저장합니다.
                     
                     order_data = {
