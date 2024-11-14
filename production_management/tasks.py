@@ -121,7 +121,7 @@ def ordersheet_upload_celery(self,df_json):
                 if (int(df['Quantity'][i])) < 0:
                     
                     # order_status 필드 false로 변경
-                    sales_order.status = False
+                    sales_order.status = True
                     sales_order.save()  # 변경 사항을 저장합니다.
                 
                 elif (int(df['Quantity'][i])) > 0:
