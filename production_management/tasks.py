@@ -105,6 +105,7 @@ def ordersheet_upload_celery(self,df_json):
         
         # JSON을 다시 데이터프레임으로 변환
         df = pd.read_json(df_json)
+        df = df.sort_values(by='Receipt date', ascending=True)
         
         for i in range(len(df)):
             # Sales order와 Line number가 빈 경우 건너뜀
