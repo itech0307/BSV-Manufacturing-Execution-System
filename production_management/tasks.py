@@ -112,16 +112,18 @@ def ordersheet_upload_celery(self,df_json):
                 continue
         
             sales_order = SalesOrder.objects.filter(
-                order_no=f"{df['Sales order'][i]}-{(df['Line number'][i])}"
-            ).first()
+                order_no = f"{df['Sales order'][i]}-{(df['Line number'][i])}"
+                ).first()
             
             if sales_order:
-                quantity = int(df['Quantity'][i])
-                
-                if quantity < 0:
+                # 객체의 order_quantity 필드에서 값을 비교 합니다
+                if (int(df['Quantity'][i])) < 0:
+                    
+                    # order_status 필드 false로 변경
                     sales_order.status = False
-
-                elif quantity > 0:
+                    sales_order.save()  # 변경 사항을 저장합니다.
+                
+                elif (int(df['Quantity'][i])) > 0:
                     order_data = {
                         'order_id': df['Sales order'][i],
                         'seq_no': int(df['Line number'][i]),
@@ -137,7 +139,7 @@ def ordersheet_upload_celery(self,df_json):
                         'color_name': df['Color Name'][i],
                         'pattern': df['TYPE'][i],
                         'spec': df['Spec Name'][i],
-                        'order_qty': quantity,
+                        'order_qty': int(df['Quantity'][i]),
                         'qty_unit': df['Unit'][i],
                         'unit_price': float(df['Ship Unit price'][i]),
                         'currency': df['Currency(Trade)'][i],
@@ -146,14 +148,13 @@ def ordersheet_upload_celery(self,df_json):
                         'sample_step': df['Sample Step'][i],
                         'production_location': df['Order To Company'][i],
                         'product_group': df['Prod Group'][i],
-                        'product_type': df['Custom No'][i]
+                        'product_type': df['Custom No'][i],
+                        'status': 'None'
                     }
-                    
+        
                     for key, value in order_data.items():
                         setattr(sales_order, key, value)
-                    sales_order.status = True
-                
-                sales_order.save()
+                    sales_order.save()
             else:
                 if int(df['Quantity'][i]) > 0:
                     order_data = {
