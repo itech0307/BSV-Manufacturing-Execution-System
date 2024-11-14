@@ -124,6 +124,10 @@ def ordersheet_upload_celery(self,df_json):
                     sales_order.save()  # 변경 사항을 저장합니다.
                 
                 elif (int(df['Quantity'][i])) > 0:
+                    # order_status 필드 None으로 변경
+                    sales_order.status = None
+                    sales_order.save()  # 변경 사항을 저장합니다.
+                    
                     order_data = {
                         'order_id': df['Sales order'][i],
                         'seq_no': int(df['Line number'][i]),
