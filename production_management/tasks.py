@@ -120,6 +120,7 @@ def ordersheet_upload_celery(self,df_json):
                 
                 if quantity < 0:
                     sales_order.status = False
+
                 elif quantity > 0:
                     order_data = {
                         'order_id': df['Sales order'][i],
@@ -145,12 +146,12 @@ def ordersheet_upload_celery(self,df_json):
                         'sample_step': df['Sample Step'][i],
                         'production_location': df['Order To Company'][i],
                         'product_group': df['Prod Group'][i],
-                        'product_type': df['Custom No'][i],
-                        'status': None
+                        'product_type': df['Custom No'][i]
                     }
                     
                     for key, value in order_data.items():
                         setattr(sales_order, key, value)
+                    sales_order.status = None
                 
                 sales_order.save()
             else:
