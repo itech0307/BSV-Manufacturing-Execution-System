@@ -152,8 +152,7 @@ def ordersheet_upload_celery(self,df_json):
                         'sample_step': df['Sample Step'][i],
                         'production_location': df['Order To Company'][i],
                         'product_group': df['Prod Group'][i],
-                        'product_type': df['Custom No'][i],
-                        'status': 'None'
+                        'product_type': df['Custom No'][i]
                     }
         
                     for key, value in order_data.items():
