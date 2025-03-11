@@ -9,3 +9,4 @@ logs/
 temp/
 setup.ini
 redis/
+.cursor/
