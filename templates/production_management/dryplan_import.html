@@ -1,33 +1,144 @@
-{% extends 'common/main.html' %}
-{% load static %}
-{% block content %}
+{% extends 'common/main.html' %} {% load static %} {% block content %}
 <h3>DRYPLAN IMPORT</h3>
-<form method="post" enctype="multipart/form-data">  {# 파일 업로드를 위한 폼 시작 #}
-{% csrf_token %}  {# CSRF 토큰 추가하기 #}
-<input type="file" name="importData">  {# 파일 선택 입력창 #}
-<input hidden type="text" name="title" value="CONVERT QR">  {# 숨겨진 입력창으로 제목 설정 #}
-<p>Please select format of file.</p>
-<button class="btn btn-primary" type="submit">convert</button>  {# 변환 버튼 #}
+
+<form id="uploadForm" method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <input type="file" name="importData" />
+  <input hidden type="text" name="title" value="CONVERT QR" />
+  <p>Please select format of file.</p>
+  <button class="btn btn-primary" type="submit">Convert</button>
 </form>
-<a href="#">Return Home View</a>  {# 홈 화면으로 돌아가기 링크 #}
+
+<a href="#">Return Home View</a>
+
 <div class="text-center" style="font-size: 14px">
-	<div id="progress-bar-message">
-	</div>
+  <div id="progress-bar-message"></div>
 </div>
-<div class='progress-wrapper' style="padding-top: 10px;">
-	<div id='progress-bar' class='progress-bar' style="background-color: #68a9ef; width: 0%;">&nbsp;</div>  {# 진행률 표시 바 #}
+
+<div class="progress-wrapper" style="padding-top: 10px">
+  <div
+    id="progress-bar"
+    class="progress-bar"
+    style="background-color: #68a9ef; width: 0%"
+  >
+    &nbsp;
+  </div>
 </div>
-<div id="celery-result">
-</div>
-{% endblock %}  {# 컨텐츠 블록 끝 #}
-{% block script %}  {# 스크립트 블록 시작 #}
-{% if task_id %}
-<script src="{% static 'js/celery_progress.js' %}"></script>  {# Celery 프로그레스 바 자바스크립트 파일 로드하기 #}
-<script type="text/javascript">
-	$(function () {
-		var progressUrl = "{% url 'celery_progress:task_status' task_id %}";  {# 작업 상태를 가져오는 URL 설정 #}
-		CeleryProgressBar.initProgressBar(progressUrl, {})  {# 진행률 표시 바 초기화하기 #}
-	});
+
+<div id="celery-result"></div>
+
+<div id="invalid-orders-container"></div>
+
+{% endblock %} {% block extra_js %}
+<script>
+  document
+    .getElementById("uploadForm")
+    .addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const formData = new FormData(this);
+
+      // Lấy CSRF token từ cookie
+      function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+          const cookies = document.cookie.split(";");
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === name + "=") {
+              cookieValue = decodeURIComponent(
+                cookie.substring(name.length + 1)
+              );
+              break;
+            }
+          }
+        }
+        return cookieValue;
+      }
+      const csrftoken = getCookie("csrftoken");
+
+      fetch('{% url "production_management:dryplan_import" %}', {
+        method: "POST",
+        body: formData,
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          "X-CSRFToken": csrftoken,
+        },
+        credentials: "same-origin", // Thêm credentials để gửi cookies
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+          return response.json();
+        })
+        .then((data) => {
+          if (data.error) {
+            alert(data.error);
+            return;
+          }
+
+          // Nếu có file để download
+          if (data.file_content) {
+            // Chuyển base64 string thành blob
+            const byteCharacters = atob(data.file_content);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+
+            // Tạo blob và download
+            const blob = new Blob([byteArray], { type: data.content_type });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = data.filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+          }
+
+          // Hiển thị danh sách đơn hàng không hợp lệ
+          if (data.invalid_orders && data.invalid_orders.length > 0) {
+            const container = document.getElementById(
+              "invalid-orders-container"
+            );
+            let html = `
+                <div class="alert alert-danger mt-3">
+                    <h5><strong>Lỗi đơn hàng không tồn tại:</strong></h5>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Row No.</th>
+                                <th>Order No.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            data.invalid_orders.forEach((order) => {
+              html += `
+                    <tr>
+                        <td>${order.row}</td>
+                        <td>${order.order_no}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            container.innerHTML = html;
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          alert("Có lỗi xảy ra khi xử lý yêu cầu: " + error.message);
+        });
+    });
 </script>
-{% endif %}
-{% endblock %}  {# 스크립트 블록 끝 #}
+{% endblock %}

@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect, resolve_url
 from django.http import JsonResponse, HttpResponseNotAllowed
 import pandas as pd
 from .tasks import ordersheet_upload_celery, dryplan_convert_to_qrcard, dev_order_convert_to_qrcard
-from .models import SalesOrderUploadLog, Development, DevelopmentOrder, DevelopmentComment
+from .models import SalesOrderUploadLog, Development, DevelopmentOrder, DevelopmentComment, SalesOrder
 import hashlib
 from django.utils import timezone
 from datetime import timedelta
@@ -89,41 +89,83 @@ def dryplan_import(request):
         try:
             file = request.FILES['importData']
             df = pd.read_excel(file, na_filter=False, sheet_name='plan', header=1)
-            
-            # 필요한 열만 선택하기
+
+            # Các cột cần lấy
             columns_needed = [
-                3, # Order Id
-                4, # Seq
-                6, # Customer
-                11, # Bran
+                3,  # Order Id
+                4,  # Seq
+                6,  # Customer
+                11, # Brand
                 12, # Item
                 13, # Color
                 14, # Pattern
                 15, # Base
                 17, # Order Qty
                 36, # Remark
-                0, # Line
-                2, # Plan Date
-                1, # Plan No
+                0,  # Line
+                2,  # Plan Date
+                1,  # Plan No
                 21, # Plan Qty
                 16, # Skin/Binder
                 24, # RP Qty
                 35, # Plan Remark
-                7, # OrderType
-                ]
+                7,  # OrderType
+            ]
             df = df.iloc[:, columns_needed]
-            
-            # 두 번째 열(order id)이 빈 문자열인 행만 제거
+
+            # Bỏ các dòng có Order Id trống
             df = df[df[df.columns[1]] != ""]
-           
+
+            # Chuyển dữ liệu sang dạng string
             df = df.applymap(str)
-            df_json = df.to_json()
-            response = dryplan_convert_to_qrcard(df_json)
-            return response
+
+            valid_orders = []
+            invalid_orders = []  # Lưu số dòng và mã đơn hàng không tồn tại
+
+            for index, row in df.iterrows():
+                order_no = f"{row.iloc[0]}-{row.iloc[1]}"  # Order Id + Seq
+                if SalesOrder.objects.filter(order_no=order_no).exists():
+                    valid_orders.append(row.to_dict())  # Lưu vào danh sách hợp lệ
+                else:
+                    invalid_orders.append({'row': index + 2, 'order_no': order_no})
+
+            # Tạo QR cho đơn hàng hợp lệ nếu có
+            if valid_orders:
+                df_valid = pd.DataFrame(valid_orders)
+                df_json = df_valid.to_json()
+                response = dryplan_convert_to_qrcard(df_json)
+                
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    import base64
+                    import uuid
+                    
+                    # Encode binary content to base64
+                    file_content = base64.b64encode(response.content).decode('utf-8')
+                    filename = f'qr_cards_{uuid.uuid4().hex[:8]}.xlsx'
+                    
+                    # Trả về response với content được encode base64
+                    return JsonResponse({
+                        'file_content': file_content,
+                        'filename': filename,
+                        'content_type': response['Content-Type'],
+                        'invalid_orders': invalid_orders
+                    })
+                return response
+
+            # Nếu chỉ có đơn hàng không hợp lệ
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'invalid_orders': invalid_orders})
+            return render(request, 'production_management/dryplan_import.html', {
+                'invalid_orders': invalid_orders
+            })
+
         except Exception as e:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'error': str(e)})
             return JsonResponse({'error': str(e)})
 
     return render(request, 'production_management/dryplan_import.html')
+
 
 @login_required
 def development_list(request):
