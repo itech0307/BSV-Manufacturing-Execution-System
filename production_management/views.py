@@ -2,11 +2,11 @@ from django.shortcuts import render, get_object_or_404, redirect, resolve_url
 from django.http import JsonResponse, HttpResponseNotAllowed
 import pandas as pd
 from .tasks import ordersheet_upload_celery, dryplan_convert_to_qrcard, dev_order_convert_to_qrcard
-from .models import SalesOrderUploadLog, Development, DevelopmentOrder, DevelopmentComment, SalesOrder
+from .models import SalesOrder, SalesOrderUploadLog, Development, DevelopmentOrder, DevelopmentComment
 import hashlib
 from django.utils import timezone
 from datetime import timedelta
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.paginator import Paginator
 from django.contrib import messages
 from .forms import DevelopmentForm, DevelopmentCommentForm
@@ -19,10 +19,10 @@ import boto3
 from botocore.exceptions import ClientError
 from botocore.config import Config
 
-# 레포지토리 루트 설정
-REPOSITORY_ROOT = 'development/'  # S3 버킷 내의 레포지토리 경로
+# Set repository root path in S3 bucket
+REPOSITORY_ROOT = 'development/'  # Repository path within the S3 bucket       
 
-# S3 클라이언트 설정
+# S3 client configuration
 s3_config = Config(
     region_name=settings.AWS_S3_REGION_NAME,
     signature_version='s3v4',
@@ -33,38 +33,46 @@ s3_config = Config(
 )
 s3 = boto3.client('s3', config=s3_config)
 
+def is_production_team(user):
+    return user.is_authenticated and user.profile.is_production_team()
+
+@login_required
+@user_passes_test(is_production_team)
 def order_sheet_upload(request):
+    if not request.user.is_authenticated:
+        return redirect('common:login')
+        
     thirty_days_ago = timezone.now() - timedelta(days=30)
     upload_logs = SalesOrderUploadLog.objects.filter(upload_time__gte=thirty_days_ago).order_by('-upload_time')
     try:
         if request.method == 'POST':
-            # 사용자가 업로드한 파일을 가져옴
+            # Get the file uploaded by the user
             file = request.FILES['importData']
 
-            # 파일 해시 계산
+            # Calculate file hash
             file_hash = hashlib.sha256(file.read()).hexdigest()
-            file.seek(0)  # 파일 포인터를 다시 처음으로 이동
+            file.seek(0)  # Move file pointer back to the beginning
             
-            # 엑셀 파일을 Pandas 데이터프레임으로 변환
+            # Convert Excel file to Pandas DataFrame
             df = pd.read_excel(file, na_filter=False, sheet_name='Total received today')            
-            # NaN 값을 가진 행 제거
+            # Remove rows with NaN values
             df = df.dropna()
             
-            # 필요한 열만 문자열로 변환
+            # Convert required columns to strings
             for col in df.columns:
                 df[col] = df[col].astype(str)
             
-            # 데이터프레임을 JSON으로 변환
+            # Convert DataFrame to JSON
             df_json = df.to_json()
             
-            # 주문 파일 검증 (선택적)
+            # Optional: Validate order sheet file
             # ordersheet_file_validation(df_json)
             
-            # Celery 작업 시작
+            # Start Celery task
             order_upload_task = ordersheet_upload_celery.delay(df_json)
             task_id = order_upload_task.task_id
 
-            # SalesOrderUploadLog 생성
+            # Create SalesOrderUploadLog
             SalesOrderUploadLog.objects.create(
                 user=request.user,
                 file_name=file.name,
@@ -75,22 +83,34 @@ def order_sheet_upload(request):
             return render(request, 'production_management/order_sheet_upload.html', {'task_id': task_id})
 
     except Exception as e:
-        # 디버깅을 위해 예외를 로그에 출력
-        print(f"에러가 발생했습니다: {e}")
-        return JsonResponse({"error": "파일 처리 중 에러가 발생했습니다."})
+        # Print exception for debugging
+        print(f"An error occurred: {e}")
+        return JsonResponse({"error": "An error occurred while processing the file."})
 
     content = {
         'upload_logs': upload_logs,
     }
     return render(request, 'production_management/order_sheet_upload.html', content)
 
+@login_required
+@user_passes_test(is_production_team)
 def dryplan_import(request):
+    if not request.user.is_authenticated:
+        return redirect('common:login')
+        
     if request.method == 'POST':
+        if not request.user.profile.is_production_team():
+            return HttpResponseForbidden("You don't have permission to import dry plans.")
+            
+        # Check CSRF token
+        if not request.POST.get('csrfmiddlewaretoken'):
+            return HttpResponseForbidden('CSRF verification failed')
+            
         try:
             file = request.FILES['importData']
             df = pd.read_excel(file, na_filter=False, sheet_name='plan', header=1)
 
-            # Các cột cần lấy
+            # Columns to get
             columns_needed = [
                 3,  # Order Id
                 4,  # Seq
@@ -113,23 +133,23 @@ def dryplan_import(request):
             ]
             df = df.iloc[:, columns_needed]
 
-            # Bỏ các dòng có Order Id trống
+            # Remove rows with empty Order Id
             df = df[df[df.columns[1]] != ""]
 
-            # Chuyển dữ liệu sang dạng string
+            # Convert data to string
             df = df.applymap(str)
 
             valid_orders = []
-            invalid_orders = []  # Lưu số dòng và mã đơn hàng không tồn tại
+            invalid_orders = []  # Save rows and order numbers that do not exist
 
             for index, row in df.iterrows():
                 order_no = f"{row.iloc[0]}-{row.iloc[1]}"  # Order Id + Seq
                 if SalesOrder.objects.filter(order_no=order_no).exists():
-                    valid_orders.append(row.to_dict())  # Lưu vào danh sách hợp lệ
+                    valid_orders.append(row.to_dict())  # Save to valid list
                 else:
                     invalid_orders.append({'row': index + 2, 'order_no': order_no})
 
-            # Tạo QR cho đơn hàng hợp lệ nếu có
+            # Create QR for valid orders if any
             if valid_orders:
                 df_valid = pd.DataFrame(valid_orders)
                 df_json = df_valid.to_json()
@@ -137,13 +157,12 @@ def dryplan_import(request):
                 
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     import base64
-                    import uuid
                     
                     # Encode binary content to base64
                     file_content = base64.b64encode(response.content).decode('utf-8')
-                    filename = f'qr_cards_{uuid.uuid4().hex[:8]}.xlsx'
+                    filename = response['Content-Disposition'].split('filename=')[1].strip('"')
                     
-                    # Trả về response với content được encode base64
+                    # Return response with encoded content
                     return JsonResponse({
                         'file_content': file_content,
                         'filename': filename,
@@ -152,7 +171,7 @@ def dryplan_import(request):
                     })
                 return response
 
-            # Nếu chỉ có đơn hàng không hợp lệ
+            # If there are only invalid orders
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse({'invalid_orders': invalid_orders})
             return render(request, 'production_management/dryplan_import.html', {
@@ -165,7 +184,6 @@ def dryplan_import(request):
             return JsonResponse({'error': str(e)})
 
     return render(request, 'production_management/dryplan_import.html')
-
 
 @login_required
 def development_list(request):
@@ -184,10 +202,10 @@ def development_list(request):
     else:
         development_list = Development.objects.all()
 
-    # id 역순으로 정렬
+    # Sort by id in descending order
     development_list = development_list.order_by('-id')
 
-    paginator = Paginator(development_list, 10)  # 페이지당 10개씩 보여주기
+    paginator = Paginator(development_list, 10)  # Show 10 per page
     page_obj = paginator.get_page(page)
     context = {'development_list': page_obj, 'page': page, 'kw': kw, 'field': field}
     return render(request, 'production_management/development.html', context)
@@ -197,11 +215,11 @@ DEVELOPMENT_ROOT = 'development/'
 @login_required
 def development_detail(request, development_id):
     if request.method == 'POST':
-        # request.body가 비어있는지 확인
+        # Check if request.body is empty
         if not request.body:
             return JsonResponse({'error': 'Empty request body'}, status=400)
         
-        # JSON 데이터 파싱
+                # Parse JSON data
         try:
             data = json.loads(request.body)
             action = data.get('action')
@@ -218,17 +236,17 @@ def development_detail(request, development_id):
     
     development = get_object_or_404(Development, pk=development_id)
     
-    # DevelopmentOrder에서 아이템, 컬러, 패턴 정보 가져오기
+    # Get item, color, pattern information from DevelopmentOrder
     orders = DevelopmentOrder.objects.filter(development=development)
 
-    # 파일 목록 가져오기
+    # Get file list
     path = f"{DEVELOPMENT_ROOT}{development_id}/"
     files = []
     try:
         response = s3.list_objects_v2(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Prefix=path, Delimiter='/')
         if 'Contents' in response:
             for obj in response['Contents']:
-                if obj['Key'] != path:  # 현재 디렉토리 자체는 제외
+                if obj['Key'] != path:  # Current directory itself is excluded
                     file_name = obj['Key'][len(path):]
                     url = s3.generate_presigned_url('get_object',
                                                     Params={'Bucket': settings.AWS_STORAGE_BUCKET_NAME, 'Key': obj['Key']},
@@ -240,7 +258,7 @@ def development_detail(request, development_id):
                         'url': url
                     })
     except ClientError as e:
-        # 에러 처리 (예: 로그 기록)
+        # Error handling (e.g., log recording)
         print(f"Error fetching files: {str(e)}")
     
     context = {
@@ -256,12 +274,12 @@ def development_register(request):
         form = DevelopmentForm(request.POST)
         if form.is_valid():
             development = form.save(commit=False)
-            development.developer = request.user  # developer 속성에 로그인 계정 저장
+            development.developer = request.user  # Save login account to developer attribute
             development.content = request.POST['content']
 
             development.save()
 
-            # S3 버킷에 폴더 생성
+            # Create folder in S3 bucket
             folder_name = f"{REPOSITORY_ROOT}{development.id}/"
             try:
                 s3.put_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=folder_name)
@@ -276,7 +294,7 @@ def development_register(request):
             order_remarks = request.POST.getlist('order_remark[]')
             product_groups = request.POST.getlist('product_group[]')
             
-            # 각 정보를 하나의 배열로 묶기
+            # Combine information into one array
             combined_info = zip(item_names, color_codes, patterns, specs, order_qtys, order_remarks, product_groups)
             
             for info in combined_info:
@@ -296,10 +314,10 @@ def development_register(request):
             
             return redirect('production_management:development_list')
         else:
-            # Form 데이터가 유효하지 않으면, 에러 메시지와 함께 다시 form을 보여줍니다.
+            # If form data is invalid, show the form again with an error message
             return render(request, 'production_management/development_register.html', {'form': form})
     else:
-        form = DevelopmentForm()  # GET 요청 시 빈 폼을 생성
+        form = DevelopmentForm()  # Create empty form for GET request
         return render(request, 'production_management/development_register.html', {'form': form})
 
 @login_required
@@ -309,7 +327,7 @@ def development_modify(request, development_id):
         messages.error(request, 'You do not have permission to edit')
         return redirect('production_management:development_detail', development_id=development.id)
     
-    # orders 변수를 초기화
+    # Initialize orders variable
     orders = DevelopmentOrder.objects.filter(development=development)
     
     if request.method == "POST":
@@ -318,7 +336,7 @@ def development_modify(request, development_id):
             development = form.save(commit=False)
             development.save()
 
-            # 기존 order 삭제 및 새로운 order 저장
+            # Delete existing orders and save new orders
             DevelopmentOrder.objects.filter(development=development).delete()
             
             items = request.POST.getlist("item_name[]")
@@ -329,7 +347,7 @@ def development_modify(request, development_id):
             order_remarks = request.POST.getlist("order_remark[]")
             product_groups = request.POST.getlist("product_group[]")
             
-            # 각 정보를 하나의 배열로 묶기
+            # Combine information into one array
             combined_info = zip(items, colors, patterns, order_qtys, specs, order_remarks, product_groups)
             
             for info in combined_info:
@@ -461,7 +479,7 @@ def delete_development_file(request, development_id, file_name):
     path = f"{DEVELOPMENT_ROOT}{development_id}/{file_name}"
     
     try:
-        # 파일 메타데이터를 가져와 업로더 확인
+        # Get file metadata to check uploader
         response = s3.head_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=path)
         uploader = response['Metadata'].get('uploader')
         

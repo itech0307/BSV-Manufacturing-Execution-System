@@ -100,15 +100,15 @@ def parse_date(date_string):
 @shared_task(bind=True)
 def ordersheet_upload_celery(self,df_json):
     try:
-        # 작업 진행 상황을 기록하기 위한 객체
+        # Object for recording progress of the operation
         progress_recorder = ProgressRecorder(self)
         
-        # JSON을 다시 데이터프레임으로 변환
+        # Convert JSON back to pandas DataFrame
         df = pd.read_json(df_json)
         df = df.sort_values(by='Receipt date', ascending=True)
         
         for i in range(len(df)):
-            # Sales order와 Line number가 빈 경우 건너뜀
+            # Skip if Sales order and Line number are empty
             if df['Sales order'][i] == "" and df['Line number'][i] == "":
                 continue
         
@@ -117,18 +117,18 @@ def ordersheet_upload_celery(self,df_json):
             ).first()
             
             if sales_order:
-                # 객체의 order_quantity 필드에서 값을 비교 합니다
+                # Compare values in the order_quantity field of the object
                 if (int(df['Quantity'][i])) < 0:
                     
                     # order_status 필드 false로 변경
                     #sales_order.status = True
-                    #sales_order.save()  # 변경 사항을 저장합니다.
+                    #sales_order.save()  # Save changes
                     pass
                 
                 elif (int(df['Quantity'][i])) > 0:
                     # order_status 필드 None으로 변경
                     sales_order.status = None
-                    sales_order.save()  # 변경 사항을 저장합니다.
+                    sales_order.save()  # Save changes
                     
                     order_data = {
                         'order_id': df['Sales order'][i],
@@ -195,34 +195,38 @@ def ordersheet_upload_celery(self,df_json):
         
             progress_recorder.set_progress(i + 1, len(df), description="Uploading")
     except Exception as e:
-        # 작업 중 에러가 발생한 경우 로그에 출력
-        print(f"작업 중 에러가 발생했습니다: {e}")
-        # 필요한 예외 처리를 여기에 추가
+        # Print error message if an error occurs during the operation
+        print(f"An error occurred during the operation: {e}")
+        # Add necessary exception handling here
 
 def dryplan_convert_to_qrcard(df_json):
     try:
-        # 엑셀 파일로 응답을 생성합니다.
-        response = HttpResponse(content_type='application/ms-excel')
-        response['Content-Disposition'] = 'attachment; filename="qrcard_.xlsx"'
+        # Create file name with current time
+        current_time = datetime.now().strftime('%y%m%d%H%M%S')
+        filename = f"qr_code_{current_time}.xlsx"
         
-        # JSON 데이터를 pandas DataFrame으로 변환합니다.
+        # Change Content-Disposition with new file name
+        response = HttpResponse(content_type='application/ms-excel')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        # Convert JSON data to pandas DataFrame
         df = pd.read_json(df_json)
         
-        # 새 워크북을 생성하고 기존의 'qrcard.xlsx' 파일을 로드합니다.
+        # Create new workbook and load existing 'qrcard.xlsx' file
         wb = openpyxl.Workbook()
         
-        # S3에서 파일 가져오기
+        # Get the excel file from S3
         excel_file = get_s3_file('forms/qrcard.xlsx')
 
-        # openpyxl로 워크북 로드
+        # Load the workbook using openpyxl
         qrcard = openpyxl.load_workbook(excel_file)
         
-        # 각 행에 대해 새 워크시트를 생성하고 데이터를 채웁니다.
+        # For each row, create a new worksheet and fill in the data
         for i in range(len(df)):
             ws = wb.create_sheet(str(i+1))
             copy_sheet(qrcard['DRY'], ws)
-            # 워크시트에 데이터를 채웁니다.
-            row_data = df.iloc[i]  # 데이터 프레임에서 한 행의 데이터를 미리 불러옴
+            # Fill in the data in the worksheet
+            row_data = df.iloc[i]  # Preload data from the data frame for one row
             try:
                 sales_order = SalesOrder.objects.exclude(status=False).get(order_no=f"{row_data.iloc[0]}-{row_data.iloc[1]}")
                 if '/' in str(row_data.iloc[14]):
@@ -238,7 +242,7 @@ def dryplan_convert_to_qrcard(df_json):
                     "plan_remark": f"{row_data.iloc[16]}"
                 }
                 
-                # ProductionPlan 모델 인스턴스 생성 또는 업데이트
+                # Create or update ProductionPlan model instance
                 production_plan, created = ProductionPlan.objects.update_or_create(
                     sales_order=sales_order,
                     plan_date=row_data.iloc[11][:10],
@@ -272,68 +276,68 @@ def dryplan_convert_to_qrcard(df_json):
             qr_str = f"!BSVPD!{row_data.iloc[0]}!{row_data.iloc[1]}!"
             qr_img = qrcode.make(qr_str).resize((160, 160))
             
-            # QR 코드 이미지를 BytesIO 스트림에 저장합니다.
+            # Save QR code image to BytesIO stream
             img_stream = io.BytesIO()
             qr_img.save(img_stream, format='PNG')
             
-            # 스트림 위치를 처음으로 돌립니다.
+            # Reset stream position to the beginning
             img_stream.seek(0)
             
-            # openpyxl 이미지 객체를 생성합니다.
+            # Create openpyxl image object
             qr_img_openpyxl = Image(img_stream)
             
-            # 워크시트에 QR 코드 이미지를 추가합니다.
+            # Add QR code image to worksheet
             ws.add_image(qr_img_openpyxl, "G22")
 
             qr_img_2 = qrcode.make(qr_str).resize((160, 160))
 
-            # QR 코드 이미지를 BytesIO 스트림에 저장합니다.
+            # Save QR code image to BytesIO stream
             img_stream_2 = io.BytesIO()
             qr_img_2.save(img_stream_2, format='PNG')
             
-            # 스트림 위치를 처음으로 돌립니다.
+            # Reset stream position to the beginning
             img_stream_2.seek(0)
             
-            # openpyxl 이미지 객체를 생성합니다.
+            # Create openpyxl image object
             qr_img_openpyxl_2 = Image(img_stream_2)
             
-            # 워크시트에 QR 코드 이미지를 추가합니다.
+            # Add QR code image to worksheet
             ws.add_image(qr_img_openpyxl_2, "A22")
         
-        # 워크북을 저장하고 응답을 반환합니다.
+        # Save workbook and return response
         del wb['Sheet']
         wb.save(response)
         return response
     
     except Exception as e:
-        # 에러가 발생하면 JSON 형식으로 에러 메시지를 반환합니다.
+        # Return error message in JSON format if an error occurs
         return JsonResponse({'error': str(e)})
 
 def dev_order_convert_to_qrcard(development_and_orders):
     try:
-        # 엑셀 파일로 응답을 생성합니다.
+        # Create excel file response
         response = HttpResponse(content_type='application/ms-excel')
         response['Content-Disposition'] = 'attachment; filename="dev_qrcard_.xlsx"'
         
-        # JSON 데이터를 pandas DataFrame으로 변환합니다.
+        # Convert JSON data to pandas DataFrame
         # df = pd.read_json(df_json)
         
-        # 새 워크북을 생성하고 기존의 'qrcard.xlsx' 파일을 로드합니다.
+        # Create new workbook and load existing 'qrcard.xlsx' file
         wb = openpyxl.Workbook()
         
-        # S3에서 파일 가져오기
+        # Get the excel file from S3
         excel_file = get_s3_file('forms/qrcard.xlsx')
 
-        # openpyxl로 워크북 로드
+        # Load the workbook using openpyxl
         qrcard = openpyxl.load_workbook(excel_file)
         
-        # 각 행에 대해 새 워크시트를 생성하고 데이터를 채웁니다.
+        # For each row, create a new worksheet and fill in the data
         for development, order in development_and_orders:
             order_no = order.order_no
             order_info = order.order_information
             ws = wb.create_sheet(str(order_no))
             copy_sheet(qrcard['DEV'], ws)
-            # 워크시트에 데이터를 채웁니다.
+            # Fill in the data in the worksheet
             
             ws['A3'] = str(development.category)
             #ws['F3'] = str(development.deadline)[2:]
@@ -354,39 +358,39 @@ def dev_order_convert_to_qrcard(development_and_orders):
             qr_str = f"!BSVPD!{order_no.split('-')[0]}!{order_no.split('-')[1]}!"
             qr_img = qrcode.make(qr_str).resize((160, 160))
             
-            # QR 코드 이미지를 BytesIO 스트림에 저장합니다.
+            # Save QR code image to BytesIO stream
             img_stream = io.BytesIO()
             qr_img.save(img_stream, format='PNG')
             
-            # 스트림 위치를 처음으로 돌립니다.
+            # Reset stream position to the beginning
             img_stream.seek(0)
             
-            # openpyxl 이미지 객체를 생성합니다.
+            # Create openpyxl image object
             qr_img_openpyxl = Image(img_stream)
             
-            # 워크시트에 QR 코드 이미지를 추가합니다.
+            # Add QR code image to worksheet
             ws.add_image(qr_img_openpyxl, "G22")
 
             qr_img_2 = qrcode.make(qr_str).resize((160, 160))
 
-            # QR 코드 이미지를 BytesIO 스트림에 저장합니다.
+            # Save QR code image to BytesIO stream
             img_stream_2 = io.BytesIO()
             qr_img_2.save(img_stream_2, format='PNG')
             
-            # 스트림 위치를 처음으로 돌립니다.
+            # Reset stream position to the beginning
             img_stream_2.seek(0)
             
-            # openpyxl 이미지 객체를 생성합니다.
+            # Create openpyxl image object
             qr_img_openpyxl_2 = Image(img_stream_2)
             
-            # 워크시트에 QR 코드 이미지를 추가합니다.
+            # Add QR code image to worksheet
             ws.add_image(qr_img_openpyxl_2, "A22")
         
-        # 워크북을 저장하고 응답을 반환합니다.
+        # Save workbook and return response
         del wb['Sheet']
         wb.save(response)
         return response
     
     except Exception as e:
-        # 에러가 발생하면 JSON 형식으로 에러 메시지를 반환합니다.
+        # Return error message in JSON format if an error occurs
         return JsonResponse({'error': str(e)})

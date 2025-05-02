@@ -64,7 +64,7 @@
           "X-Requested-With": "XMLHttpRequest",
           "X-CSRFToken": csrftoken,
         },
-        credentials: "same-origin", // Thêm credentials để gửi cookies
+        credentials: "same-origin", // Add credentials to send cookies
       })
         .then((response) => {
           if (!response.ok) {
@@ -78,9 +78,9 @@
             return;
           }
 
-          // Nếu có file để download
+          // If there is a file to download
           if (data.file_content) {
-            // Chuyển base64 string thành blob
+            // Convert base64 string to blob
             const byteCharacters = atob(data.file_content);
             const byteNumbers = new Array(byteCharacters.length);
             for (let i = 0; i < byteCharacters.length; i++) {
@@ -88,7 +88,7 @@
             }
             const byteArray = new Uint8Array(byteNumbers);
 
-            // Tạo blob và download
+            // Create blob and download
             const blob = new Blob([byteArray], { type: data.content_type });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement("a");
@@ -100,14 +100,14 @@
             a.remove();
           }
 
-          // Hiển thị danh sách đơn hàng không hợp lệ
+          // Display list of invalid orders
           if (data.invalid_orders && data.invalid_orders.length > 0) {
             const container = document.getElementById(
               "invalid-orders-container"
             );
             let html = `
                 <div class="alert alert-danger mt-3">
-                    <h5><strong>Lỗi đơn hàng không tồn tại:</strong></h5>
+                    <h5><strong>Invalid order error:</strong></h5>
                     <table class="table table-bordered">
                         <thead>
                             <tr>
@@ -137,7 +137,7 @@
         })
         .catch((error) => {
           console.error("Error:", error);
-          alert("Có lỗi xảy ra khi xử lý yêu cầu: " + error.message);
+          alert("An error occurred while processing the request: " + error.message);
         });
     });
 </script>

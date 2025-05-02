@@ -164,8 +164,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # 로깅 설정
 LOGGING = {
-    'version': 1,   # version은 고정값 1을 사용해야 함. logging 모듈이 업그레이드되어도 현재 설정을 보장해 주는 장치
-    'disable_existing_loggers': False,  # True로 설정하면 기존에 설정된 로거들을 사용하지 않게 됨
+    'version': 1,   # version must be set to 1. This ensures current settings are preserved even when logging module is upgraded
+    'disable_existing_loggers': False,  # If set to True, previously set loggers will not be used.
     'filters': {
         'require_debug_false': {
             '()': 'django.utils.log.RequireDebugFalse',
@@ -255,3 +255,38 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 )
+
+# Security Settings
+SECURE_BROWSER_XSS_FILTER = True # Prevent XSS attacks by filtering out malicious content
+SECURE_CONTENT_TYPE_NOSNIFF = True # Prevent MIME type sniffing
+X_FRAME_OPTIONS = 'DENY' # Prevent clickjacking
+CSRF_COOKIE_SECURE = True # Prevent CSRF attacks by ensuring cookies are only sent over HTTPS
+SESSION_COOKIE_SECURE = True # Prevent session hijacking by ensuring cookies are only sent over HTTPS
+SECURE_SSL_REDIRECT = True # Redirect all HTTP requests to HTTPS
+SECURE_HSTS_SECONDS = 31536000  # HTTP Strict Transport Security (HSTS)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True # Include subdomains in HSTS policy
+SECURE_HSTS_PRELOAD = True # Enable HSTS preloading
+
+# Session Settings
+SESSION_COOKIE_AGE = 1800  # Session timeout in seconds
+SESSION_SAVE_EVERY_REQUEST = True # Save session data every request
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True # Expire session at browser close
+
+# Authentication Settings
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend', # Default authentication backend
+    'allauth.account.auth_backends.AuthenticationBackend', # Allauth authentication backend
+]
+
+# These pages are not required to be logged in to access
+# Login Settings
+LOGIN_REQUIRED_IGNORE_VIEW_NAMES = [
+    'common:login', #   Login view
+    'common:signup', # Signup view
+    'common:password_reset', # Password reset view
+]
+
+# CSRF Settings
+CSRF_COOKIE_HTTPONLY = True # Cookie should not be accessible to JavaScript
+CSRF_USE_SESSIONS = True # Save CSRF token in session instead of cookie
+CSRF_COOKIE_SAMESITE = 'Strict' # Cookie should only be sent from the same site
