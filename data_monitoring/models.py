@@ -66,8 +66,21 @@ class Inspection(models.Model):
     production_plan = models.ForeignKey(ProductionPlan, null=True, on_delete=models.CASCADE)
     ins_qty = models.IntegerField()
     ins_information = models.JSONField(null=True)
-    line_no = models.CharField(max_length=10)    
-    position = models.CharField(max_length=50)
+    line_no = models.CharField(max_length=10)
+    qty_to_printing = models.IntegerField(null=True, blank=True)
+    position = models.CharField(max_length=50, null=True, blank=True)
+    create_date = models.DateTimeField(default=timezone.now)
+    modify_date = models.DateTimeField(null=True, auto_now=True)
+
+    def __str__(self):
+        return f"{self.production_plan.sales_order.order_no}-{self.production_plan.plan_date}"
+
+class Printing(models.Model):
+    sales_order = models.ForeignKey(SalesOrder, null=True, on_delete=models.CASCADE)
+    production_plan = models.ForeignKey(ProductionPlan, null=True, on_delete=models.CASCADE)
+    print_qty = models.IntegerField()
+    print_information = models.JSONField(null=True)
+    line_no = models.CharField(max_length=10)
     create_date = models.DateTimeField(default=timezone.now)
     modify_date = models.DateTimeField(null=True, auto_now=True)
 
@@ -82,7 +95,7 @@ class ProductionLot(models.Model):
     def generate_lot(cls):
         today = datetime.now().strftime('%m%d')
         
-        # ProductionLot 모델에서 lot_no를 검색하여 누락된 숫자 찾기
+        # Find missing numbers in lot_no from ProductionLot model
         existing_lots = ProductionLot.objects.filter(lot_no__startswith=today)
         
         existing_counts = sorted(

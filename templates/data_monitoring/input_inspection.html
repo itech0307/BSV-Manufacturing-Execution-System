@@ -1,7 +1,6 @@
 {% extends "data_monitoring/input_base.html" %} {% block title %}PRODUCTION-DATA
 QR SYSTEM (INSPECTION){% endblock %} {% block header %}PRODUCTION-DATA QR SYSTEM
-(INSPECTION){% endblock %} {% block content %} {% endblock %}
-{% block extra_js %}
+(INSPECTION){% endblock %} {% block content %} {% endblock %} {% block extra_js %}
 <script>
   $(document).ready(function () {
     var decimalButton = document.querySelector(".decimal");
@@ -14,11 +13,6 @@ QR SYSTEM (INSPECTION){% endblock %} {% block header %}PRODUCTION-DATA QR SYSTEM
   $("#nextBtn").on("click", handleNextButtonClick);
 
   function handleNextButtonClick() {
-    if (nextBtnState === 1) {
-      if (!validateAGradeQuantity()) {
-        return;
-      }
-    }
 
     nextBtnState++;
     switch (nextBtnState) {
@@ -43,9 +37,6 @@ QR SYSTEM (INSPECTION){% endblock %} {% block header %}PRODUCTION-DATA QR SYSTEM
   }
 
   function handleSecondClick() {
-    if (!validateAGradeQuantity()) {
-      return;
-    }
     sendDataToServer();
   }
 
@@ -54,23 +45,28 @@ QR SYSTEM (INSPECTION){% endblock %} {% block header %}PRODUCTION-DATA QR SYSTEM
   }
 
   function sendDataToServer() {
-    if (!validateAGradeQuantity()) {
-      return;
+    $("#keypad").hide();
+
+    // Determine next_step based on input type
+    let selectedNextProcess = '';
+    const printingQty = quantityInput.find(x => x.Grade === 'Printing');
+    if (printingQty) {
+        selectedNextProcess = 'PRINTING';
     }
 
-    $("#keypad").hide();
     $.ajax({
-      url: "/data_monitoring/input_inspection/",
-      type: "POST",
-      data: JSON.stringify({
-        scannedOrders: scannedQRCodes,
-        quantityInput: quantityInput,
-        machine: machineValue,
-      }),
-      contentType: "application/json; charset=utf-8",
-      dataType: "json",
-      success: handleServerResponse,
-      error: handleServerError,
+        url: "/data_monitoring/input_inspection/",
+        type: "POST",
+        data: JSON.stringify({
+            scannedOrders: scannedQRCodes,
+            quantityInput: quantityInput,
+            machine: machineValue,
+            selectedNextProcess: selectedNextProcess
+        }),
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        success: handleServerResponse,
+        error: handleServerError
     });
   }
 
@@ -78,51 +74,120 @@ QR SYSTEM (INSPECTION){% endblock %} {% block header %}PRODUCTION-DATA QR SYSTEM
 
   function addAgradeQuantity() {
     parentDiv = $("#quantityInputTable");
-    // Create flex container for horizontal alignment
+
+    // Create container for A-grade
+    const aGradeContainer = $('<div id="aGradeContainer" class="mb-4"></div>');
+
+    // Create flex container for A-grade
     const flexContainer = $('<div class="d-flex align-items-center"></div>');
 
     // Add "A Grade" label
-    const label = $(
-      '<label style="width:50%; font-size:35px;">A Grade:</label>'
-    );
+    const label = $('<label style="width:50%; font-size:35px;">A Grade:</label>');
+
     // Create input field for A Grade quantity
     const aGradeQuantityInput = $(
-      '<input type="text" class="form-control form-control-lg numeric-input required" style="width:50%" placeholder="Qty *" required>'
+        '<input type="text" class="form-control form-control-lg numeric-input required" style="width:50%" placeholder="Qty *">'
     );
-    aGradeQuantityInput.css("border-color", "#ff9999"); // Visual indicator for required field
+
     // Add unit label "M"
     const unitLabel = $('<span class="ml-2">M</span>');
 
-    // Add label, input field and unit label to flex container
-    flexContainer.append(label); // Add label
-    flexContainer.append(aGradeQuantityInput); // Add input field
-    flexContainer.append(unitLabel); // Add "M" label
-    parentDiv.append(flexContainer); // Add complete flex container to parent div
+    // Add components to flex container
+    flexContainer.append(label);
+    flexContainer.append(aGradeQuantityInput);
+    flexContainer.append(unitLabel);
 
-    // Adjust position of addButtonContainer below flexContainer
-    parentDiv.append(addButtonContainer); // Add addButtonContainer below flexContainer
+    // Add flex container to A-grade container
+    aGradeContainer.append(flexContainer);
 
-    // Add required field message
-    const requiredMessage = $(
-      '<small class="text-danger">* Required field - Please enter quantity</small>'
+    // Add A-grade container to parent
+    parentDiv.append(aGradeContainer);
+
+    // Add button container
+    parentDiv.append(addButtonContainer);
+
+    // Create container for Printing quantity
+    const printingContainer = $('<div id="printingContainer" class="mt-4"></div>');
+
+    // Create flex container for Printing
+    const printingFlexContainer = $('<div class="d-flex align-items-center"></div>');
+
+    // Add "To Printing" label
+    const printingLabel = $('<label style="width:50%; font-size:35px;">To Printing:</label>');
+
+    // Create input field for Printing quantity
+    const printingQuantityInput = $(
+        '<input type="text" class="form-control form-control-lg numeric-input" style="width:50%" placeholder="Qty">'
     );
-    aGradeQuantityInput.after(requiredMessage);
 
-    // Add event handler for input field
-    aGradeQuantityInput.on("input", function () {
-      const value = $(this).val().trim();
-      if (value !== "" && parseFloat(value) > 0) {
-        $(this).css("border-color", "");
-        requiredMessage.hide();
-      } else {
-        $(this).css("border-color", "#ff9999");
-        requiredMessage.show();
-      }
+    // Add unit label "M"
+    const printingUnitLabel = $('<span class="ml-2">M</span>');
 
-      const existingAgrade = quantityInput.find((x) => x.Grade === "A");
-      if (existingAgrade) {
-        existingAgrade.quantity = value ? parseFloat(value) : 0;
-      }
+    // Add components to printing flex container
+    printingFlexContainer.append(printingLabel);
+    printingFlexContainer.append(printingQuantityInput);
+    printingFlexContainer.append(printingUnitLabel);
+
+    // Add printing flex container to printing container
+    printingContainer.append(printingFlexContainer);
+
+    // Add printing container to parent
+    parentDiv.append(printingContainer);
+
+    // Handle A-grade input
+    aGradeQuantityInput.on('input', function() {
+        const quantity = $(this).val();
+        if (quantity && quantity > 0) {
+            // Disable Printing input and clear its value
+            printingQuantityInput.val('').prop('disabled', true);
+            // Update quantityInput array
+            const existingAgrade = quantityInput.find(x => x.Grade === 'A');
+            if (existingAgrade) {
+                existingAgrade.quantity = quantity;
+            } else {
+                quantityInput.push({ Grade: 'A', quantity: quantity });
+            }
+            // Enable defect input
+            $('.addQtyBtn').prop('disabled', false);
+        } else {
+            // Enable Printing input
+            printingQuantityInput.prop('disabled', false);
+            // Remove A-grade from quantityInput array
+            const agradeIndex = quantityInput.findIndex(x => x.Grade === 'A');
+            if (agradeIndex > -1) {
+                quantityInput.splice(agradeIndex, 1);
+            }
+        }
+    });
+
+    // Handle Printing input
+    printingQuantityInput.on('input', function() {
+        const quantity = $(this).val();
+        if (quantity && quantity > 0) {
+            // Disable A-grade input and clear its value
+            aGradeQuantityInput.val('').prop('disabled', true);
+            // Clear all defect inputs
+            $('.defect-cause-container').remove();
+            // Disable add defect button
+            $('.addQtyBtn').prop('disabled', true);
+            // Clear quantityInput array and add only printing quantity
+            quantityInput.length = 0;
+            quantityInput.push({
+                Grade: 'Printing',
+                quantity: quantity,
+                next_step: 'PRINTING'
+            });
+        } else {
+            // Enable A-grade input
+            aGradeQuantityInput.prop('disabled', false);
+            // Enable add defect button
+            $('.addQtyBtn').prop('disabled', false);
+            // Remove printing from quantityInput array
+            const printingIndex = quantityInput.findIndex(x => x.Grade === 'Printing');
+            if (printingIndex > -1) {
+                quantityInput.splice(printingIndex, 1);
+            }
+        }
     });
   }
 
@@ -198,7 +263,7 @@ QR SYSTEM (INSPECTION){% endblock %} {% block header %}PRODUCTION-DATA QR SYSTEM
   }
 
   // Add validation function for A Grade quantity
-  function validateAGradeQuantity() {
+  {% comment %} function validateAGradeQuantity() {
     const aGradeInput = $("input.numeric-input.required").val();
     if (
       !aGradeInput ||
@@ -210,15 +275,6 @@ QR SYSTEM (INSPECTION){% endblock %} {% block header %}PRODUCTION-DATA QR SYSTEM
       return false;
     }
     return true;
-  }
-
-  // Modify Next button behavior
-  $("#nextButton").click(function () {
-    if (!validateAGradeQuantity()) {
-      return false; // Stop processing if A Grade quantity not entered
-    }
-
-    // ... rest of your existing next button code ...
-  });
+  } {% endcomment %}
 </script>
 {% endblock %}

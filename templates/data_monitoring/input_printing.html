@@ -1,0 +1,118 @@
+{% extends "data_monitoring/input_base.html" %} {% load static %} 
+{% block title %}PRODUCTION-DATA QR SYSTEM - PRINTING{% endblock %} {% block header %}PRODUCTION-DATA QR SYSTEM - PRINTING{% endblock %} {% block content %}
+<!-- Nội dung đặc thù cho bộ phận Printing có thể thêm vào đây nếu cần -->
+{% endblock %} {% block extra_js %}
+<script>
+  $(document).ready(function () {
+    // Khi trang được tải, xóa trống trường 'Production Quantity'
+    $("#qty").val("");
+
+    // Cập nhật biến quantityInput mỗi khi giá trị trường 'qty' thay đổi
+    $("#qty").change(function () {
+      quantityInput = $(this).val(); // Đặt giá trị nhập vào biến quantityInput
+    });
+
+    var decimalButton = document.querySelector(".decimal");
+    // Chỉ ẩn nút nếu nó tồn tại
+    if (decimalButton) {
+      decimalButton.style.display = "none";
+    }
+  });
+
+  let nextBtnState = 0;
+  let scannedOrdersData;
+
+  $("#nextBtn").on("click", handleNextButtonClick);
+
+  function handleNextButtonClick() {
+    nextBtnState++;
+    switch (nextBtnState) {
+      case 1:
+        handleFirstClick();
+        break;
+      case 2:
+        handleSecondClick();
+        break;
+      case 3:
+        handleThirdClick();
+        break;
+      default:
+        resetPage();
+    }
+  }
+
+  function handleFirstClick() {
+    updateScannedQRCodes();
+    updateQRSummary();
+    clearOrderInfo();
+    disableAddButton();
+  }
+
+  function handleSecondClick() {
+    addQuantityInput();
+    showQuantityInput();
+    setupTableToggle();
+  }
+
+  function handleThirdClick() {
+    const quantityInput = $("#qty").val();
+    if (quantityInput) {
+      sendDataToServer(quantityInput);
+    } else {
+      alert("Vui lòng nhập số lượng đã sửa màu.");
+      nextBtnState = 1;
+      $("#nextBtn").click();
+    }
+  }
+
+  function addQuantityInput() {
+    const htmlContent = `
+      <label class="col-6"><h3>SỐ LƯỢNG ĐÃ SỬA MÀU</h3></label>
+      <div class="row">
+        <input style="font-size: 128px;" type="text" id="qty" name="qty" class="form-control col-10 form-control-lg">
+        <label style="font-size: 128px;" class="col-2">M</label>
+      </div>`;
+    $("#addButtonContainer").html(htmlContent);
+  }
+
+  function showQuantityInput() {
+    $("#quantityInputContainer").show();
+    $("#qty").focus();
+    $("#scannedOrdersTable").hide();
+  }
+
+  function sendDataToServer(quantityInput) {
+    $("#keypad").hide();
+
+    $.ajax({
+      url: window.location.pathname,
+      type: "POST",
+      data: JSON.stringify({
+        scannedOrders: scannedQRCodes,
+        quantityInput: quantityInput,
+        machine: machineValue,
+      }),
+      contentType: "application/json; charset=utf-8",
+      dataType: "json",
+      success: handleServerResponse,
+      error: handleServerError,
+    });
+  }
+
+  function toggleTableVisibility() {
+    $("#scannedOrdersTable").toggle();
+    const buttonText = $("#scannedOrdersTable").is(":visible")
+      ? "Giấu"
+      : "Hiện";
+    $(".toggle-button").text(buttonText);
+  }
+
+  // Hàm cập nhật biến quantityInput khi giá trị trường nhập thay đổi
+  function updateQuantityInput() {
+    quantityInput = $("#qty").val();
+  }
+
+  // Thêm event listener 'input' để gọi hàm updateQuantityInput mỗi khi trường nhập thay đổi
+  $("#qty").on("input", updateQuantityInput);
+</script>
+{% endblock %}

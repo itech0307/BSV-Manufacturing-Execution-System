@@ -1,156 +1,235 @@
-{% load static %}
-{% load i18n %}
+{% load static %} {% load i18n %}
 <div class="hover-area"></div>
 <nav class="nav-container">
-    <button class="toggle-btn">☰</button>
-    <div class="logo">
-        <a href="{% url 'common:main' %}" class="BSV-MES">
-            <span class="text-wrapper-1">BSV</span>
-            <span class="text-wrapper-2">MES</span>
-            <div class="subtitle">
-                <span>{% trans "Manufacturing Execution System" %}</span>
-            </div>
-        </a>
+  <button class="toggle-btn">☰</button>
+  <div class="logo">
+    <a href="{% url 'common:main' %}" class="BSV-MES">
+      <span class="text-wrapper-1">BSV</span>
+      <span class="text-wrapper-2">MES</span>
+      <div class="subtitle">
+        <span>{% trans "Manufacturing Execution System" %}</span>
+      </div>
+    </a>
+  </div>
+  
+  <!-- ORDERS -->
+  <div class="navi-menu">
+    <div class="menu-button" data-submenu="orders-submenu">
+      <div class="bi bi-search me-2"></div>
+      <div class="text-wrapper">{% trans "Orders" %}</div>
     </div>
-    <div class="navi-menu">
-        <div class="menu-button" data-submenu="orders-submenu">
-            <div class="icon-placeholder"></div>
-            <div class="text-wrapper">{% trans "Orders" %}</div>
-        </div>
-        <div class="submenu" id="orders-submenu">
-            <a href="{% url 'data_monitoring:order_search' %}" class="submenu-item">{% trans "Search" %}</a>
-            <a href="#" class="submenu-item">{% trans "Process" %}</a>
-            {% if user.profile.is_production_team %}
-            <a href="{% url 'production_management:order_sheet_upload' %}" class="submenu-item">{% trans "Import" %}</a>
-            <a href="#" class="submenu-item">{% trans "Export" %}</a>
-            {% endif %}
-        </div>
+    <div class="submenu" id="orders-submenu">
+      <a href="{% url 'data_monitoring:order_search' %}" class="submenu-item"
+        >{% trans "Search" %}</a
+      >
+      <a href="#" class="submenu-item">{% trans "Process" %}</a>
+      {% if user.profile.is_production_team %}
+      <a
+        href="{% url 'production_management:order_sheet_upload' %}"
+        class="submenu-item"
+        >{% trans "Import" %}</a
+      >
+      <a href="{% url 'data_monitoring:export' %}" class="submenu-item">{% trans "Uninspected Orders" %}</a>
+      {% endif %}
     </div>
-    <div class="navi-menu">
-        <div class="menu-button" data-submenu="library-submenu">
-            <div class="icon-placeholder"></div>
-            <div class="text-wrapper">{% trans "Library" %}</div>
-        </div>
-        <div class="submenu" id="library-submenu">
-            <a href="#" class="submenu-item">{% trans "Item" %}</a>
-            <a href="#" class="submenu-item">{% trans "Color" %}</a>
-            <a href="#" class="submenu-item">{% trans "Pattern" %}</a>
-        </div>
+  </div>
+
+  <!-- LIBRARY -->
+  <div class="navi-menu">
+    <div class="menu-button" data-submenu="library-submenu">
+      <div class="icon-placeholder"></div>
+      <div class="text-wrapper">{% trans "Library" %}</div>
     </div>
-    <div class="navi-menu">
-        <div class="menu-button" data-submenu="inventory-submenu">
-            <div class="icon-placeholder"></div>
-            <div class="text-wrapper">{% trans "Inventory" %}</div>
-        </div>
-        <div class="submenu" id="inventory-submenu">
-            <a href="{% url 'inventory_management:view_raw_materials' %}" class="submenu-item">{% trans "Search" %}</a>
-            {% if user.profile.is_production_team %}
-            <a href="#" class="submenu-item">{% trans "Import" %}</a>
-            <a href="#" class="submenu-item">{% trans "Export" %}</a>
-            {% endif %}
-        </div>
+    <div class="submenu" id="library-submenu">
+      <a href="#" class="submenu-item">{% trans "Item" %}</a>
+      <a href="#" class="submenu-item">{% trans "Color" %}</a>
+      <a href="#" class="submenu-item">{% trans "Pattern" %}</a>
     </div>
-    <div class="navi-menu">
-        <div class="menu-button" data-submenu="planning-submenu">
-            <div class="icon-placeholder"></div>
-            <div class="text-wrapper">{% trans "Planing" %}</div>
-        </div>
-        <div class="submenu" id="planning-submenu">
-            {% if user.profile.is_production_team %}
-            <a href="{% url 'production_management:dryplan_import' %}" class="submenu-item">{% trans "Dry Plan Import" %}</a>
-            <a href="#" class="submenu-item">{% trans "Wet Plan Import" %}</a>
-            {% endif %}
-            <a href="{% url 'data_monitoring:dryplan' %}" class="submenu-item">{% trans "Dry Line Plan" %}</a>
-            <a href="#" class="submenu-item">{% trans "Wet Line Plan" %}</a>
-        </div>
     </div>
-    <div class="navi-menu">
-        <div class="menu-button" data-submenu="production-submenu">
-            <div class="icon-placeholder"></div>
-            <div class="text-wrapper">{% trans "Production" %}</div>
-        </div>
-        <div class="submenu" id="production-submenu">
-            <a href="{% url 'data_monitoring:drymix' %}" class="submenu-item">{% trans "Dry Mix" %}</a>
-            <a href="#" class="submenu-item">{% trans "Wet Mix" %}</a>
-            <a href="{% url 'data_monitoring:dryline' %}" class="submenu-item">{% trans "Dry Line" %}</a>
-            <a href="#" class="submenu-item">{% trans "Wet Line" %}</a>
-            <a href="{% url 'data_monitoring:delamination' %}" class="submenu-item">{% trans "RP" %}</a>
-        </div>
+
+  <!-- INVENTORY -->
+  <div class="navi-menu">
+    <div class="menu-button" data-submenu="inventory-submenu">
+      <div class="icon-placeholder"></div>
+      <div class="text-wrapper">{% trans "Inventory" %}</div>
     </div>
-    <div class="navi-menu">
-        <div class="menu-button" data-submenu="post-process-submenu">
-            <div class="icon-placeholder"></div>
-            <div class="text-wrapper">{% trans "Post-Process" %}</div>
-        </div>
-        <div class="submenu" id="post-process-submenu">
-            <a href="#" class="submenu-item">{% trans "Buffing" %}</a>
-            <a href="#" class="submenu-item">{% trans "Color-Printing" %}</a>
-            <a href="#" class="submenu-item">{% trans "WEL" %}</a>
-        </div>
+    <div class="submenu" id="inventory-submenu">
+      <a
+        href="{% url 'inventory_management:view_raw_materials' %}"
+        class="submenu-item"
+        >{% trans "Search" %}</a
+      >
+      {% if user.profile.is_production_team %}
+      <a href="#" class="submenu-item">{% trans "Import" %}</a>
+      <a href="#" class="submenu-item">{% trans "Export" %}</a>
+      {% endif %}
     </div>
-    <div class="navi-menu">
-        <div class="menu-button" data-submenu="inspection-submenu">
-            <div class="icon-placeholder"></div>
-            <div class="text-wrapper">{% trans "Final-Process" %}</div>
-        </div>
-        <div class="submenu" id="inspection-submenu">
-            <a href="{% url 'data_monitoring:inspection' %}" class="submenu-item">{% trans "Inspection" %}</a>
-            <a href="#" class="submenu-item">{% trans "QA/QC" %}</a>
-            <a href="#" class="submenu-item">{% trans "Shipment" %}</a>
-        </div>
+  </div>
+  <div class="navi-menu">
+    <div class="menu-button" data-submenu="planning-submenu">
+      <div class="icon-placeholder"></div>
+      <div class="text-wrapper">{% trans "Planing" %}</div>
     </div>
-    <div class="navi-menu">
-        <div class="menu-button" data-submenu="board-submenu">
-            <div class="icon-placeholder"></div>
-            <div class="text-wrapper">{% trans "Board" %}</div>
-        </div>
-        <div class="submenu" id="board-submenu">
-            <a href="{% url 'common:list_files' %}" class="submenu-item">{% trans "File Browser" %}</a>
-            <a href="#" class="submenu-item">{% trans "Discussion" %}</a>
-            <a href="#" class="submenu-item">{% trans "Q&A" %}</a>
-        </div>
+    <div class="submenu" id="planning-submenu">
+      {% if user.profile.is_production_team %}
+      <a
+        href="{% url 'production_management:dryplan_import' %}"
+        class="submenu-item"
+        >{% trans "Dry Plan Import" %}</a
+      >
+      <a href="#" class="submenu-item">{% trans "Wet Plan Import" %}</a>
+      {% endif %}
+      <a href="{% url 'data_monitoring:dryplan' %}" class="submenu-item"
+        >{% trans "Dry Line Plan" %}</a
+      >
+      <a href="#" class="submenu-item">{% trans "Wet Line Plan" %}</a>
     </div>
-    {% if user.profile.is_production_team %}
-    <div class="navi-menu">
-        <div class="menu-button" data-submenu="development-submenu">
-            <div class="icon-placeholder"></div>
-            <div class="text-wrapper">{% trans "Development" %}</div>
-        </div>
-        <div class="submenu" id="development-submenu">
-            <a href="{% url 'production_management:development_list' %}" class="submenu-item">{% trans "Report" %}</a>
-        </div>
+  </div>
+
+  <!-- PRODUCTION -->
+  <div class="navi-menu">
+    <div class="menu-button" data-submenu="production-submenu">
+      <div class="icon-placeholder"></div>
+      <div class="text-wrapper">{% trans "Production" %}</div>
     </div>
-    <div class="navi-menu">
-        <div class="menu-button" data-submenu="hrm-submenu">
-            <div class="icon-placeholder"></div>
-            <div class="text-wrapper">{% trans "HRM" %}</div>
-        </div>
-        <div class="submenu" id="hrm-submenu">
-            <a href="{% url 'workforce_management:worker_list' %}" class="submenu-item">{% trans "List" %}</a>
-        </div>
+    <div class="submenu" id="production-submenu">
+      <a href="{% url 'data_monitoring:drymix' %}" class="submenu-item" 
+        >{% trans "Dry Mix" %}</a
+      >
+      <a href="#" class="submenu-item">{% trans "Wet Mix" %}</a>
+      <a href="{% url 'data_monitoring:dryline' %}" class="submenu-item"
+        >{% trans "Dry Line" %}</a
+      >
+      <a href="#" class="submenu-item">{% trans "Wet Line" %}</a>
+      <a href="{% url 'data_monitoring:delamination' %}" class="submenu-item"
+        >{% trans "RP" %}</a
+      >
     </div>
+  </div>
+
+  <!-- POST-PROCESS -->
+  <div class="navi-menu">
+    <div class="menu-button" data-submenu="post-process-submenu">
+      <div class="icon-placeholder"></div>
+      <div class="text-wrapper">{% trans "Post-Process" %}</div>
+    </div>
+    <div class="submenu" id="post-process-submenu">
+      <a href="#" class="submenu-item">{% trans "Buffing" %}</a>
+      <a href="#" class="submenu-item">{% trans "Color-Printing" %}</a>
+      <a href="#" class="submenu-item">{% trans "WEL" %}</a>
+    </div>
+  </div>
+
+  <!-- FINAL-PROCESS -->
+  <div class="navi-menu">
+    <div class="menu-button" data-submenu="inspection-submenu">
+      <div class="icon-placeholder"></div>
+      <div class="text-wrapper">{% trans "Final-Process" %}</div>
+    </div>
+    <div class="submenu" id="inspection-submenu">
+      <a href="{% url 'data_monitoring:inspection' %}" class="submenu-item"
+        >{% trans "Inspection" %}</a
+      >
+      <a href="#" class="submenu-item">{% trans "QA/QC" %}</a>
+      <a href="#" class="submenu-item">{% trans "Shipment" %}</a>
+    </div>
+  </div>
+
+  <!-- BOARD -->
+  <div class="navi-menu">
+    <div class="menu-button" data-submenu="board-submenu">
+      <div class="icon-placeholder"></div>
+      <div class="text-wrapper">{% trans "Board" %}</div>
+    </div>
+    <div class="submenu" id="board-submenu">
+      <a href="{% url 'common:list_files' %}" class="submenu-item"
+        >{% trans "File Browser" %}</a
+      >
+      <a href="#" class="submenu-item">{% trans "Discussion" %}</a>
+      <a href="#" class="submenu-item">{% trans "Q&A" %}</a>
+    </div>
+  </div>
+
+  <!-- DEVELOPMENT -->
+  {% if user.profile.is_production_team %}
+  <div class="navi-menu">
+    <div class="menu-button" data-submenu="development-submenu">
+      <div class="icon-placeholder"></div>
+      <div class="text-wrapper">{% trans "Development" %}</div>
+    </div>
+    <div class="submenu" id="development-submenu">
+      <a
+        href="{% url 'production_management:development_list' %}"
+        class="submenu-item"
+        >{% trans "Report" %}</a
+      >
+    </div>
+  </div>
+
+  <!-- HRM -->
+  <div class="navi-menu">
+    <div class="menu-button" data-submenu="hrm-submenu">
+      <div class="icon-placeholder"></div>
+      <div class="text-wrapper">{% trans "HRM" %}</div>
+    </div>
+    <div class="submenu" id="hrm-submenu">
+      <a
+        href="{% url 'workforce_management:worker_list' %}"
+        class="submenu-item"
+        >{% trans "List" %}</a
+      >
+    </div>
+  </div>
+  {% endif %}
+  <!-- Move user info section to the end of nav-container -->
+  <div class="user-info">
+    {% if user.is_authenticated %}
+    <div class="nav-item dropdown">
+      <a
+        class="nav-link dropdown-toggle d-flex align-items-center"
+        href="#"
+        id="userDropdown"
+        role="button"
+        data-bs-toggle="dropdown"
+        aria-expanded="false"
+      >
+        {% comment %}
+        <div class="user-avatar me-2">
+          <img
+            src="{% static 'images/default-avatar.png' %}"
+            alt="User Avatar"
+            width="30"
+            height="30"
+            class="rounded-circle"
+          />
+        </div>
+        {% endcomment %}
+        <span>{{ user.username }}</span>
+      </a>
+      <ul
+        class="dropdown-menu dropdown-menu-end"
+        aria-labelledby="userDropdown"
+      >
+        <li>
+          <a class="dropdown-item" href="{% url 'common:mypage' %}"
+            >{% trans "My Page" %}</a
+          >
+        </li>
+        <li>
+          <a class="dropdown-item" href="{% url 'common:change_password' %}"
+            >{% trans "Change Password" %}</a
+          >
+        </li>
+        <li><hr class="dropdown-divider" /></li>
+        <li>
+          <a class="dropdown-item" href="{% url 'common:logout' %}"
+            >{% trans "Logout" %}</a
+          >
+        </li>
+      </ul>
+    </div>
+    {% else %}
+    <!-- 로그인되지 않은 경우의 처리 -->
     {% endif %}
-    <!-- 사용자 정보 섹션을 nav-container의 끝으로 이동 -->
-    <div class="user-info">
-        {% if user.is_authenticated %}
-        <div class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                <!--
-                <div class="user-avatar me-2">
-                    <img src="{% static 'images/default-avatar.png' %}" alt="User Avatar" width="30" height="30" class="rounded-circle">
-                </div>
-                -->
-                <span>{{ user.username }}</span>
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                <li><a class="dropdown-item" href="{% url 'common:mypage' %}">{% trans "My Page" %}</a></li>
-                <li><a class="dropdown-item" href="{% url 'common:change_password' %}">{% trans "Change Password" %}</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="{% url 'common:logout' %}">{% trans "Logout" %}</a></li>
-            </ul>
-        </div>
-        {% else %}
-        <!-- 로그인되지 않은 경우의 처리 -->
-        {% endif %}
-    </div>
+  </div>
 </nav>

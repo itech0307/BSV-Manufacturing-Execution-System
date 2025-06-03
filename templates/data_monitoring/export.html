@@ -1,53 +1,20 @@
-{% extends 'data_monitoring/base.html' %}
+{% extends 'common/main.html' %}
 {% load i18n %}
 {% load custom_filters %}
-{% block header %}{% trans "Orders" %} {% trans "Search" %}{% endblock %}
-{% block checkbox %}
-<!-- Column display control checkboxes -->
+{% load static %}
+{% block content %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/report.css' %}">
+<h2>{% trans "Uninspected Orders" %} {% trans "Export" %}</h2>
+
+<!-- Checkbox và Download Button -->
 <div class="dropdown d-inline-block me-2">
-    <button class="btn btn-secondary dropdown-toggle" type="button" id="columnToggleDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-      {% trans "Select Columns" %}
-    </button>
-    <ul class="dropdown-menu" aria-labelledby="columnToggleDropdown">
-      <li>
-        <label class="dropdown-item">
-          <input class="form-check-input me-2 column-toggle" type="checkbox" id="toggleOrderDateColumn" data-column="OrderDate">
-          OrderDate
-        </label>
-      </li>
-      <li>
-        <label class="dropdown-item">
-          <input class="form-check-input me-2 column-toggle" type="checkbox" id="toggleRTDColumn" data-column="RTD">
-          RTD
-        </label>
-      </li>
-      <li>
-        <label class="dropdown-item">
-          <input class="form-check-input me-2 column-toggle" type="checkbox" id="toggleETDColumn" data-column="ETD">
-          ETD
-        </label>
-      </li>
-      <li>
-        <label class="dropdown-item">
-          <input class="form-check-input me-2 column-toggle" type="checkbox" id="toggleSpecColumn" data-column="Spec">
-          Spec
-        </label>
-      </li>
-    </ul>
+  <button class="btn btn-success me-2" onclick="exportTableToExcel()">{% trans "Download as Excel" %}</button>
 </div>
-{% endblock %}
-{% block forms %}
-<form method="post" action="{% url 'data_monitoring:order_search' %}" onsubmit="return validateOrderNumber();" style="display: flex; align-items: center; width: 100%;">
-    {% csrf_token %}
-    <input class="form-control" type="search" placeholder="order number" aria-label="order number" id="order_number" name="order_number" style="width:30%; margin-right: 10px;" required autocomplete="off">
-    <button class="btn btn-outline-success" type="submit">{% trans "Search" %}</button>
-</form>
-{% endblock %}
-{% block url %}{% url 'data_monitoring:order_search' %}{% endblock %}
-{% block table %}
+
+<!-- Nội dung bảng -->
 {% if order_and_status %}
-<text>Total {{ count }} results found.</text>
-<div class="scrollable-tbody">
+<br>
+<div class="scrollable-tbody" style="padding-top:2px">
     <table class="table table-report" style="width:80%">
         <thead>
             <tr>
@@ -71,7 +38,7 @@
                     <span class="filter-header" onclick="toggleFilter('nextStepFilter', event)">NextStep</span>
                     <div id="nextStepFilter" class="filter-dropdown" style="display: none;">
                         <div class="filter-options" id="filterOptions">
-                            <!-- The checkboxes are added here dynamically -->  
+                            <!-- 체크박스들이 여기에 동적으로 추가 -->
                         </div>
                     </div>
                 </th>
@@ -142,11 +109,7 @@
                             <span id="next_step" style="background-color: #5986c9; color: black; padding: 5px 10px; border-radius: 5px;"><b>INSPECTION{% if status.line_shortage < 0 %} ({{ status.line_shortage }}M) {% endif %}</b></span>
                         </td>
                     {% elif status.latest_process == 'Inspection' %}
-                        {% if status.qty_to_printing > 0 %}
-                            <td>
-                                <span id="next_step" style="background-color: #FF8C00; color: black; padding: 5px 10px; border-radius: 5px;"><b>PRINTING({{ status.qty_to_printing }}M)</b></span>
-                            </td>
-                        {% elif status.bal_qty > 0 %}
+                        {% if status.bal_qty > 0 %}
                             <td>
                                 <span id="next_step" style="background-color: #FFC107; color: black; padding: 5px 10px; border-radius: 5px;"><b>Add-Plan</b></span>
                             </td>
@@ -155,10 +118,6 @@
                                 <span id="next_step" style="background-color: #3CB371; color: black; padding: 5px 10px; border-radius: 5px;"><b>SHIPMENT</b></span>
                             </td>
                         {% endif %}
-                    {% elif status.latest_process == 'Printing' %}
-                        <td>
-                            <span id="next_step" style="background-color: #5986c9; color: black; padding: 5px 10px; border-radius: 5px;"><b>INSPECTION</b></span>
-                        </td>
                     {% else %}
                         <td></td>
                     {% endif %}
@@ -173,120 +132,209 @@
     </table>
 </div>
 {% else %}
-<p>No matching orders found.</p>
-{% endif %} {% endblock %} {% block extra_js %}
+<div class="alert alert-info">
+    <p>{% trans "No orders waiting for inspection found." %}</p>
+</div>
+{% endif %}
+
+<!-- Phần phân trang -->
+{% if page_obj.has_other_pages %}
+<div class="pagination justify-content-center mt-4">
+    <ul class="pagination">
+        {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page=1">&laquo; Đầu</a></li>
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">&lsaquo; Trước</a></li>
+        {% else %}
+            <li class="page-item disabled"><span class="page-link">&laquo; Đầu</span></li>
+            <li class="page-item disabled"><span class="page-link">&lsaquo; Trước</span></li>
+        {% endif %}
+
+        {% for i in page_obj.paginator.page_range %}
+            {% if page_obj.number == i %}
+                <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+            {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Tiếp &rsaquo;</a></li>
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Cuối &raquo;</a></li>
+        {% else %}
+            <li class="page-item disabled"><span class="page-link">Tiếp &rsaquo;</span></li>
+            <li class="page-item disabled"><span class="page-link">Cuối &raquo;</span></li>
+        {% endif %}
+    </ul>
+</div>
+<p class="text-center text-muted">Hiển thị {{ page_obj.start_index }} đến {{ page_obj.end_index }} trong tổng số {{ total_orders }} đơn hàng</p>
+{% endif %}
+
+<!-- Context Menu này cần được thêm vào export.html -->
+<div id="context-menu" class="context-menu">
+    <ul>
+        <li onclick="action1()">Status Info</li>
+        <li onclick="action2()">Add to mylist</li>
+        <li onclick="action3()">Comment</li>
+        <li onclick="action4()">To urgent</li>
+    </ul>
+</div>
+
+<!-- Modal này cũng cần được thêm vào -->
+<div id="infoModal" class="modal" style="z-index: 9999;">
+    <div class="modal-content" style="width:50%;">
+        <span class="close">&times;</span>
+        <h2>Status Information</h2>
+        <p id="modalStatusInfo"></p>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script src="{% static 'js/base.js' %}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.8/FileSaver.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    function toggleFilter(filterId, event) {
-        event.stopPropagation();
-        const filter = document.getElementById(filterId);
-        filter.style.display = filter.style.display === 'none' ? 'block' : 'none';
+// Khai báo biến toàn cục
+var clickedRow;
+
+// Đăng ký xử lý sự kiện khi trang đã tải xong
+document.addEventListener('DOMContentLoaded', function() {
+    // Lấy reference của bảng và context menu
+    const table = document.querySelector('.table-report');
+    const contextMenu = document.getElementById('context-menu');
+    
+    if (table && contextMenu) {
+        // Đăng ký sự kiện chuột phải (contextmenu)
+        table.addEventListener('contextmenu', function(e) {
+            e.preventDefault(); // Ngăn menu mặc định của trình duyệt
+            clickedRow = e.target.closest('tr'); // Lưu hàng được click
+            const { clientX: mouseX, clientY: mouseY } = e;
+            
+            // Hiển thị menu tại vị trí con trỏ chuột
+            contextMenu.style.top = `${mouseY}px`;
+            contextMenu.style.left = `${mouseX}px`;
+            contextMenu.style.display = 'block';
+        });
+        
+        // Đóng context menu khi click ra ngoài
+        document.addEventListener('click', function() {
+            contextMenu.style.display = 'none';
+        });
     }
     
-    function filterTable() {
-        const table = document.querySelector('.table-report');
-        const rows = table.querySelectorAll('tbody tr');
-        const checkboxes = document.querySelectorAll('#nextStepFilter input[type="checkbox"]:checked');
-        const selectedValues = Array.from(checkboxes).map(cb => cb.value);
+    // Xử lý đóng modal khi click vào nút X
+    const modal = document.getElementById('infoModal');
+    const closeBtn = modal.querySelector('.close');
     
-        rows.forEach(row => {
-            const nextStepCell = row.querySelector('td:last-child');
-            if (nextStepCell) {
-                const nextStepValue = nextStepCell.textContent.trim();
-                if (selectedValues.length === 0 || selectedValues.some(value => {
-                    if (value === '(N/A)') {
-                        return nextStepValue === '';
-                    }
-                    return nextStepValue.includes(value);
-                })) {
-                    row.style.display = "";
-                } else {
-                    row.style.display = "none";
-                }
-            }
-        });
+    if (closeBtn) {
+        closeBtn.onclick = function() {
+            modal.style.display = 'none';
+        }
     }
-    function populateFilterOptions() {
-        const table = document.querySelector('.table-report');
-        const rows = table.querySelectorAll('tbody tr');
-        const nextStepValues = new Set();
     
-        rows.forEach(row => {
-            const nextStepCell = row.querySelector('td:last-child');
-            if (nextStepCell) {
-                const nextStepValue = nextStepCell.textContent.trim();
-                if (nextStepValue === '') {
-                    nextStepValues.add('(N/A)');
-                } else {
-                    nextStepValues.add(nextStepValue);
-                }
-            }
-        });
-    
-        const filterOptions = document.getElementById('filterOptions');
-        filterOptions.innerHTML = ''; // Remove all existing options  
-    
-        nextStepValues.forEach(value => {
-            const label = document.createElement('label');
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.value = value;
-            checkbox.checked = true; // Set the checkbox to checked by default
-            checkbox.onclick = filterTable;
-            label.appendChild(checkbox);
-            label.appendChild(document.createTextNode(` ${value}`));
-            label.style.color = 'black'; // Set the filter text color to black
-            filterOptions.appendChild(label);
-        });
+    // Xử lý đóng modal khi click vào bên ngoài modal
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
     }
-
-    // Connect the filtering function to the page load and add a document click event listener
-    document.addEventListener('DOMContentLoaded', function() {
-        populateFilterOptions(); // Create filter options when the page loads
-
-        // Close the filter window when the document is clicked
-        document.addEventListener('click', function(event) {
-            const filterDropdown = document.getElementById('nextStepFilter');
-            if (filterDropdown.style.display === 'block' && !filterDropdown.contains(event.target)) {
-                filterDropdown.style.display = 'none';
-            }
-        });
-
-        // Prevent event propagation when clicking inside the filter dropdown
-        const filterDropdown = document.getElementById('nextStepFilter');
-        filterDropdown.addEventListener('click', function(event) {
-            event.stopPropagation();
-        });
-    });
+});
 </script>
 
 <style>
-  .filter-header {
+.filter-header {
     cursor: pointer;
-  }
+}
 
-  .filter-dropdown {
+.filter-dropdown {
     position: absolute;
     background-color: #f9f9f9;
     min-width: 160px;
     box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
     padding: 12px;
     z-index: 1;
-  }
+}
 
-  .filter-dropdown input[type="text"] {
+.filter-dropdown input[type="text"] {
     width: 100%;
     padding: 5px;
     margin-bottom: 10px;
-  }
+}
 
-  .filter-options {
+.filter-options {
     max-height: 200px;
     overflow-y: auto;
-  }
+}
 
-  .filter-options label {
+.filter-options label {
     display: block;
     margin-bottom: 5px;
-  }
+}
+
+.filter-form {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+/* Context Menu Styles */
+.context-menu {
+    display: none;
+    position: absolute;
+    z-index: 10000;
+    background-color: #f9f9f9;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.context-menu ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.context-menu li {
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.context-menu li:hover {
+    background-color: #e9e9e9;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 10% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    border-radius: 5px;
+    width: 50%;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: black;
+}
 </style>
 {% endblock %}

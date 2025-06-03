@@ -3,7 +3,7 @@ body.kiosk {
 }
 
 .kiosk-container {
-    margin-top: 50px;
+    margin-top: 10px;
     background-color: #DFF0D8;
     padding: 20px;
     border-radius: 10px;
@@ -134,4 +134,28 @@ h2.kiosk-title {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+.support-info-container {
+    margin-top: 15px;
+    margin-bottom: 15px;
+  }
+
+.support-info {
+    display: inline-block;
+    background-color: rgba(40, 167, 69, 0.15);
+    border: 1px solid rgba(40, 167, 69, 0.5);
+    color: #212529;
+    padding: 8px 15px;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.support-phone,
+.support-name {
+    font-weight: bold;
+
+  }
+  
+.support-name-po {
+    font-weight: normal;
 }

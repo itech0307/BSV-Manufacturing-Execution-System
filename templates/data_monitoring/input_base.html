@@ -1,105 +1,152 @@
 {% load static %}
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}PRODUCTION-DATA QR SYSTEM{% endblock %}</title>
-    <link rel="stylesheet" type="text/css" href="{% static 'css/bootstrap.min.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static 'css/jquery.keypad.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static 'css/kiosk.css' %}">
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{% static 'css/bootstrap.min.css' %}"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{% static 'css/jquery.keypad.css' %}"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{% static 'css/kiosk.css' %}"
+    />
     {% block extra_css %}{% endblock %}
-</head>
-<body class="kiosk">
+  </head>
+  <body class="kiosk">
+        <!-- IT Support Contact Information -->
+        <div class="container text-center support-info-container">
+          <div class="support-info">
+              <strong style="text-decoration: underline;">Contact IT:</strong>
+              <span class="support-phone">082 704 2971</span> |
+              <span class="support-name">ĐẠT <span class="support-name-po">(PO)</span>
+          </div>
+        </div>
     <div class="container kiosk-container">
-        <h2 class="title kiosk-title">{% block header %}PRODUCTION-DATA QR SYSTEM{% endblock %}</h2>
-        <div class="row">
-            <div class="col-md-6">
-                <img src="{% static 'images/worker.png' %}" alt="Worker Input Kiosk" style="width:100%;">
-            </div>
-            <div class="col-md-6">
-                <video class="qr-preview" id="qr-preview"></video>
-            </div>
+      <h2 class="title kiosk-title">
+        {% block header %}PRODUCTION-DATA QR SYSTEM{% endblock %}
+      </h2>
+      <div class="row">
+        <div class="col-md-6">
+          <img
+            src="{% static 'images/worker.png' %}"
+            alt="Worker Input Kiosk"
+            style="width: 75%"
+          />
         </div>
-        
-        <div class="qr-count" id="qrCount">
-            Số Lượng Mã QR: 0
+        <div class="col-md-6">
+          <video class="qr-preview" id="qr-preview"></video>
         </div>
-    </div>
-    
-    <!-- 오더 정보 모달-->
-    <div class="modal fade" id="kiosk">
-        <div class="modal-dialog modal-fullscreen">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title">THÔNG TIN</h4>
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <p id="qrResult"></p>
-                    <hr>
-                    <div id="orderInfoContainer">
-                        <h5>=============== THÔNG TIN HÀNG ===============</h5>
-                        <table class="table table-bordered">
-                            <tbody id="orderInfo">
-                                <!-- 여기에 order_information의 내용이 들어갑니다 -->
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div id="quantityInputContainer" style="display:none;">
-                                <h5>[NHẬP SỐ LƯỢNG]</h5>
-                                <div id="quantityInputTable">
-                                    <div id="addButtonContainer">
-                                        <button class="addQtyBtn btn btn-primary btn-lg">(+)</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div id="keypad" style="float: right; margin: 10px;">
-                                <button class="number">1</button>
-                                <button class="number">2</button>
-                                <button class="number">3</button>
-                                <button class="number">4</button>
-                                <button class="number">5</button>
-                                <button class="number">6</button>
-                                <button class="number">7</button>
-                                <button class="number">8</button>
-                                <button class="number">9</button>
-                                <button class="delete">del</button>
-                                <button class="number">0</button>
-                                <button class="decimal">.</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="completionMessage" style="display:none;">
-                        <h1>Đã Quét Mã QR</h1>
-                    </div>
-                </div>
-                <div class="modal-footer d-flex justify-content-between">
-                    <button type="button" class="btn btn-primary btn-lg" id="addScanQrCode">Thêm</button>
-                    <div>
-                        <button type="button" class="btn btn-secondary btn-lg" id="nextBtn">Tiếp</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+      </div>
+
+      <div class="qr-count" id="qrCount">Số Lượng Mã QR: 0</div>
     </div>
 
-    <!-- 카테고리 선택 모달 -->
-    <div class="modal fade" id="categoryModal" tabindex="-1" role="dialog" aria-labelledby="categoryModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="categoryModalLabel">CHỌN DANH MỤC</h5>
-                </div>
-                <div class="modal-body">
-                    <!-- 내용 -->
-                </div>
+    <!-- Order Information Modal -->
+    <div class="modal fade" id="kiosk">
+      <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title">THÔNG TIN</h4>
+            <button type="button" class="close" data-dismiss="modal">
+              &times;
+            </button>
+          </div>
+          <div class="modal-body">
+            <p id="qrResult"></p>
+            <hr />
+            <div id="orderInfoContainer">
+              <h5>=============== THÔNG TIN HÀNG ===============</h5>
+              <table class="table table-bordered">
+                <tbody id="orderInfo">
+                  <!-- Content of order_information will be inserted here -->
+                </tbody>
+              </table>
             </div>
+            <div class="row">
+              <div class="col-md-6">
+                <div id="quantityInputContainer" style="display: none">
+                  <h5>[NHẬP SỐ LƯỢNG]</h5>
+                  <div id="quantityInputTable">
+                    <div id="addButtonContainer">
+                      <button class="addQtyBtn btn btn-primary btn-lg">
+                        (+)
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div id="keypad" style="float: right; margin: 10px">
+                  <button class="number">1</button>
+                  <button class="number">2</button>
+                  <button class="number">3</button>
+                  <button class="number">4</button>
+                  <button class="number">5</button>
+                  <button class="number">6</button>
+                  <button class="number">7</button>
+                  <button class="number">8</button>
+                  <button class="number">9</button>
+                  <button class="delete">del</button>
+                  <button class="number">0</button>
+                  <button class="decimal">.</button>
+                </div>
+              </div>
+            </div>
+            <div id="completionMessage" style="display: none">
+              <h1>Đã Quét Mã QR</h1>
+            </div>
+          </div>
+          <div class="modal-footer d-flex justify-content-between">
+            <button
+              type="button"
+              class="btn btn-primary btn-lg"
+              id="addScanQrCode"
+            >
+              Thêm
+            </button>
+            <div>
+              <button
+                type="button"
+                class="btn btn-secondary btn-lg"
+                id="nextBtn"
+              >
+                Tiếp
+              </button>
+            </div>
+          </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Category Selection Modal -->
+    <div
+      class="modal fade"
+      id="categoryModal"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="categoryModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="categoryModalLabel">CHỌN DANH MỤC</h5>
+          </div>
+          <div class="modal-body">
+            <!-- Content -->
+          </div>
+        </div>
+      </div>
     </div>
     {% block content %}{% endblock %}
 
@@ -108,190 +155,206 @@
     <script src="{% static 'js/popper.min.js' %}"></script>
     <script src="{% static 'js/bootstrap.min.js' %}"></script>
     <script src="{% static 'js/instascan.min.js' %}"></script>
-    <script src="{% static 'js/qr_scanner.js' %}"></script> <!-- QR 스캐너 스크립트 -->
-    
-    <!-- KIOSK 일반 스크립트 -->
+    <script src="{% static 'js/qr_scanner.js' %}"></script>
+    <!-- QR Scanner Script -->
+
+    <!-- KIOSK General Script -->
     <script>
-        // URL에서 매개변수를 가져오기
-        const params = new URLSearchParams(window.location.search);    
-        const machineValue = params.get('machine');
+      // Get parameters from URL
+      const params = new URLSearchParams(window.location.search);
+      const machineValue = params.get("machine");
 
-        // 이미지 더블 클릭 시, 새로고침
-        let clickCount = 0;
-        $('img').on('click', function() {
-            clickCount++;            
-            if (clickCount === 2) {
-                // 페이지 강제 새로고침
-                location.reload(true);
-            }            
-            // 500ms 후 clickCount 리셋
-            setTimeout(function() {
-                clickCount = 0;
-            }, 500);
-        });
-
-        let scannedQRCodes = [];  // 스캔된 QR 코드를 저장할 배열
-        function updateScannedQRCodes() {
-            const currentOrderQty = $('#orderInfo').find('td').eq(4).text();
-            const currentQRCodeObj = { 
-                order_number: $('#qrResult').text().replace("Order Number: ", ""),
-                order_qty: currentOrderQty
-            };
-            scannedQRCodes.push(currentQRCodeObj);
-            $('#qrCount').text(`Số Lượng Mã QR: ${scannedQRCodes.length}`);
+      // When image is double-clicked, refresh page
+      let clickCount = 0;
+      $("img").on("click", function () {
+        clickCount++;
+        if (clickCount === 2) {
+          // Force page refresh
+          location.reload(true);
         }
-        $('#addScanQrCode').on('click', function() {
-            const currentOrderQty = $('#orderInfo').find('td').eq(4).text();  // "order_qty" 값을 추출
-            const currentOrderNumber = $('#qrResult').text().replace("Order Number: ", "");  // "Order Number: " 문자열을 제거하여 오더 번호만 추출
-        
-            const currentQRCodeObj = { 
-                order_number: currentOrderNumber,
-                order_qty: currentOrderQty
-            };
-                   
-            scannedQRCodes.push(currentQRCodeObj);  // 현재 QR 코드 정보를 객체 배열에 추가        
-            $('#qrCount').text(`Số Lượng Mã QR: ${scannedQRCodes.length}`); // 저장된 QR 코드 개수를 업데이트       
-            $('#kiosk').modal('hide'); // 모달 창 닫기
-        });
-        
-        // "(+)" 버튼을 눌렀을 때의 로직
-        $('.addQtyBtn').on('click', function() {
-            addNewItem();
-        });
+        // Reset clickCount after 500ms
+        setTimeout(function () {
+          clickCount = 0;
+        }, 500);
+      });
 
-        // 모달 창이 x버튼으로 닫힐 때마다 실행되는 이벤트
-        $(document).on('click', '[data-dismiss="modal"]', function () {
-            location.reload();  // 페이지 새로고침
-        });
+      let scannedQRCodes = []; // Array to store scanned QR codes
+      function updateScannedQRCodes() {
+        const currentOrderQty = $("#orderInfo").find("td").eq(4).text();
+        const currentQRCodeObj = {
+          order_number: $("#qrResult").text().replace("Order Number: ", ""),
+          order_qty: currentOrderQty,
+        };
+        scannedQRCodes.push(currentQRCodeObj);
+        $("#qrCount").text(`Số Lượng Mã QR: ${scannedQRCodes.length}`);
+      }
+      $("#addScanQrCode").on("click", function () {
+        const currentOrderQty = $("#orderInfo").find("td").eq(4).text(); // Extract "order_qty" value
+        const currentOrderNumber = $("#qrResult")
+          .text()
+          .replace("Order Number: ", ""); // Remove "Order Number: " string to extract order number only
 
-        // keypad 초기화
-        $(function(){
-            $('#keypad').keypad({
-                buttonTemplate: '<button></button>',
-                submitButtonText: '.',   // 'ok' 대신 '.'로 변경
-                deleteButtonText: 'del',
-                submitButtonClass: 'decimal',
-                deleteButtonClass: 'delete'
-            });
-            $('#keypad').hide();  // 초기에 숨김
+        const currentQRCodeObj = {
+          order_number: currentOrderNumber,
+          order_qty: currentOrderQty,
+        };
+
+        scannedQRCodes.push(currentQRCodeObj); // Add current QR code information to the object array
+        $("#qrCount").text(`Số Lượng Mã QR: ${scannedQRCodes.length}`); // Update the number of stored QR codes
+        $("#kiosk").modal("hide"); // Close the modal window
+      });
+
+      // Logic when "(+)" button is clicked
+      $(".addQtyBtn").on("click", function () {
+        addNewItem();
+      });
+
+      // Event executed whenever the modal window is closed by the x button
+      $(document).on("click", '[data-dismiss="modal"]', function () {
+        location.reload(); // Refresh page
+      });
+
+      // Initialize keypad
+      $(function () {
+        $("#keypad").keypad({
+          buttonTemplate: "<button></button>",
+          submitButtonText: ".", // Change 'ok' to '.'
+          deleteButtonText: "del",
+          submitButtonClass: "decimal",
+          deleteButtonClass: "delete",
         });
-    
-        let preventBlur = false;  // blur 이벤트를 방지할지 결정하는 플래그
-    
-        // 입력 필드에 포커스가 있을 때 키보드 활성화
-        $(document).on('focus', 'input[type="text"]', function() {
-            const inputField = $(this);
-            $('#keypad').show();  // 키보드 보이기
-    
-            $('.number').off('click').on('click', function() {
-                const number = $(this).text();
-                inputField.val(function(i, oldVal) {
-                    return oldVal + number;
-                }).trigger('input');  // 'input' 이벤트를 트리거
+        $("#keypad").hide(); // Hide initially
+      });
+
+      let preventBlur = false; // Flag to prevent blur event
+
+      // When input field is focused, activate keypad
+      $(document).on("focus", 'input[type="text"]', function () {
+        const inputField = $(this);
+        $("#keypad").show(); // Show keypad
+
+        $(".number")
+          .off("click")
+          .on("click", function () {
+            const number = $(this).text();
+            inputField
+              .val(function (i, oldVal) {
+                return oldVal + number;
+              })
+              .trigger("input"); // Trigger 'input' event
+          });
+
+        $(".delete")
+          .off("click")
+          .on("click", function () {
+            inputField.val(function (i, oldVal) {
+              return oldVal.slice(0, -1);
             });
-    
-            $('.delete').off('click').on('click', function() {
-                inputField.val(function(i, oldVal) {
-                    return oldVal.slice(0, -1);
-                });
-            });
-    
-            $('.decimal').off('click').on('click', function() {
-                let currentValue = inputField.val();
-                if (!currentValue.includes('.')) {
-                    inputField.val(currentValue + '.');
-                }
-            });
-        });
-    
-        // keypad 내부의 버튼이 클릭되면 blur 이벤트를 방지
-        $('#keypad').on('mousedown', function(event) {
-            preventBlur = true;
-        });
-    
-        // 포커스가 사라질 때 키보드 숨기기
-        $(document).on('blur', 'input[type="text"]', function() {
-            if (preventBlur) {
-                preventBlur = false;  // 플래그를 리셋
-                $(this).focus();  // 포커스를 다시 설정
-            } else {
-                $('#keypad').hide();
+          });
+
+        $(".decimal")
+          .off("click")
+          .on("click", function () {
+            let currentValue = inputField.val();
+            if (!currentValue.includes(".")) {
+              inputField.val(currentValue + ".");
             }
+          });
+      });
+
+      // Prevent blur event when keypad button is clicked
+      $("#keypad").on("mousedown", function (event) {
+        preventBlur = true;
+      });
+
+      // Hide keypad when focus is lost
+      $(document).on("blur", 'input[type="text"]', function () {
+        if (preventBlur) {
+          preventBlur = false; // Reset flag
+          $(this).focus(); // Set focus again
+        } else {
+          $("#keypad").hide();
+        }
+      });
+
+      function updateQRSummary() {
+        let qrSummaryHtml =
+          '<h5 id="scannedOrdersText">Đơn Mã QR<span id="selectedStaffInfo"></span></h5>' +
+          '<table class="table table-bordered" id="scannedOrdersTable">' +
+          "<thead><tr><th>Order Number</th><th>Quantity</th></tr></thead><tbody>";
+
+        let totalQty = scannedQRCodes.reduce((total, codeObj) => {
+          qrSummaryHtml += `<tr><td>${codeObj.order_number}</td><td>${codeObj.order_qty}</td></tr>`;
+          return total + parseInt(codeObj.order_qty, 10);
+        }, 0);
+
+        qrSummaryHtml += `<tr><td>Total</td><td>${totalQty}</td></tr></tbody></table>`;
+        $("#qrResult").html(qrSummaryHtml);
+      }
+
+      function showCompletionMessage() {
+        $("#completionMessage").css("background-color", "#3CB371").show();
+      }
+      function showErrorMessage() {
+        $("#completionMessage").css("background-color", "#FF0000").show();
+      }
+
+      function clearOrderInfo() {
+        $("#orderInfoContainer").empty();
+      }
+
+      function disableAddButton() {
+        $("#addBtn").prop("disabled", true);
+      }
+
+      function hideElements() {
+        $("#orderInfoContainer, #quantityInputContainer, #qrResult").hide();
+      }
+
+      function setupTableToggle() {
+        $("#scannedOrdersText").on("click", function () {
+          $("#scannedOrdersTable").show();
+          $("#quantityInputTable").hide();
         });
+        $("#quantityInputContainer").on("click", function () {
+          $("#scannedOrdersTable").hide();
+          $("#quantityInputTable").show();
+        });
+      }
 
-        function updateQRSummary() {
-            let qrSummaryHtml = '<h5 id="scannedOrdersText">Đơn Mã QR<span id="selectedStaffInfo"></span></h5>' +
-                                '<table class="table table-bordered" id="scannedOrdersTable">' +
-                                '<thead><tr><th>Order Number</th><th>Quantity</th></tr></thead><tbody>';
-            
-            let totalQty = scannedQRCodes.reduce((total, codeObj) => {
-                qrSummaryHtml += `<tr><td>${codeObj.order_number}</td><td>${codeObj.order_qty}</td></tr>`;
-                return total + parseInt(codeObj.order_qty, 10);
-            }, 0);
-            
-            qrSummaryHtml += `<tr><td>Total</td><td>${totalQty}</td></tr></tbody></table>`;
-            $('#qrResult').html(qrSummaryHtml);
+      function handleServerResponse(response) {
+        if (response.status === "success") {
+          hideElements();
+          showCompletionMessage();
+          schedulePageRefresh();
+        } else {
+          alert("Error occurred: " + response.message);
         }
-        
-        function showCompletionMessage() {
-            $('#completionMessage').css('background-color', '#3CB371').show();
-        }
-        
-        function clearOrderInfo() {
-            $('#orderInfoContainer').empty();
-        }
-    
-        function disableAddButton() {
-            $('#addBtn').prop('disabled', true);
-        }
+      }
 
-        function hideElements() {
-            $('#orderInfoContainer, #quantityInputContainer, #qrResult').hide();
-        }
-        
-        function setupTableToggle() {
-            $('#scannedOrdersText').on('click', function() {
-                $('#scannedOrdersTable').show();
-                $('#quantityInputTable').hide();
-            });
-            $('#quantityInputContainer').on('click', function() {
-                $('#scannedOrdersTable').hide();
-                $('#quantityInputTable').show();
-            });
-        }
+      function handleServerError(xhr, status, error) {
+        alert("An error occurred while sending data to the server: " + error);
+      }
 
-        function handleServerResponse(response) {
-            if (response.status === "success") {
-                hideElements();
-                showCompletionMessage();
-                schedulePageRefresh();
-            } else {
-                alert("Error occurred: " + response.message);
-            }
-        }
+      function schedulePageRefresh() {
+        setTimeout(() => location.reload(), 1000);
+      }
 
-        function handleServerError(xhr, status, error) {
-            alert("An error occurred while sending data to the server: " + error);
-        }
+      function resetPage() {
+        location.reload();
+        nextBtnState = 0;
+      }
 
-        function schedulePageRefresh() {
-            setTimeout(() => location.reload(), 1000);
+      function toggleTableVisibility() {
+        var table = document.getElementById("scannedOrdersTable");
+        if (table.style.display === "none") {
+          table.style.display = "table"; // Show table
+        } else {
+          table.style.display = "none"; // Hide table
         }
-        
-        function resetPage() {
-            location.reload();
-            nextBtnState = 0;
-        }
-
-        function toggleTableVisibility() {
-            var table = document.getElementById('scannedOrdersTable');
-            if (table.style.display === 'none') {
-                table.style.display = 'table';  // 테이블 보이기
-            } else {
-                table.style.display = 'none';   // 테이블 숨기기
-            }
-        }
+      }
     </script>
     {% block extra_js %}{% endblock %}
-</body>
+
+  </body>
 </html>

@@ -8,6 +8,7 @@ urlpatterns = [
     path('input_dryline/', views.input_dryline, name='input_dryline'),
     path('input_rp/', views.input_rp, name='input_rp'),
     path('input_inspection/', views.input_inspection, name='input_inspection'),
+    path('input_printing/', views.input_printing, name='input_printing'),
 
     path('aging_room/', views.aging_room, name='aging_room'),
     path('create_lot_no/', views.create_lot_no, name='create_lot_no'),
@@ -18,4 +19,6 @@ urlpatterns = [
     path('dryline/', views.dryline, name='dryline'),
     path('delamination/', views.delamination, name='delamination'),
     path('inspection/', views.inspection, name='inspection'),
+    path('export/', views.export, name='export'),
+    path('debug/export-counts/', views.debug_export_counts, name='debug_export_counts'),
 ]
