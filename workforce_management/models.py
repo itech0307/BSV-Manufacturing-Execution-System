@@ -47,6 +47,11 @@ class Worker(models.Model):
         choices=DEPARTMENT_CHOICES,
         default='PO',
     )
+    profile_image = models.ImageField(
+        upload_to='profile_images/worker/',
+        null=True,
+        blank=True
+    )
     join_date = models.DateField()
     status = models.BooleanField(null=True) # 등록 시 null, 삭제 시 false
 
