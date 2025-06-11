@@ -1,0 +1,308 @@
+
+{% extends 'data_monitoring/base.html' %}
+{% load i18n %}
+{% load custom_filters %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/report.css' %}" />
+<h2>{% trans "Inspection Waitlist" %}</h2>
+
+<!-- Checkbox và Download Button -->
+<div class="dropdown d-inline-block me-2">
+  <button class="btn btn-success" onclick="exportTableToExcel()">
+    <i class="fas fa-file-excel"></i> {% trans "Export to Excel" %}
+  </button>
+</div>
+
+<!-- Nội dung bảng -->
+{% if order_and_status %}
+<br />
+<div class="scrollable-tbody" style="padding-top: 2px">
+  <table class="table table-report" style="width: 80%">
+    <thead>
+      <tr>
+        <th>Order No</th>
+        <th>Customer</th>
+        <th>Order Type</th>
+        <th class="orderdate-col">OrderDate</th>
+        <th class="rtd-col">RTD</th>
+        <th class="etd-col">ETD</th>
+        <th>Brand</th>
+        <th>Item</th>
+        <th class="spec-col">Spec</th>
+        <th>Color</th>
+        <th>Pattern</th>
+        <th>OrderQty</th>
+        <th>Unit</th>
+        <th>Bal.Qty</th>
+        <th>Last Process</th>
+        <th>Update</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for order, status in order_and_status %}
+      <tr
+        data-order="{{ order }}"
+        data-status="{{ status|json_str }}"
+        data-order-number="{{ order.order_no }}"
+      >
+        <td>{{ order.order_no }}</td>
+        <td>{{ order.customer_name }}</td>
+        <td>{{ order.order_type }}</td>
+        <td class="orderdate-col">{{ order.order_date|custom_date_format }}</td>
+        <td class="rtd-col">{{ order.rtd|custom_date_format }}</td>
+        <td class="etd-col">{{ order.etd|custom_date_format }}</td>
+        <td>{{ order.brand }}</td>
+        {% if order.spec|slice:"3:4" == '0' %}
+        <td>{{ order.item_name }} {{ order.spec|slice:":3" }}</td>
+        {% else %}
+        <td>{{ order.item_name }} {{ order.spec|slice:":4" }}</td>
+        {% endif %}
+        <td class="spec-col">{{ order.spec }}</td>
+        <td>{{ order.color_code }}</td>
+        <td>{{ order.pattern }}</td>
+        <td>{{ order.order_qty }}</td>
+        <td>{{ order.qty_unit }}</td>
+        <td>
+          <b>{{ status.bal_qty }}</b>
+        </td>
+        {% if status.latest_process %}
+        <td>
+          {{ status.latest_process|default_if_none:"" }} {{ status.latest_machine|slice:"-1:" }}
+        </td>
+        <td>
+          {{ status.latest_create_date|slice:"5:16" }} {% if status.latest_create_date %} ({{ status.latest_create_date|elapsed_time }}) {% endif %}
+        </td>
+        {% else %}
+        <td><span><b>N/A</b></span></td>
+        <td><span><b>N/A</b></span></td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="alert alert-info">
+  <p>{% trans "No orders waiting for inspection found." %}</p>
+</div>
+{% endif %}
+
+<!-- Phần phân trang -->
+{% if page_obj.has_other_pages %}
+<div class="pagination justify-content-center mt-4">
+  <ul class="pagination">
+    {% if page_obj.has_previous %}
+    <li class="page-item">
+      <a class="page-link" href="?page=1">&laquo; Đầu</a>
+    </li>
+    <li class="page-item">
+      <a class="page-link" href="?page={{ page_obj.previous_page_number }}">&lsaquo; Trước</a>
+    </li>
+    {% else %}
+    <li class="page-item disabled">
+      <span class="page-link">&laquo; Đầu</span>
+    </li>
+    <li class="page-item disabled">
+      <span class="page-link">&lsaquo; Trước</span>
+    </li>
+    {% endif %}
+    
+    {% for i in page_obj.paginator.page_range %}
+      {% if page_obj.number == i %}
+        <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+      {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+        </li>
+      {% endif %}
+    {% endfor %}
+    
+    {% if page_obj.has_next %}
+    <li class="page-item">
+      <a class="page-link" href="?page={{ page_obj.next_page_number }}">Tiếp &rsaquo;</a>
+    </li>
+    <li class="page-item">
+      <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Cuối &raquo;</a>
+    </li>
+    {% else %}
+    <li class="page-item disabled">
+      <span class="page-link">Tiếp &rsaquo;</span>
+    </li>
+    <li class="page-item disabled">
+      <span class="page-link">Cuối &raquo;</span>
+    </li>
+    {% endif %}
+  </ul>
+</div>
+<p class="text-center text-muted">
+  Hiển thị {{ page_obj.start_index }} đến {{ page_obj.end_index }} trong tổng số {{ total_orders }} đơn hàng
+</p>
+{% endif %}
+
+<!-- Context Menu -->
+<div id="context-menu" class="context-menu">
+  <ul>
+    <li onclick="action1()">Status Info</li>
+    <li onclick="action2()">Add to mylist</li>
+    <li onclick="action3()">Comment</li>
+    <li onclick="action4()">To urgent</li>
+  </ul>
+</div>
+
+<!-- Modal -->
+<div id="infoModal" class="modal" style="z-index: 9999">
+  <div class="modal-content" style="width: 50%">
+    <span class="close">&times;</span>
+    <h2>Status Information</h2>
+    <p id="modalStatusInfo"></p>
+  </div>
+</div>
+
+<!-- JavaScript -->
+<script src="{% static 'js/base.js' %}"></script>
+<script>
+  // Khai báo biến toàn cục
+  var clickedRow;
+
+  // Đăng ký xử lý sự kiện khi trang đã tải xong
+  document.addEventListener("DOMContentLoaded", function () {
+    // Lấy reference của bảng và context menu
+    const table = document.querySelector(".table-report");
+    const contextMenu = document.getElementById("context-menu");
+
+    if (table && contextMenu) {
+      // Đăng ký sự kiện chuột phải (contextmenu)
+      table.addEventListener("contextmenu", function (e) {
+        e.preventDefault(); // Ngăn menu mặc định của trình duyệt
+        clickedRow = e.target.closest("tr"); // Lưu hàng được click
+        const { clientX: mouseX, clientY: mouseY } = e;
+
+        // Hiển thị menu tại vị trí con trỏ chuột
+        contextMenu.style.top = `${mouseY}px`;
+        contextMenu.style.left = `${mouseX}px`;
+        contextMenu.style.display = "block";
+      });
+
+      // Đóng context menu khi click ra ngoài
+      document.addEventListener("click", function () {
+        contextMenu.style.display = "none";
+      });
+    }
+
+    // Xử lý đóng modal khi click vào nút X
+    const modal = document.getElementById("infoModal");
+    const closeBtn = modal.querySelector(".close");
+
+    if (closeBtn) {
+      closeBtn.onclick = function () {
+        modal.style.display = "none";
+      };
+    }
+
+    // Xử lý đóng modal khi click vào bên ngoài modal
+    window.onclick = function (event) {
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    };
+  });
+</script>
+
+<style>
+  .filter-header {
+    cursor: pointer;
+  }
+
+  .filter-dropdown {
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    padding: 12px;
+    z-index: 1;
+  }
+
+  .filter-dropdown input[type="text"] {
+    width: 100%;
+    padding: 5px;
+    margin-bottom: 10px;
+  }
+
+  .filter-options {
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .filter-options label {
+    display: block;
+    margin-bottom: 5px;
+  }
+
+  .filter-form {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+  }
+
+  /* Context Menu Styles */
+  .context-menu {
+    display: none;
+    position: absolute;
+    z-index: 10000;
+    background-color: #f9f9f9;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  }
+
+  .context-menu ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .context-menu li {
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+
+  .context-menu li:hover {
+    background-color: #e9e9e9;
+  }
+
+  /* Modal Styles */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  .modal-content {
+    background-color: #fff;
+    margin: 10% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    border-radius: 5px;
+    width: 50%;
+  }
+
+  .close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .close:hover {
+    color: black;
+  }
+</style>
+{% endblock %}

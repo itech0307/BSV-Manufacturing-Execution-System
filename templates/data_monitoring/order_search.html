@@ -144,7 +144,7 @@
                     {% elif status.latest_process == 'Inspection' %}
                         {% if status.qty_to_printing > 0 %}
                             <td>
-                                <span id="next_step" style="background-color: #FF8C00; color: black; padding: 5px 10px; border-radius: 5px;"><b>PRINTING({{ status.qty_to_printing }}M)</b></span>
+                                <span id="next_step" style="background-color: #0099CC; color: black; padding: 5px 10px; border-radius: 5px;"><b>PRINTING({{ status.qty_to_printing }}M)</b></span>
                             </td>
                         {% elif status.bal_qty > 0 %}
                             <td>

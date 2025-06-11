@@ -213,7 +213,7 @@ function toggleSearchPopup() {
   if (popupVisible) {
     // When the popup is open, submit the form and close the popup
     var orderNoInput = document.getElementById("orderNoInput").value;
-    var itemInput = document.getElementById("itemInput").value; // Get the Item value
+    var itemInput = document.getElementById("itemInput").value;
     var colorCodeInput = document.getElementById("colorCodeInput").value;
     var patternInput = document.getElementById("patternInput").value;
     var customerInput = document.getElementById("customerInput").value;
@@ -221,47 +221,62 @@ function toggleSearchPopup() {
     var startDateInput = document.getElementById("startDateInput").value;
     var endDateInput = document.getElementById("endDateInput").value;
 
-    // If there is no input value, do not execute the search
+    // Kiểm tra xem có ít nhất một tiêu chí tìm kiếm nào được nhập không
+    // Bao gồm cả trường hợp chỉ nhập ngày tháng
     if (
       orderNoInput.trim() === "" &&
       itemInput.trim() === "" &&
       colorCodeInput.trim() === "" &&
       patternInput.trim() === "" &&
       customerInput.trim() === "" &&
-      orderTypeInput.trim() === ""
+      orderTypeInput.trim() === "" &&
+      !startDateInput &&
+      !endDateInput
     ) {
       alert("Please enter at least one search criteria.");
-      return; // Stop additional actions after the warning
+      return;
     }
+
+    // Validate individual fields if they have values
     if (orderNoInput.length >= 1 && orderNoInput.length < 6) {
-      // If the input value is less than 6 characters, show the warning popup
       alert("'OrderNo' must be at least 6 characters long.");
-      return; // Stop additional actions
+      return;
     }
     if (itemInput.length >= 1 && itemInput.length < 4) {
-      // If the input value is less than 4 characters, show the warning popup
       alert("'Item' must be at least 4 characters long.");
-      return; // Stop additional actions
+      return;
     }
     if (colorCodeInput.length >= 1 && colorCodeInput.length < 3) {
-      // If the input value is less than 3 characters, show the warning popup
       alert("'ColorCode' must be at least 3 characters long.");
-      return; // Stop additional actions
+      return;
     }
     if (patternInput.length == 1) {
-      // If the input value is less than 2 characters, show the warning popup
       alert("'Pattern' must be at least 2 characters long.");
-      return; // Stop additional actions
+      return;
     }
     if (customerInput.length == 1) {
-      // If the input value is 1 character, show the warning popup
       alert("'Customer' must be at least 2 characters long.");
-      return; // Stop additional actions
+      return;
     }
-    if (!validateDates(startDateInput, endDateInput)) {
-      return; // Stop if the date range is invalid
+
+    // Validate date range if either date is entered
+    if (
+      (startDateInput && !endDateInput) ||
+      (!startDateInput && endDateInput)
+    ) {
+      alert("Please enter both Start Date and End Date.");
+      return;
     }
-    document.forms[0].submit(); // Assume there is only one form. If not, use the appropriate selector.
+
+    if (
+      startDateInput &&
+      endDateInput &&
+      !validateDates(startDateInput, endDateInput)
+    ) {
+      return;
+    }
+
+    document.forms[0].submit();
     popup.style.opacity = "0";
     setTimeout(function () {
       popup.style.display = "none";
@@ -272,13 +287,11 @@ function toggleSearchPopup() {
       'button[onclick="toggleSearchPopup()"]'
     );
     var buttonRect = searchButton.getBoundingClientRect();
-    var leftPosition = buttonRect.right + 20; // Set the position 20px to the right of the button
+    var leftPosition = buttonRect.right + 20;
     var windowWidth = window.innerWidth;
 
-    // Adjust the popup so it does not go out of the screen
     if (leftPosition + 600 > windowWidth) {
-      // 600px is the maximum width of the popup
-      leftPosition = windowWidth - 620; // Consider the right margin and move a little
+      leftPosition = windowWidth - 620;
     }
     popup.style.top = buttonRect.bottom + "px";
     popup.style.left = leftPosition + "px";

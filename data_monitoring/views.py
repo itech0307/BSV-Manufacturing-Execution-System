@@ -999,10 +999,17 @@ def drymix(request):
 
 @login_required
 def dryline(request):
-    today = datetime.date.today()
+    # Lấy thời gian hiện tại
     now = datetime.datetime.now()
-    _3daysago = now+datetime.timedelta(days=-3)
-    _30daysago = today - datetime.timedelta(days=30)
+    # Tính thời điểm bắt đầu của ngày hiện tại
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    # Tính thời điểm kết thúc của ngày hiện tại
+    today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+    # Tính thời điểm 3 ngày trước
+    _3daysago = today_start - datetime.timedelta(days=3)
+    # Tính thời điểm 30 ngày trước cho tìm kiếm
+    _30daysago = today_start - datetime.timedelta(days=30)
+    
     status_plan = []
     order_numbers = []
     list = []
@@ -1012,8 +1019,9 @@ def dryline(request):
         order_numbers = request.POST.get('order_numbers', '')
         if order_numbers:
             order_numbers = order_numbers.split(',')
-            list = DryLine.objects.filter(Q(production_plan__sales_order__order_no__in=order_numbers)).select_related('production_plan__sales_order').order_by('-create_date')
-
+            list = DryLine.objects.filter(
+                Q(production_plan__sales_order__order_no__in=order_numbers)
+            ).select_related('production_plan__sales_order').order_by('-create_date')
         else:
             # Receive the POST request to search for OrderNo
             order_no = request.POST.get('order_no', '')  # Get the OrderNo input from the form
@@ -1035,42 +1043,35 @@ def dryline(request):
                 query &= Q(production_plan__sales_order__color_code__icontains=color_code)
             if pattern:
                 query &= Q(production_plan__sales_order__pattern__icontains=pattern)
-            
             if customer:
                 query &= Q(production_plan__sales_order__customer_name__icontains=customer)
-            
             if order_type:
                 query &= Q(production_plan__sales_order__order_type__icontains=order_type)
             
             if start_date_str and end_date_str:
-                start_date = parse_date(start_date_str)
-                end_date = parse_date(end_date_str)
-                if start_date and end_date:
-                    start_of_day = datetime.datetime.combine(start_date, datetime.time.min)
-                    end_of_day = datetime.datetime.combine(end_date, datetime.time.max)
-                    query &= Q(create_date__range=(start_of_day, end_of_day))
+                try:
+                    start_date = parse_date(start_date_str)
+                    end_date = parse_date(end_date_str)
+                    if start_date and end_date:
+                        # Đảm bảo lấy đủ dữ liệu từ đầu ngày start_date đến cuối ngày end_date
+                        start_of_day = datetime.datetime.combine(start_date, datetime.time.min)
+                        end_of_day = datetime.datetime.combine(end_date, datetime.time.max)
+                        query &= Q(create_date__range=(start_of_day, end_of_day))
+                except ValueError:
+                    pass  # Xử lý khi parse date thất bại
 
             list = DryLine.objects.filter(query).select_related('production_plan__sales_order').order_by('-create_date')
     else:
         # In the case of GET request, display the DryLine data for the past 3 days
         list = DryLine.objects.filter(
-            create_date__range=(_3daysago, now)
+            create_date__range=(_3daysago, today_end)
         ).select_related('production_plan__sales_order').order_by('-create_date')
 
-    # Create a ProductionPlan subquery to get the latest ProductionPlan related to each ProductionPhase.
-    #latest_plan_subquery = ProductionPlan.objects.filter(
-    #    production_order=OuterRef('production_order')
-    #).order_by('-create_date').values('plan_information__plan_qty')[:1]
-
-    # Annotate the latest ProductionPlan's plan_qty related to each ProductionPhase.
-    #list_and_plan = list.annotate(
-    #    latest_plan_qty=Subquery(latest_plan_subquery)
-    #).order_by('-create_date')
-
-    context = {'list': list,
-               'today': today,  # Add today's date to the context
-               '30daysago':_30daysago
-               }
+    context = {
+        'list': list,
+        'today': now.date(),
+        '30daysago': _30daysago.date()
+    }
     return render(request, 'data_monitoring/dryline.html', context)
 
 @login_required
@@ -1259,7 +1260,7 @@ def debug_export_counts(request):
     })
 
 @login_required
-def export(request):
+def inspection_waitlist(request):
     page = request.GET.get('page', '1')
     
     # Create cache key based on parameters
@@ -1269,7 +1270,7 @@ def export(request):
     # Check if there is data in the cache
     cached_data = cache.get(cache_key)
     if cached_data:
-        return render(request, 'data_monitoring/export.html', cached_data)
+        return render(request, 'data_monitoring/inspection_waitlist.html', cached_data)
     
     # Use efficient raw query
     raw_query = """
@@ -1360,6 +1361,17 @@ def export(request):
             sub_pd_qty = 0
             defect, chemical = {}, {}
             
+            # Khởi tạo status_data với giá trị mặc định
+            status_data = {
+                'bal_qty': bal_qty,
+                'line_shortage': 0,
+                'process': [],
+                'latest_process': None,
+                'latest_create_date': None,
+                'latest_machine': None,
+                'qty_to_printing': None
+            }
+            
             # Find the latest process name and create_date in the process list
             latest_process = latest_create_date = latest_machine = None
 
@@ -1418,9 +1430,173 @@ def export(request):
                         agrade_qty = production_phase.ins_qty
                         bal_qty = bal_qty - agrade_qty
                         
-                        # Lưu số lượng chuyển qua Printing nếu có
-                        if production_phase.qty_to_printing:
-                            qty_to_printing = production_phase.qty_to_printing
+                        process.append({
+                            'process': 'Inspection',
+                            'agrade_qty': agrade_qty,
+                            'defect': defect,
+                            'machine': production_phase.line_no,
+                            'create_date': create_date,
+                            'qty_to_printing': production_phase.qty_to_printing
+                        })
+
+                    elif isinstance(production_phase, Printing):
+                        phase_info = production_phase.print_information
+                        process.append({
+                            'process': 'Printing',
+                            'print_qty': production_phase.print_qty,
+                            'machine': production_phase.line_no,
+                            'create_date': create_date
+                        })
+                
+                # Sort by time
+                process = sorted(process, key=lambda x: x['create_date'])
+                
+                # Find the latest phase
+                for proc in process:
+                    if not latest_create_date or proc['create_date'] > latest_create_date:
+                        latest_create_date = proc['create_date']
+                        latest_process = proc['process']
+                        latest_machine = proc['machine']
+            
+            # Khởi tạo status với cấu trúc đúng
+            status_data = {
+                'bal_qty': bal_qty,
+                'line_shortage': sub_pd_qty - bal_qty,
+                'process': process,
+                'latest_process': latest_process,
+                'latest_create_date': latest_create_date,
+                'latest_machine': latest_machine
+            }
+
+            cache.set(order_status_key, status_data, 3600)  # cache 1 hour
+        else:
+            status_data = order_status
+        
+        # Ensure to add order_status to the list
+        status.append(status_data)
+    
+    # Create a list of combined order and status
+    order_and_status = list(zip(current_orders, status))
+    
+    # Sort order_and_status by latest_create_date (descending - newest at the top)
+    order_and_status = sorted(
+        order_and_status, 
+        key=lambda x: x[1].get('latest_create_date') or '1900-01-01 00:00:00',
+        reverse=True
+    )
+    
+    context = {
+        'order_and_status': order_and_status,
+        'page_obj': page_obj,
+        'total_pages': paginator.num_pages,
+        'total_orders': len(all_order_ids)
+    }
+    
+    # Cache the result
+    cache.set(cache_key, context, 300)
+    
+    return render(request, 'data_monitoring/inspection_waitlist.html', context)
+
+@login_required
+def printing_waitlist(request):
+    today = datetime.date.today()
+    now = datetime.datetime.now()
+    _3daysago = now+datetime.timedelta(days=-3)
+    _30daysago = today - datetime.timedelta(days=30)
+    order_and_status = []
+    count = 0
+
+    # Lấy tất cả các đơn hàng có Inspection gần nhất với qty_to_printing > 0
+    inspections = Inspection.objects.filter(
+        qty_to_printing__gt=0
+    ).select_related('production_plan__sales_order', 'sales_order').order_by('-create_date')
+
+    # Lọc ra các đơn hàng chưa có bản ghi Printing sau bản ghi Inspection cuối cùng
+    for inspection in inspections:
+        sales_order = inspection.sales_order or inspection.production_plan.sales_order
+        
+        # Kiểm tra xem có bản ghi Printing nào sau bản ghi Inspection này không
+        latest_printing = Printing.objects.filter(
+            Q(production_plan__sales_order=sales_order) | Q(sales_order=sales_order),
+            create_date__gt=inspection.create_date
+        ).exists()
+        
+        if not latest_printing:
+            process = []
+            
+            # Search in multiple models for sales_order
+            production_phases = sorted(chain(
+                ProductionPlan.objects.filter(sales_order=sales_order),
+                DryMix.objects.filter(production_plan__sales_order=sales_order),
+                DryLine.objects.filter(production_plan__sales_order=sales_order),
+                Delamination.objects.filter(production_plan__sales_order=sales_order),
+                Inspection.objects.filter(Q(production_plan__sales_order=sales_order) | Q(sales_order=sales_order)),
+                Printing.objects.filter(Q(production_plan__sales_order=sales_order) | Q(sales_order=sales_order))
+            ), key=lambda x: x.create_date)
+            
+            bal_qty = int(sales_order.order_qty)
+            
+            agrade_qty, delami_qty, pd_qty = 0, 0, 0
+            sub_pd_qty = 0
+            defect, chemical = {}, {}
+            
+            # Find the latest process name and create_date in the process list
+            latest_process = latest_create_date = latest_machine = None
+
+            if production_phases:
+                for production_phase in production_phases:
+                    create_date = production_phase.create_date.astimezone(pytz.timezone('Asia/Ho_Chi_Minh')).strftime('%Y-%m-%d %H:%M:%S')
+                    
+                    if isinstance(production_phase, ProductionPlan):
+                        phase_info = production_phase.pd_information
+                        if production_phase.item_group == 'Dry':
+                            phase_info = {
+                                'process': 'DryPlan',
+                                'create_date': create_date,
+                                'machine': production_phase.pd_line,
+                                'plan_qty': production_phase.plan_qty,
+                                'plan_date': production_phase.plan_date.strftime('%Y-%m-%d')
+                            }
+                            process.append(phase_info)
+                    
+                    elif isinstance(production_phase, DryMix):
+                        phase_info = production_phase.mixing_information
+                        for info in phase_info:
+                            if info.get('item', ''):
+                                chemical[info.get('item')] = str(info.get('quantity')) + info.get('unit')
+                        process.append({
+                            'process': 'DryMix',
+                            'chemical': chemical,
+                            'machine': '',
+                            'create_date': create_date
+                        })
+                    
+                    elif isinstance(production_phase, DryLine):
+                        phase_info = production_phase.pd_information
+                        sub_pd_qty = sub_pd_qty + production_phase.pd_qty
+                        process.append({
+                            'process': 'DryLine',
+                            'pd_qty': production_phase.pd_qty,
+                            'machine': production_phase.line_no,
+                            'create_date': create_date
+                        })
+                    
+                    elif isinstance(production_phase, Delamination):
+                        phase_info = production_phase.dlami_information
+                        process.append({
+                            'process': 'RP',
+                            'delami_qty': production_phase.dlami_qty,
+                            'create_date': create_date,
+                            'machine': production_phase.line_no
+                        })
+                    
+                    elif isinstance(production_phase, Inspection):
+                        phase_info = production_phase.ins_information
+                        sub_pd_qty = 0
+                        for info in phase_info:
+                            defect[info.get('defectCause')] = info.get('quantity')
+                        agrade_qty = production_phase.ins_qty
+                        bal_qty = bal_qty - agrade_qty
                         
                         process.append({
                             'process': 'Inspection',
@@ -1450,17 +1626,6 @@ def export(request):
                         latest_process = proc['process']
                         latest_machine = proc['machine']
             
-            # Kiểm tra xem có bản ghi Printing nào sau bản ghi Inspection cuối cùng không
-            latest_inspection = None
-            latest_printing = None
-            for proc in reversed(process):
-                if proc['process'] == 'Inspection' and not latest_inspection:
-                    latest_inspection = proc
-                elif proc['process'] == 'Printing' and not latest_printing:
-                    latest_printing = proc
-                if latest_inspection and latest_printing:
-                    break
-
             # Khởi tạo status với cấu trúc đúng
             status_data = {
                 'bal_qty': bal_qty,
@@ -1469,43 +1634,18 @@ def export(request):
                 'latest_process': latest_process,
                 'latest_create_date': latest_create_date,
                 'latest_machine': latest_machine,
-                'qty_to_printing': None  # Mặc định là None
+                'qty_to_printing': inspection.qty_to_printing
             }
 
-            # Chỉ set qty_to_printing nếu bản ghi Inspection cuối cùng không có bản ghi Printing sau nó
-            if latest_inspection:
-                inspection_date = latest_inspection.get('create_date')
-                printing_date = latest_printing.get('create_date') if latest_printing else None
-                
-                # Nếu không có bản ghi Printing hoặc Inspection mới hơn Printing
-                if not printing_date or (inspection_date and inspection_date > printing_date):
-                    status_data['qty_to_printing'] = latest_inspection.get('qty_to_printing')
+            order_and_status.append((sales_order, status_data))
+            count += 1
 
-            cache.set(order_status_key, status_data, 3600)  # cache 1 hour
-        
-        # Ensure to add order_status to the list
-        status.append(status_data)
-    
-    # Create a list of combined order and status
-    order_and_status = list(zip(current_orders, status))
-    
-    # Sort order_and_status by latest_create_date (descending - newest at the top)
-    order_and_status = sorted(
-        order_and_status, 
-        key=lambda x: x[1].get('latest_create_date') or '1900-01-01 00:00:00',
-        reverse=True
-    )
-    
     context = {
         'order_and_status': order_and_status,
-        'page_obj': page_obj,
-        'total_pages': paginator.num_pages,
-        'total_orders': len(all_order_ids)
+        'count': count,
+        'today': today,
+        '30daysago': _30daysago
     }
-    
-    # Cache the result
-    cache.set(cache_key, context, 300)
-    
-    return render(request, 'data_monitoring/export.html', context)
+    return render(request, 'data_monitoring/printing_list.html', context)
 
 

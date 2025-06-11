@@ -19,6 +19,7 @@ urlpatterns = [
     path('dryline/', views.dryline, name='dryline'),
     path('delamination/', views.delamination, name='delamination'),
     path('inspection/', views.inspection, name='inspection'),
-    path('export/', views.export, name='export'),
+    path('inspection_waitlist/', views.inspection_waitlist, name='inspection_waitlist'),
+    path('printing_waitlist/', views.printing_waitlist, name='printing_waitlist'),
     path('debug/export-counts/', views.debug_export_counts, name='debug_export_counts'),
 ]

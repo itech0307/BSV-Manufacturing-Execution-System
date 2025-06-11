@@ -29,7 +29,8 @@
         class="submenu-item"
         >{% trans "Import" %}</a
       >
-      <a href="{% url 'data_monitoring:export' %}" class="submenu-item">{% trans "Uninspected Orders" %}</a>
+      <a href="{% url 'data_monitoring:inspection_waitlist' %}" class="submenu-item">{% trans "Inspection Waitlist" %}</a>
+      <a href="{% url 'data_monitoring:printing_waitlist' %}" class="submenu-item">{% trans "Printing Waitlist" %}</a>
       {% endif %}
     </div>
   </div>
