@@ -87,6 +87,15 @@ class Printing(models.Model):
     def __str__(self):
         return f"{self.production_plan.sales_order.order_no}-{self.production_plan.plan_date}"
 
+class DataMonitoringPrinting(models.Model):
+    order_number = models.CharField(max_length=20)
+    defect_cause = models.CharField(max_length=100)
+    line_no = models.CharField(max_length=10)
+    create_date = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"{self.order_number}-{self.defect_cause}"
+
 class ProductionLot(models.Model):
     lot_no = models.CharField(max_length=20, unique=True)
     create_date = models.DateTimeField(default=timezone.now)

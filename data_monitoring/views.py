@@ -7,7 +7,15 @@ from django.core.paginator import Paginator
 import json
 from collections import defaultdict
 from django.db.models import Q
-from .models import DryMix, DryLine, Delamination, Inspection, ProductionLot, Printing
+from .models import (
+    DryMix,
+    DryLine,
+    Delamination,
+    Inspection,
+    ProductionLot,
+    Printing,
+    DataMonitoringPrinting,
+)
 from production_management.models import SalesOrder, ProductionPlan
 from workforce_management.models import Worker
 from inventory_management.models import RawMaterial, Category
@@ -406,35 +414,52 @@ def input_printing(request):
         data = json.loads(request.body)
         scanned_orders = data.get('scannedOrders', [])
         quantity_input = data.get('quantityInput', '')
+        defect_cause = data.get('defectCause', '')
         machine = data.get('machine', '')
         
         logger.info(f"[KIOSK] PRINTING DATA: {scanned_orders}, QUANTITY: {quantity_input}, MACHINE: {machine}")
         
         # Lưu thông tin vào cơ sở dữ liệu
         for qr_item in scanned_orders:
+            order_number = qr_item.get('order_number')
             try:
-                order_number = qr_item['order_number']
-                
+                if int(quantity_input) == 0 and defect_cause:
+                    DataMonitoringPrinting.objects.create(
+                        order_number=order_number,
+                        defect_cause=defect_cause,
+                        line_no=machine,
+                        create_date=timezone.now(),
+                    )
+                    logger.info(
+                        f"[KIOSK] PRINTING DEFECT SAVED: {order_number} - {defect_cause}"
+                    )
+                    continue
+
                 if order_number[:3] == 'SOV':
                     sales_order = SalesOrder.objects.exclude(status=False).get(order_no=order_number)
-                    last_phase = DryLine.objects.filter(production_plan__sales_order=sales_order).order_by('-create_date').first()
-                    
+                    last_phase = (
+                        DryLine.objects.filter(production_plan__sales_order=sales_order)
+                        .order_by('-create_date')
+                        .first()
+                    )
+
                     if last_phase:
                         last_phase_plan = last_phase.production_plan
                     else:
                         last_phase_plan = None
-                    
-                    # Lưu dữ liệu vào model Printing với số lượng từ form nhập
-                    printing = Printing.objects.create(
+
+                    Printing.objects.create(
                         sales_order=sales_order,
                         production_plan=last_phase_plan,
-                        print_qty=int(quantity_input),  # Sử dụng số lượng từ form nhập
+                        print_qty=int(quantity_input),
                         print_information=None,
                         line_no=machine,
-                        create_date=timezone.now()
+                        create_date=timezone.now(),
                     )
-                    
-                    logger.info(f"[KIOSK] PRINTING SAVED: {order_number} - QTY: {quantity_input}")
+
+                    logger.info(
+                        f"[KIOSK] PRINTING SAVED: {order_number} - QTY: {quantity_input}"
+                    )
             except SalesOrder.DoesNotExist:
                 logger.info(f"[KIOSK] PRINTING ERROR: {order_number}")
             except ValueError:
@@ -445,9 +470,27 @@ def input_printing(request):
     # Xử lý GET request và quét QR code
     qr_content = request.GET.get('qrContent')
 
+    defect_cause = {
+        "Shiny": "Bóng",
+        "Stain": "Loang Màu",
+        "Stock": "Stock",
+        "Folding": "Quấn Nhăn",
+        "Pinhole": "Lỗ Kim",
+        "RP Line": "R/P Xước",
+        "Shortage": "Số Lượng Thiếu",
+        "RP Overlap": "R/P Nhăn",
+        "Wrong Base": "Da Sai",
+        "Surface Line": "Xước",
+        "Air Expansion": "Phồng Hơi",
+        "Contamination": "Dơ",
+        "Color Mismatch": "Màu Sai",
+        "Fabric Overlap": "Da Nhăn",
+        "Base Transparency": "Đốm",
+    }
+
     # Nếu không có QR code, hiển thị trang bình thường
     if not qr_content:
-        context = {}
+        context = {'defect_cause': json.dumps(defect_cause)}
         return render(request, 'data_monitoring/input_printing.html', context)
 
     # Nếu có QR code, tìm thông tin đơn hàng

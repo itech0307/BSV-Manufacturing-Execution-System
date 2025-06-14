@@ -1,7 +1,26 @@
-{% extends "data_monitoring/input_base.html" %} {% load static %} 
-{% block title %}PRODUCTION-DATA QR SYSTEM - PRINTING{% endblock %} {% block header %}PRODUCTION-DATA QR SYSTEM - PRINTING{% endblock %} {% block content %}
-<!-- Nội dung đặc thù cho bộ phận Printing có thể thêm vào đây nếu cần -->
-{% endblock %} {% block extra_js %}
+{% extends "data_monitoring/input_base.html" %}
+{% load static %}
+{% block title %}PRODUCTION-DATA QR SYSTEM - PRINTING{% endblock %}
+{% block header %}PRODUCTION-DATA QR SYSTEM - PRINTING{% endblock %}
+{% block content %}
+<!-- Modal chọn lỗi -->
+<div class="modal fade" id="defectModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">CHỌN LÝ DO LỖI</h5>
+      </div>
+      <div class="modal-body">
+        <select id="defectSelect" class="form-control"></select>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="defectConfirm">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
 <script>
   $(document).ready(function () {
     // Khi trang được tải, xóa trống trường 'Production Quantity'
@@ -21,6 +40,20 @@
 
   let nextBtnState = 0;
   let scannedOrdersData;
+  let defectCause = null;
+  const defectCauseOptions = JSON.parse("{{ defect_cause|escapejs }}");
+
+  Object.keys(defectCauseOptions).forEach((key) => {
+    $("#defectSelect").append(
+      $('<option>', { value: key, text: defectCauseOptions[key] })
+    );
+  });
+
+  $("#defectConfirm").on("click", function () {
+    defectCause = $("#defectSelect").val();
+    $("#defectModal").modal("hide");
+    sendDataToServer("0");
+  });
 
   $("#nextBtn").on("click", handleNextButtonClick);
 
@@ -56,7 +89,9 @@
 
   function handleThirdClick() {
     const quantityInput = $("#qty").val();
-    if (quantityInput) {
+    if (quantityInput === "0" || parseInt(quantityInput) === 0) {
+      $("#defectModal").modal("show");
+    } else if (quantityInput) {
       sendDataToServer(quantityInput);
     } else {
       alert("Vui lòng nhập số lượng đã sửa màu.");
@@ -91,6 +126,7 @@
         scannedOrders: scannedQRCodes,
         quantityInput: quantityInput,
         machine: machineValue,
+        defectCause: defectCause,
       }),
       contentType: "application/json; charset=utf-8",
       dataType: "json",
