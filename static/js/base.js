@@ -415,25 +415,18 @@ function action1() {
         i
       ].machine.slice(-1)}</td>
           `;
-      values += `
-                  {% if "production_managers" in user_groups %}
-              `;
+      
+      // Kiểm tra quyền người dùng thông qua biến toàn cục
+      const isProductionManager = window.isProductionManager || false;
+      
       for (const value of Object.values(statusInfo.process[i].chemical)) {
         values += `
-                  <td>${value}</td>
+                  <td>${isProductionManager ? value : '???'}</td>
               `;
       }
-      values += `
-                  {% else %}
-              `;
-      for (const value of Object.values(statusInfo.process[i].chemical)) {
-        values += `
-                  <td>???</td>
-              `;
-      }
+      
       values += `
               </tr>
-              {% endif %}
           `;
     } else if (statusInfo.process[i].process == "DryLine") {
       dryline_time = new Date(
@@ -514,15 +507,25 @@ function action1() {
                   <th>Date</th>
                   <th>Process</th>
                   <th>Quantity</th>
+                  <th>Remark</th>
               </tr>
           `;
+      
+      // Format print information
+      const printInfo = statusInfo.process[i].print_information;
+      const formattedPrintInfo = printInfo && Array.isArray(printInfo) && printInfo.length > 0
+          ? printInfo
+              .filter(info => info && typeof info === 'object')
+              .map(info => info.defectCause || 'N/A')
+              .join(', ')
+          : 'N/A';
+      
       values = `
               <tr>                        
                   <td>${statusInfo.process[i].create_date.slice(0, 16)}</td>
-                  <td>${statusInfo.process[i].process} ${statusInfo.process[
-        i
-      ].machine.slice(-1)}</td>
+                  <td>${statusInfo.process[i].process} ${statusInfo.process[i].machine.slice(-1)}</td>
                   <td>${statusInfo.process[i].print_qty} M</td>
+                  <td>${formattedPrintInfo}</td>
               </tr>
           `;
     }

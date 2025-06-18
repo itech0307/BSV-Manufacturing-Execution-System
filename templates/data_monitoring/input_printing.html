@@ -1,6 +1,6 @@
-{% extends "data_monitoring/input_base.html" %} {% load static %} 
-{% block title %}PRODUCTION-DATA QR SYSTEM - PRINTING{% endblock %} {% block header %}PRODUCTION-DATA QR SYSTEM - PRINTING{% endblock %} {% block content %}
-<!-- Nội dung đặc thù cho bộ phận Printing có thể thêm vào đây nếu cần -->
+{% extends "data_monitoring/input_base.html" %} {% load static %}
+{% block title %}PRODUCTION-DATA QR SYSTEM - PRINTING{% endblock %}
+{% block header %}PRODUCTION-DATA QR SYSTEM - PRINTING{% endblock %} {% block content %} 
 {% endblock %} {% block extra_js %}
 <script>
   $(document).ready(function () {
@@ -36,6 +36,9 @@
       case 3:
         handleThirdClick();
         break;
+      case 4:
+        handleFourthClick();
+        break;
       default:
         resetPage();
     }
@@ -56,13 +59,82 @@
 
   function handleThirdClick() {
     const quantityInput = $("#qty").val();
-    if (quantityInput) {
-      sendDataToServer(quantityInput);
+    if (quantityInput == "0") {
+      showDefectSelectionForm();
     } else {
-      alert("Vui lòng nhập số lượng đã sửa màu.");
-      nextBtnState = 1;
-      $("#nextBtn").click();
+      sendDataToServer(quantityInput);
     }
+  }
+
+  function handleFourthClick() {
+    // Lấy các lỗi đã chọn và gửi đến server
+    const defectSelects = $(".defect-select");
+    const defectCauses = [];
+
+    // Collect all selected defect causes
+    defectSelects.each(function () {
+      const defectCode = $(this).val();
+      if (defectCode) {
+        defectCauses.push(defectCode);
+      }
+    });
+
+    if (defectCauses.length === 0) {
+      alert("Vui lòng chọn ít nhất một lỗi");
+      nextBtnState = 3; // Quay lại trạng thái chọn lỗi
+      return;
+    }
+
+    // Create an array of defect causes
+    const printInfo = defectCauses.map((defectCause) => ({
+      defectCause: defectCause,
+    }));
+
+    sendDataToServer(0, printInfo);
+  }
+
+  function showDefectSelectionForm() {
+    const htmlContent = `
+      <div class="form-group">
+        <label><h3>CHỌN LỖI KHÔNG THỂ SỬA MÀU</h3></label>
+        <div id="defectSelections">
+          <div class="defect-row mb-2">
+            <div class="d-flex">
+              <select class="form-control defect-select" required>
+                <option value="">-- Chọn lỗi --</option>
+                {% for code, name in defect_cause.items %}
+                <option value="{{ code }}">{{ name }}</option>
+                {% endfor %}
+              </select>
+              <button type="button" class="btn btn-success ml-2 add-defect">+</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+
+    $("#quantityInputContainer").html(htmlContent);
+
+    // Add event handler for the "+" button
+    $("#quantityInputContainer").on("click", ".add-defect", function () {
+      const newRow = `
+        <div class="defect-row mb-2">
+          <div class="d-flex">
+            <select class="form-control defect-select" required>
+              <option value="">-- Chọn lỗi --</option>
+              {% for code, name in defect_cause.items %}
+              <option value="{{ code }}">{{ name }}</option>
+              {% endfor %}
+            </select>
+            <button type="button" class="btn btn-danger ml-2 remove-defect">-</button>
+          </div>
+        </div>`;
+      $("#defectSelections").append(newRow);
+    });
+
+    // Add event handler for the "-" button
+    $("#quantityInputContainer").on("click", ".remove-defect", function () {
+      $(this).closest(".defect-row").remove();
+    });
   }
 
   function addQuantityInput() {
@@ -81,17 +153,23 @@
     $("#scannedOrdersTable").hide();
   }
 
-  function sendDataToServer(quantityInput) {
+  function sendDataToServer(quantityInput, printInfo = null) {
     $("#keypad").hide();
+
+    const data = {
+      scannedOrders: scannedQRCodes,
+      quantityInput: quantityInput,
+      machine: machineValue,
+    };
+
+    if (printInfo) {
+      data.print_information = printInfo;
+    }
 
     $.ajax({
       url: window.location.pathname,
       type: "POST",
-      data: JSON.stringify({
-        scannedOrders: scannedQRCodes,
-        quantityInput: quantityInput,
-        machine: machineValue,
-      }),
+      data: JSON.stringify(data),
       contentType: "application/json; charset=utf-8",
       dataType: "json",
       success: handleServerResponse,
