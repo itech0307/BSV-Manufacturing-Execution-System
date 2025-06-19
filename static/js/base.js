@@ -654,3 +654,104 @@ function captureTableAsImage() {
     });
   }
 }
+
+// function exportAllData() {
+//     // Show loading indicator
+//     const loadingDiv = document.createElement('div');
+//     loadingDiv.id = 'exportLoading';
+//     loadingDiv.style.position = 'fixed';
+//     loadingDiv.style.top = '50%';
+//     loadingDiv.style.left = '50%';
+//     loadingDiv.style.transform = 'translate(-50%, -50%)';
+//     loadingDiv.style.padding = '20px';
+//     loadingDiv.style.background = 'rgba(0, 0, 0, 0.7)';
+//     loadingDiv.style.color = 'white';
+//     loadingDiv.style.borderRadius = '5px';
+//     loadingDiv.style.zIndex = '9999';
+//     loadingDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xuất dữ liệu...';
+//     document.body.appendChild(loadingDiv);
+
+//     // Get current URL
+//     const currentUrl = window.location.pathname;
+//     console.log('Current URL:', currentUrl);
+    
+//     // Get all search parameters from the search popup
+//     const orderNo = document.getElementById('orderNoInput')?.value || '';
+//     const item = document.getElementById('itemInput')?.value || '';
+//     const colorCode = document.getElementById('colorCodeInput')?.value || '';
+//     const pattern = document.getElementById('patternInput')?.value || '';
+//     const customer = document.getElementById('customerInput')?.value || '';
+//     const orderType = document.getElementById('orderTypeInput')?.value || '';
+//     const startDate = document.getElementById('startDateInput')?.value || '';
+//     const endDate = document.getElementById('endDateInput')?.value || '';
+
+//     console.log('Search parameters:', {
+//         orderNo,
+//         item,
+//         colorCode,
+//         pattern,
+//         customer,
+//         orderType,
+//         startDate,
+//         endDate
+//     });
+
+//     // Create form data
+//     const formData = new FormData();
+//     formData.append('order_no', orderNo);
+//     formData.append('item', item);
+//     formData.append('color_code', colorCode);
+//     formData.append('pattern', pattern);
+//     formData.append('customer', customer);
+//     formData.append('order_type', orderType);
+//     formData.append('start_date', startDate);
+//     formData.append('end_date', endDate);
+//     formData.append('export', 'true');
+
+//     // Get CSRF token
+//     const csrftoken = getCookie('csrftoken');
+//     console.log('CSRF token:', csrftoken ? 'Present' : 'Missing');
+
+//     // Make API call
+//     fetch(currentUrl, {
+//         method: 'POST',
+//         headers: {
+//             'X-CSRFToken': csrftoken
+//         },
+//         body: formData
+//     })
+//     .then(response => {
+//         console.log('Response status:', response.status);
+//         console.log('Response headers:', response.headers);
+//         if (!response.ok) {
+//             return response.text().then(text => {
+//                 console.error('Error response:', text);
+//                 throw new Error('Network response was not ok');
+//             });
+//         }
+//         return response.blob();
+//     })
+//     .then(blob => {
+//         console.log('Blob type:', blob.type);
+//         console.log('Blob size:', blob.size);
+//         // Create download link
+//         const url = window.URL.createObjectURL(blob);
+//         const a = document.createElement('a');
+//         a.href = url;
+//         // Get filename from header or use default
+//         const filename = document.querySelector('h2').textContent.trim();
+//         a.download = `${filename}.xlsx`;
+//         document.body.appendChild(a);
+//         a.click();
+//         a.remove();
+//         window.URL.revokeObjectURL(url);
+//     })
+//     .catch(error => {
+//         console.error('Error details:', error);
+//         alert('Có lỗi xảy ra khi xuất dữ liệu!');
+//     })
+//     .finally(() => {
+//         // Remove loading indicator
+//         document.getElementById('exportLoading')?.remove();
+//     });
+// }

@@ -15,6 +15,7 @@
             {% block forms %}
             {% endblock %}
             <div class="title-buttons" style="text-align: left; margin-top: 10px;">
+                {% block action_buttons %}
                 <button onclick="generateQRCode()" title="QR" style="background: none; border: none; cursor: pointer; margin: 0 10px;">
                     <i class="fas fa-qrcode"></i>
                 </button>
@@ -30,6 +31,7 @@
                 <button onclick="captureTableAsImage()" title="Capture" style="background: none; border: none; cursor: pointer; margin: 0 10px;">
                     <i class="fas fa-camera"></i>
                 </button>
+                {% endblock %}
             </div>
         </div>
     </div>

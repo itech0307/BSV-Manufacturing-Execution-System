@@ -1,9 +1,5 @@
-{% extends 'data_monitoring/base.html' %}
-{% load i18n %}
-{% load custom_filters %}
-{% load static %}
-
-{% block header %}{% trans "Inspection Waitlist" %}{% endblock %}
+{% extends 'data_monitoring/base.html' %} {% load i18n %}
+{% load custom_filters %} {% load static %} {% block header %}{% trans "Printing Waitlist" %}{% endblock %}
 
 {% block action_buttons %}
 <button onclick="toggleSearchPopup()" title="Search" style="background: none; border: none; cursor: pointer; margin: 0 10px;">
@@ -15,7 +11,7 @@
 <button onclick="exportTableToExcel()" title="Download as Excel" style="background: none; border: none; cursor: pointer; margin: 0 10px;">
     <i class="fas fa-file-excel"></i>
 </button>
-<button onclick="captureTableAsImage()" title=" Capture" style="background: none; border: none; cursor: pointer; margin: 0 10px;">
+<button onclick="captureTableAsImage()" title="Capture" style="background: none; border: none; cursor: pointer; margin: 0 10px;">
     <i class="fas fa-camera"></i>
 </button>
 {% endblock %}
@@ -56,8 +52,8 @@
 {% endblock %}
 
 {% block forms %}{% endblock %}
-{% block url_search_popup %}{% url 'data_monitoring:inspection_waitlist' %}{% endblock %}
-{% block url_list_search %}{% url 'data_monitoring:inspection_waitlist' %}{% endblock %}
+{% block url_search_popup %}{% url 'data_monitoring:printing_waitlist' %}{% endblock %}
+{% block url_list_search %}{% url 'data_monitoring:printing_waitlist' %}{% endblock %}
 
 {% block table %}
 <!-- Nội dung bảng -->
@@ -79,7 +75,7 @@
         <th>Pattern</th>
         <th>OrderQty</th>
         <th>Unit</th>
-        <th>Bal.Qty</th>
+        <th>To Printing</th>
         <th>Last Process</th>
         <th>Update</th>
       </tr>
@@ -109,7 +105,7 @@
         <td>{{ order.order_qty }}</td>
         <td>{{ order.qty_unit }}</td>
         <td>
-          <b>{{ status.bal_qty }}</b>
+          <b>{{ status.qty_to_printing }}</b>
         </td>
         {% if status.latest_process %}
         <td>
@@ -129,8 +125,11 @@
 </div>
 {% else %}
 <div class="alert alert-info">
-  <p>{% trans "No orders waiting for inspection found." %}</p>
+  <p>{% trans "No orders waiting for printing found." %}</p>
 </div>
+{% endif %}
+
+{% if order_and_status %}
 {% endif %}
 {% endblock %}
 
