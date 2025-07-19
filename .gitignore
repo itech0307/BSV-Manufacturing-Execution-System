@@ -10,3 +10,5 @@ temp/
 setup.ini
 redis/
 .cursor/
+.specstory/
+.github/

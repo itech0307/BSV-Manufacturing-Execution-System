@@ -14,12 +14,19 @@ urlpatterns = [
     path('create_lot_no/', views.create_lot_no, name='create_lot_no'),
     
     path('order_search/', views.order_search, name='order_search'),
+
     path('dryplan/', views.dryplan, name='dryplan'),
     path('drymix/', views.drymix, name='drymix'),
     path('dryline/', views.dryline, name='dryline'),
     path('delamination/', views.delamination, name='delamination'),
     path('inspection/', views.inspection, name='inspection'),
+
     path('inspection_waitlist/', views.inspection_waitlist, name='inspection_waitlist'),
     path('printing_waitlist/', views.printing_waitlist, name='printing_waitlist'),
+
     path('debug/export-counts/', views.debug_export_counts, name='debug_export_counts'),
+
+    path('update_swatch_location/', views.update_swatch_location, name='update_swatch_location'),
+    path('swatch_management/', views.swatch_management, name='swatch_management'),
+    path('upload_swatch/', views.upload_swatch, name='upload_swatch'),
 ]

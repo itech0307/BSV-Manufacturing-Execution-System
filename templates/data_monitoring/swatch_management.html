@@ -1,0 +1,598 @@
+{% extends "base/core.html" %}
+{% load i18n %}
+{% load static %}
+{% load custom_filters %}
+{% block title %}{% trans "Swatch Management" %} - BSV-MES{% endblock %}
+{% block header %}{% trans "Swatch Management" %}{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet"> 
+<link href="{% static 'css/fontawesome/css/all.min.css' %}" rel="stylesheet">
+<style>
+/* DataTables style customization */
+.dataTables-wrapper {
+    padding: 16px 0;
+}
+
+.dataTables-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.dataTables-length {
+    display: flex;
+    align-items: center;
+}
+
+/* Table Responsive */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 1rem;
+}
+
+/* Advanced search styling */
+.advanced-search {
+    background:rgb(255, 255, 255) !important;
+    padding: 1rem !important;
+    border: 1px solid #dee2e6 !important;
+    border-radius: 4px !important;
+    margin-bottom: 1rem !important;
+}
+
+.advanced-search .form-control {
+    height: 38px;
+    font-size: 14px;
+}
+
+.advanced-search input::placeholder {
+    color: #999;
+    font-style: italic;
+}
+
+/* Column header styling */
+.sorting {
+    position: relative;
+    padding-right: 30px;
+    cursor: pointer;
+}
+
+.sorting:after {
+    position: absolute;
+    right: 8px;
+    content: "↕";
+    opacity: 0.3;
+}
+
+.sorting:hover:after {
+    opacity: 1;
+}
+
+/* Pagination styling */
+.dataTables-pagination {
+    margin-top: 1rem;
+}
+
+.dataTables-info {
+    padding-top: 0.5rem;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    .dataTables-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .dataTables-length {
+        justify-content: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .advanced-search .row {
+        margin: 0;
+    }
+
+    .advanced-search .col-md-2 {
+        flex: 0 0 100%;
+        max-width: 100%;
+        padding: 0.5rem 0;
+    }
+
+    .table-responsive {
+        margin: 0 -15px;
+        padding: 0 15px;
+        border: 0;
+    }
+
+    .dataTables-table th, 
+    .dataTables-table td {
+        white-space: nowrap;
+        min-width: 120px;
+    }
+
+    .pagination {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    /* Modal Responsive */
+    .modal-dialog {
+        margin: 0.5rem;
+        max-width: calc(100% - 1rem);
+    }
+
+    .modal-body {
+        padding: 1rem;
+    }
+}
+
+.table thead th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    vertical-align: middle;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+}
+
+.pagination {
+    margin-bottom: 0;
+}
+
+.pagination .page-link {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.progress {
+    height: 20px;
+}
+
+.alert {
+    font-size: 0.9rem;
+}
+
+#errorList {
+    max-height: 200px;
+    overflow-y: auto;
+    padding-left: 20px;
+}
+
+.progress-bar {
+    transition: width 0.5s ease-in-out;
+}
+
+.spinner-border {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h2 class="mb-0">{% trans "Swatch Management" %}</h2>
+        <button class="btn btn-primary" id="uploadBtn">
+            <i class="fas fa-upload"></i> {% trans "Upload" %}
+        </button>
+    </div>
+
+    <div class="dataTables-wrapper">
+        <!-- Length and Search controls -->
+        <div class="dataTables-header">
+            <div class="dataTables-length">
+                <label class="me-2">{% trans "Show" %}</label>
+                <select class="form-select me-2" style="width: 70px;" id="entriesSelect">
+                    {% for option in limit_options %}
+                        <option value="{{ option }}" {% if option == limit %}selected{% endif %}>{{ option }}</option>
+                    {% endfor %}
+                </select>
+                <label>{% trans "entries" %}</label>
+            </div>
+            <div class="d-flex align-items-center">
+                <div class="input-group">
+                    <button class="btn btn-outline-secondary btn-sm" type="button" onclick="captureTableAsImage()" title="Capture">
+                        <i class="fas fa-camera"></i>
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" type="button" onclick="loadTableData()" title="Refresh">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" type="button">
+                        <i class="fas fa-th-large"></i>
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" type="button" id="exportBtn" title="Export QR Code">
+                        <i class="fa fa-qrcode"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Search -->
+        <div class="advanced-search">
+            <div class="row g-3">
+                <div class="col-md-2">
+                    <label for="selectType" style="font-weight: bold;">{% trans "M/S" %}</label>
+                    <select class="form-select" id="selectType">
+                        <option value="all">{% trans "All Types" %}</option>
+                        <option value="SP">SP</option>
+                        <option value="MG">MG</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="sttSearch" style="font-weight: bold;">{% trans "STT" %}</label>
+                    <input type="text" class="form-control" id="sttSearch" name="stt" 
+                           value="{{ stt_search }}" placeholder="{% trans 'STT...' %}">
+                </div>
+                <div class="col-md-2">
+                    <label for="customerSearch" style="font-weight: bold;">{% trans "Customer" %}</label>
+                    <input type="text" class="form-control" id="customerSearch" name="customer" 
+                           value="{{ customer_search }}" placeholder="{% trans 'Customer...' %}">
+                </div>
+                <div class="col-md-2">
+                    <label for="itemSearch" style="font-weight: bold;">{% trans "Item" %}</label>
+                    <input type="text" class="form-control" id="itemSearch" name="item" 
+                           value="{{ item_search }}" placeholder="{% trans 'Item...' %}">
+                </div>
+                <div class="col-md-2">
+                    <label for="colorSearch" style="font-weight: bold;">{% trans "Color" %}</label>
+                    <input type="text" class="form-control" id="colorSearch" name="color" 
+                           value="{{ color_search }}" placeholder="{% trans 'Color...' %}">
+                </div>
+                <div class="col-md-2">
+                    <label for="patternSearch" style="font-weight: bold;">{% trans "Pattern" %}</label>
+                    <input type="text" class="form-control" id="patternSearch" name="pattern" 
+                           value="{{ pattern_search }}" placeholder="{% trans 'Pattern...' %}">
+                </div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered dataTables-table">
+                <thead>
+                    <tr>
+                        <th class="sorting">EPC</th>
+                        <th class="sorting">STT</th>
+                        <th class="sorting">M/S</th>
+                        <th class="sorting">Customer</th>
+                        <th class="sorting">Item</th>
+                        <th class="sorting">Color</th>
+                        <th class="sorting">Pattern</th>
+                        <th class="sorting">Base</th>
+                        <th>Last Location</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for swatch in swatches %}
+                    <tr>
+                        <td>{{ swatch.epc }}</td>
+                        <td>{{ swatch.stt }}</td>
+                        <td>{{ swatch.type }}</td>
+                        <td>{{ swatch.customer }}</td>
+                        <td>{{ swatch.item }}</td>
+                        <td>{{ swatch.color }}</td>
+                        <td>{{ swatch.pattern }}</td>
+                        <td>{{ swatch.base_color }}</td>
+                        <td>
+                            {% if swatch.last_location %}
+                                {{ swatch.last_location }}
+                                <br>
+                                <small class="text-muted">{{ swatch.last_seen|slice:"5:16" }} {% if swatch.last_seen %} ({{ swatch.last_seen|elapsed_time }}) {% endif %}</small>
+                                <br>
+                                <small class="text-primary">{{ swatch.last_employee }}</small>
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="dataTables-info">
+                {% trans "Showing" %} {{ start_entry }} {% trans "to" %} {{ end_entry }} {% trans "of" %} {{ total_entries }} {% trans "entries" %}
+            </div>
+            <nav class="dataTables-pagination">
+                <ul class="pagination pagination-sm mb-0">
+                    {% if page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page|add:'-1' }}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for p in page_range %}
+                        {% if p == page %}
+                            <li class="page-item active"><a class="page-link" href="#">{{ p }}</a></li>
+                        {% else %}
+                            <li class="page-item"><a class="page-link" href="?page={{ p }}">{{ p }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page < total_pages %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page|add:'1' }}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{% trans "Upload Swatch Data" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadForm" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="fileInput" class="form-label">{% trans "Choose Excel File (.xlsb)" %}</label>
+                        <input type="file" class="form-control" id="fileInput" name="file" accept=".xlsb">
+                    </div>
+                </form>
+                
+                <!-- Progress Bar -->
+                <div id="uploadProgress" class="d-none">
+                    <div class="progress mb-3">
+                        <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <p class="text-muted mb-0" id="progressText">Processing...</p>
+                </div>
+
+                <!-- Results -->
+                <div id="uploadResults" class="d-none">
+                    <div class="alert alert-info">
+                        <h6>{% trans "Upload Results" %}:</h6>
+                        <p class="mb-1">{% trans "Total Processed" %}: <span id="totalProcessed">0</span></p>
+                        <p class="mb-1">{% trans "New Records" %}: <span id="newRecords">0</span></p>
+                        <p class="mb-1">{% trans "Updated Records" %}: <span id="updatedRecords">0</span></p>
+                        <p class="mb-0">{% trans "Errors" %}: <span id="errorCount">0</span></p>
+                    </div>
+                    
+                    <!-- Error Logs -->
+                    <div id="errorLogs" class="d-none">
+                        <h6>{% trans "Error Details" %}:</h6>
+                        <div class="alert alert-danger">
+                            <ul class="mb-0" id="errorList"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="submitUpload">{% trans "Upload" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
+<script src="{% static 'js/celery_progress.js' %}"></script>
+<script>
+$(document).ready(function() {
+    // Setup CSRF token for AJAX requests
+    var csrftoken = $('[name=csrfmiddlewaretoken]').val();
+    
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+
+    // Handle Upload button click
+    $('#uploadBtn').click(function() {
+        $('#uploadModal').modal('show');
+        resetUploadForm();
+    });
+
+    // Handle file upload
+    $('#submitUpload').click(function() {
+        const form = $('#uploadForm')[0];
+        const formData = new FormData(form);
+        
+        if (!$('#fileInput')[0].files.length) {
+            alert('Please select a file');
+            return;
+        }
+        
+        // Show progress bar and hide results
+        $('#uploadProgress').removeClass('d-none');
+        $('#uploadResults').addClass('d-none');
+        $('#errorLogs').addClass('d-none');
+        $('#submitUpload').prop('disabled', true);
+        
+        $.ajax({
+            url: '{% url "data_monitoring:upload_swatch" %}',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.status === 'success' && response.task_id) {
+                    // Initialize progress tracking
+                    initializeProgress(response.task_id);
+                } else {
+                    showError(response.message || 'Upload failed');
+                }
+            },
+            error: function(xhr, status, error) {
+                showError('Upload failed: ' + error);
+            }
+        });
+    });
+
+    function initializeProgress(taskId) {
+        var progressUrl = '/celery-progress/' + taskId;
+        var currentProgress = 0;
+        
+        CeleryProgressBar.initProgressBar(progressUrl, {
+            progressBarElement: document.querySelector('#uploadProgress .progress-bar'),
+            progressBarMessageElement: document.querySelector('#progressText'),
+            onProgress: function(progressBarElement, progressBarMessageElement, progress) {
+                if (progress.percent > currentProgress) {
+                    currentProgress = progress.percent;
+                    $(progressBarElement).css({
+                        'width': progress.percent + '%',
+                        'transition': 'width 0.5s ease-in-out'
+                    });
+                    $(progressBarMessageElement).text(progress.current + ' of ' + progress.total + ' rows processed');
+                }
+            },
+            onSuccess: function(progressBarElement, progressBarMessageElement, result) {
+                $(progressBarElement).css({
+                    'width': '100%',
+                    'transition': 'width 0.5s ease-in-out'
+                });
+                showResults(result);
+            },
+            onError: function(progressBarElement, progressBarMessageElement, error) {
+                showError(error);
+            }
+        });
+    }
+
+    function showResults(result) {
+        $('#uploadProgress').addClass('d-none');
+        $('#uploadResults').removeClass('d-none');
+        $('#submitUpload').prop('disabled', false);
+        
+        if (result.status === 'error') {
+            showError(result.message);
+            return;
+        }
+        
+        $('#totalProcessed').text(result.total_processed || 0);
+        $('#newRecords').text(result.new_records || 0);
+        $('#updatedRecords').text(result.updated_records || 0);
+        $('#errorCount').text(result.errors || 0);
+        
+        if (result.error_logs && result.error_logs.length > 0) {
+            $('#errorLogs').removeClass('d-none');
+            const errorList = $('#errorList');
+            errorList.empty();
+            result.error_logs.forEach(function(error) {
+                errorList.append('<li>' + error + '</li>');
+            });
+        }
+    }
+
+    function showError(message) {
+        $('#uploadProgress').addClass('d-none');
+        $('#uploadResults').removeClass('d-none');
+        $('#errorLogs').removeClass('d-none');
+        $('#errorList').html('<li>' + message + '</li>');
+        $('#submitUpload').prop('disabled', false);
+    }
+
+    function resetUploadForm() {
+        $('#uploadForm')[0].reset();
+        $('#uploadProgress').addClass('d-none');
+        $('#uploadResults').addClass('d-none');
+        $('#errorLogs').addClass('d-none');
+        $('#submitUpload').prop('disabled', false);
+        $('.progress-bar').css('width', '0%');
+        $('#progressText').text('Processing...');
+    }
+
+    // Function to load table data via AJAX
+    function loadTableData(params = {}) {
+        // Show loading spinner in the table
+        $('tbody').html('<tr><td colspan="9" class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></td></tr>');
+        
+        // Add advanced search parameters
+        const type = $('#selectType').val();
+        params.type = type !== 'all' ? type : '';
+        params.stt = $('#sttSearch').val();
+        params.customer = $('#customerSearch').val();
+        params.item = $('#itemSearch').val();
+        params.color = $('#colorSearch').val();
+        params.pattern = $('#patternSearch').val();
+        
+        $.get(window.location.pathname, params, function(response) {
+            // Parse HTML response
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(response, 'text/html');
+            
+            // Update table content
+            $('tbody').html($(doc).find('tbody').html());
+            
+            // Update pagination
+            $('.pagination').html($(doc).find('.pagination').html());
+            
+            // Update display entries information
+            $('.dataTables-info').html($(doc).find('.dataTables-info').html());
+            
+            // Update URL with search parameters without reloading the page
+            const url = new URL(window.location);
+            Object.keys(params).forEach(key => {
+                if (params[key]) {
+                    url.searchParams.set(key, params[key]);
+                } else {
+                    url.searchParams.delete(key);
+                }
+            });
+            window.history.pushState({}, '', url);
+        });
+    }
+
+    // Handle search when Enter is pressed or input changes
+    $('#sttSearch, #customerSearch, #itemSearch, #colorSearch, #patternSearch').on('keyup', function(e) {
+        if (e.key === 'Enter' || !e.key) {
+            e.preventDefault();
+            loadTableData();
+        }
+    });
+
+    // Handle pagination
+    $(document).on('click', '.pagination .page-link', function(e) {
+        e.preventDefault();
+        const page = $(this).attr('href').split('page=')[1] || 1;
+        loadTableData({
+            page: page
+        });
+    });
+
+    // Handle change in number of rows displayed
+    $('#entriesSelect').change(function() {
+        const limit = $(this).val();
+        // Update the URL parameter directly and reload the data
+        loadTableData({
+            limit: limit,
+            page: 1 // Reset to first page when changing entries per page
+        });
+    });
+
+    // Handle change in swatch type
+    $('#selectType').change(function() {
+        loadTableData();
+    });
+});
+</script>
+{% endblock extra_js %}

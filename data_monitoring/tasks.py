@@ -1,26 +1,35 @@
 import openpyxl
 from copy import copy
 import pandas as pd
-from .models import SalesOrder, ProductionPlan
+from .models import ColorSwatchMovement, ColorSwatch
+from production_management.models import SalesOrder, ProductionPlan
 from datetime import datetime
 from django.http import HttpResponse, JsonResponse
 from django.conf import settings
+from django.db import transaction
 from openpyxl.drawing.image import Image
 import qrcode
 import io
 import os
+import logging
+import pyxlsb
 
 # Celery
 from celery import shared_task
 # Celery-progress
 from celery_progress.backend import ProgressRecorder
+from celery.schedules import crontab
+from config.celery import app
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 import boto3
 
 s3 = boto3.client('s3', region_name=settings.AWS_S3_REGION_NAME)
 
 def get_s3_file(key):
-    """S3에서 파일을 가져와 BytesIO 객체로 반환합니다."""
+    """Get a file from S3 and return it as a BytesIO object.""" 
     s3_response = s3.get_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=key)
     file_content = s3_response['Body'].read()
     return io.BytesIO(file_content)
@@ -99,29 +108,29 @@ def parse_date(date_string):
 
 def order_convert_to_qrcard(production_order):
     try:
-        # 엑셀 파일로 응답을 생성합니다.
+        # Generate a response in an Excel file.
         response = HttpResponse(content_type='application/ms-excel')
         response['Content-Disposition'] = 'attachment; filename="qrcard_.xlsx"'
         
-        # JSON 데이터를 pandas DataFrame으로 변환합니다.
+        # Convert JSON data to pandas DataFrame
         # df = pd.read_json(df_json)
         
-        # 새 워크북을 생성하고 기존의 'qrcard.xlsx' 파일을 로드합니다.
+        # Create a new workbook and load the existing 'qrcard.xlsx' file
         wb = openpyxl.Workbook()
         
-        # S3에서 파일 가져오기
+        # Get the file from S3
         excel_file = get_s3_file('forms/qrcard.xlsx')
 
-        # openpyxl로 워크북 로드
+        # Load the workbook using openpyxl
         qrcard = openpyxl.load_workbook(excel_file)
         
-        # 각 행에 대해 새 워크시트를 생성하고 데이터를 채웁니다.
+        # Create a new worksheet for each row and fill the data
         for order in production_order:
             order_no = order.order_no            
             
             ws = wb.create_sheet(str(order_no))
             copy_sheet(qrcard['DRY'], ws)
-            # 워크시트에 데이터를 채웁니다.
+            # Fill the worksheet with data
             
             ws['A3'] = order.customer_name
             ws['F3'] = order.brand
@@ -138,40 +147,172 @@ def order_convert_to_qrcard(production_order):
             qr_str = f"!BSVPD!{order_no_split[0]}!{order_no_split[1]}!"
             qr_img = qrcode.make(qr_str).resize((160, 160))
             
-            # QR 코드 이미지를 BytesIO 스트림에 저장합니다.
+            # Save the QR code image to a BytesIO stream
             img_stream = io.BytesIO()
             qr_img.save(img_stream, format='PNG')
             
-            # 스트림 위치를 처음으로 돌립니다.
+            # Reset the stream position to the beginning
             img_stream.seek(0)
             
-            # openpyxl 이미지 객체를 생성합니다.
+            # Create an openpyxl image object
             qr_img_openpyxl = Image(img_stream)
             
-            # 워크시트에 QR 코드 이미지를 추가합니다.
+            # Add the QR code image to the worksheet
             ws.add_image(qr_img_openpyxl, "G22")
 
             qr_img_2 = qrcode.make(qr_str).resize((180, 180))
 
-            # QR 코드 이미지를 BytesIO 스트림에 저장합니다.
+            # Save the QR code image to a BytesIO stream
             img_stream_2 = io.BytesIO()
             qr_img_2.save(img_stream_2, format='PNG')
             
-            # 스트림 위치를 처음으로 돌립니다.
+            # Reset the stream position to the beginning
             img_stream_2.seek(0)
             
-            # openpyxl 이미지 객체를 생성합니다.
+            # Create an openpyxl image object
             qr_img_openpyxl_2 = Image(img_stream_2)
             
-            # 워크시트에 QR 코드 이미지를 추가합니다.
+            # Add the QR code image to the worksheet
             ws.add_image(qr_img_openpyxl_2, "A22")
 
 
-        # 워크북을 저장하고 응답을 반환합니다.
+        # Save the workbook and return the response
         del wb['Sheet']
         wb.save(response)
         return response
     
     except Exception as e:
-        # 에러가 발생하면 JSON 형식으로 에러 메시지를 반환합니다.
+        # If an error occurs, return the error message in JSON format
         return JsonResponse({'error': str(e)})
+
+# Upload swatch data to the database
+@shared_task(bind=True, time_limit=1800)  # 30 minutes
+def upload_swatch_data(self, file_path):
+    """Upload swatch data to the database from .xlsb file"""
+    progress_recorder = ProgressRecorder(self)
+    error_logs = []
+    success_count = 0
+    update_count = 0
+    error_count = 0
+    
+    try:
+        # Read .xlsb file
+        df = pd.read_excel(file_path, engine='pyxlsb', sheet_name='TOTAL SW')
+        total_rows = len(df)
+        
+        # Required columns
+        required_columns = ['EPC', 'CUSTOMER', 'M/S', 'STT', 'ITEM', 'COLOR', 'TYPE', 'BASE']
+        
+        # Check if all required columns exist
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        if missing_columns:
+            error_message = f"Missing required columns: {', '.join(missing_columns)}"
+            logger.error(error_message)
+            return {
+                'status': 'error',
+                'message': error_message
+            }
+
+        # Cập nhật progress bar trước khi bắt đầu xử lý
+        progress_recorder.set_progress(0, total_rows, 'Starting data processing...')
+        
+        # Xử lý từng dòng
+        for index, row in df.iterrows():
+            try:
+                # Check if row has all required values
+                if row[required_columns].isnull().any():
+                    error_logs.append(f"Row {index + 2}: Missing required values")
+                    error_count += 1
+                    continue
+
+                # Clean and prepare data
+                swatch_data = {
+                    'epc': str(row['EPC']).strip(),
+                    'stt': int(row['STT']),
+                    'type': row['M/S'],
+                    'customer': str(row['CUSTOMER']).strip(),
+                    'item': str(row['ITEM']).strip(),
+                    'color': str(row['COLOR']).strip(),
+                    'pattern': str(row.get('TYPE', '')).strip(),
+                    'base_color': str(row.get('BASE', '')).strip(),
+                }
+
+                # Process database in a separate transaction
+                try:
+                    with transaction.atomic():
+                        # Check if swatch exists by EPC
+                        existing_swatch = ColorSwatch.objects.filter(epc=swatch_data['epc']).first()
+                        
+                        if existing_swatch:
+                            # Update existing swatch
+                            for key, value in swatch_data.items():
+                                setattr(existing_swatch, key, value)
+                            existing_swatch.save()
+                            update_count += 1
+                        else:
+                            # Create new swatch
+                            ColorSwatch.objects.create(**swatch_data)
+                            success_count += 1
+
+                except Exception as db_error:
+                    error_message = f"Row {index + 2}: Database error - {str(db_error)}"
+                    error_logs.append(error_message)
+                    logger.error(error_message)
+                    error_count += 1
+
+            except Exception as row_error:
+                error_message = f"Row {index + 2}: {str(row_error)}"
+                error_logs.append(error_message)
+                logger.error(error_message)
+                error_count += 1
+
+            # Update progress bar after processing each row
+            if (index + 1) % 10 == 0 or index == total_rows - 1:
+                current_progress = index + 1
+                progress_recorder.set_progress(
+                    current_progress,
+                    total_rows,
+                    f'Processed {current_progress} of {total_rows} rows'
+                )
+
+        # Clean up temp file
+        try:
+            os.remove(file_path)
+        except Exception as e:
+            logger.warning(f"Failed to remove temp file: {str(e)}")
+
+        # Final results
+        result = {
+            'status': 'success',
+            'total_processed': total_rows,
+            'new_records': success_count,
+            'updated_records': update_count,
+            'errors': error_count,
+            'error_logs': error_logs[:100]  # Limit error logs to prevent response size issues
+        }
+        
+        logger.info(f"Upload completed: {result}")
+        return result
+
+    except Exception as e:
+        error_message = f"File processing error: {str(e)}"
+        logger.error(error_message)
+        return {
+            'status': 'error',
+            'message': error_message
+        }
+
+@app.task
+def cleanup_old_swatch_movements():
+    """Clean up old color swatch movement records"""
+    deleted_count = ColorSwatchMovement.cleanup_old_records()
+    logger.info(f"Cleanup task completed: {deleted_count} old records deleted")
+    return deleted_count
+
+# Register periodic task to run at midnight every day
+app.conf.beat_schedule.update({
+    'cleanup-old-swatch-movements': {
+        'task': 'data_monitoring.tasks.cleanup_old_swatch_movements',
+        'schedule': crontab(hour=0, minute=0),  # Run at midnight
+    },
+})

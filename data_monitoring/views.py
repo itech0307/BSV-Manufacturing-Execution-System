@@ -1,24 +1,25 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.http import JsonResponse
 from django.utils import timezone
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import json
 from collections import defaultdict
 from django.db.models import Q
-from .models import DryMix, DryLine, Delamination, Inspection, ProductionLot, Printing
+from .models import DryMix, DryLine, Delamination, Inspection, ProductionLot, Printing, ColorSwatch, ColorSwatchMovement
 from production_management.models import SalesOrder, ProductionPlan
 from workforce_management.models import Worker
 from inventory_management.models import RawMaterial, Category
 from django.contrib.admin.views.decorators import staff_member_required
-
+from django.utils.translation import gettext as _
 
 from django.utils.dateparse import parse_date
 from itertools import chain
 import datetime
 import pytz
-from .tasks import order_convert_to_qrcard
+from .tasks import order_convert_to_qrcard, upload_swatch_data
 
 import logging
 logger = logging.getLogger('data_monitoring')
@@ -26,6 +27,10 @@ logger = logging.getLogger('data_monitoring')
 from django.core.cache import cache
 from django.conf import settings
 import hashlib
+import socket
+import os
+from django.core.files.storage import default_storage
+from .models import Scanner
 
 @csrf_exempt
 def input_drymix(request):
@@ -43,6 +48,7 @@ def input_drymix(request):
                 try:
                     sales_order = SalesOrder.objects.exclude(status=False).get(order_no=order['order_number'])
                     production_plan = ProductionPlan.objects.filter(sales_order=sales_order).order_by('-create_date').first()
+                    
                     # Create an instance of the ProductionPhase model
                     production_phase = DryMix(
                         production_plan = production_plan,
@@ -52,6 +58,7 @@ def input_drymix(request):
                     production_phase.save()  # Save the instance
                     logger.info(f"[KIOSK] DRYMIX SAVED: {order['order_number']}")
                 except SalesOrder.DoesNotExist:
+                    
                     # If the order number does not exist, handle the error  
                     logger.info(f"[KIOSK] DRYMIX ERROR: {order['order_number']}")
             
@@ -212,41 +219,36 @@ def input_rp(request):
         for order in scanned_orders:
             if order['order_number'][:3] == 'SOV':
                 try:
-                    production_order = SalesOrder.objects.exclude(status=False).get(order_no=order['order_number'])
-                    last_phase = DryLine.objects.filter(production_plan__sales_order=production_order).order_by('-create_date').first()
+                    sales_order = SalesOrder.objects.exclude(status=False).get(order_no=order['order_number'])
                     
-                    if last_phase:
-                        last_phase_plan = last_phase.production_plan
-                    else:
-                        last_phase_plan = None
-                    
-                    # Find the most recent production history
-                    production_phase = Delamination.objects.filter(
-                            production_plan=last_phase_plan
+                    # Thử tìm từ DryLine trước
+                    last_phase = DryLine.objects.filter(
+                        production_plan__sales_order=sales_order
                     ).order_by('-create_date').first()
-                    
-                    if production_phase is None or production_phase.dlami_lot is not None: # If the history is not found or the production roll is confirmed, add a new lot
-                        production_phase = Delamination.objects.create(
-                            production_plan=last_phase_plan,
-                            dlami_qty=quantity_data,
-                            line_no=machine_value,
-                            create_date=timezone.now()
-                        )
-                    elif production_phase is not None and production_phase.dlami_lot is None: # If the production history exists and the roll is not confirmed, update the existing lot
-                        production_phase = Delamination.objects.update_or_create(
-                            id=production_phase.id, # Update the most recent production lot
-                            production_plan=last_phase_plan,
-                            defaults={
-                                'dlami_qty' : quantity_data,
-                                'line_no' : machine_value,
-                                'create_date': timezone.now()
-                            }
-                        )
+
+                    if last_phase and last_phase.production_plan:
+                        production_plan = last_phase.production_plan
+                    else:
+                        # Nếu không có DryLine, tìm trực tiếp từ ProductionPlan
+                        production_plan = ProductionPlan.objects.filter(
+                            sales_order=sales_order,
+                            item_group="Dry"
+                        ).order_by('-create_date').first()
+
+                    if not production_plan:
+                        logger.error(f"[KIOSK] RP ERROR: No production plan found for {order['order_number']}")
+                        continue
+
+                    production_phase = Delamination.objects.create(
+                        production_plan=production_plan,
+                        dlami_qty=quantity_data,
+                        line_no=machine_value,
+                        create_date=timezone.now()
+                    )
                     logger.info(f"[KIOSK] RP SAVED: {order['order_number']}")
                 except SalesOrder.DoesNotExist:
-                    # If the order number does not exist, handle the error
-                    logger.info(f"[KIOSK] RP ERROR: {order['order_number']}")
-                
+                    logger.error(f"[KIOSK] RP ERROR: Order not found {order['order_number']}")
+                    continue
 
         return JsonResponse({"status": "success", "message": "Data added successfully"})    
     
@@ -296,7 +298,7 @@ def input_inspection(request):
         
         logger.info(f"[KIOSK] INSPECTION DATA: {data}")
         
-        # Khởi tạo các biến
+        # Initialize variables
         a_qty = 0
         qty_to_printing = 0
         defect = []
@@ -307,7 +309,7 @@ def input_inspection(request):
                 a_qty = int(item.get('quantity', 0))
             elif item.get('Grade') == 'Printing':
                 qty_to_printing = int(item.get('quantity', 0))
-            elif item.get('defectCause'):  # Chỉ thêm vào defect nếu là lỗi
+            elif item.get('defectCause'):  # Only add to defect if it is an error
                 defect.append({
                     'quantity': int(item.get('quantity', 0)),
                     'defectCause': item.get('defectCause')
@@ -331,9 +333,9 @@ def input_inspection(request):
                         sales_order=sales_order,
                         production_plan=last_phase_plan,
                         ins_qty=a_qty,
-                        qty_to_printing=qty_to_printing,  # Sử dụng trường qty_to_printing mới
+                        qty_to_printing=qty_to_printing,  # Use the new qty_to_printing field
                         line_no=machine_value,
-                        ins_information=defect,  # Luôn truyền vào mảng (rỗng hoặc có dữ liệu)
+                        ins_information=defect,  # Always pass an array (empty or with data)
                         create_date=timezone.now()
                     )
                     production_phase.save()
@@ -411,7 +413,7 @@ def input_printing(request):
         
         logger.info(f"[KIOSK] PRINTING DATA: {scanned_orders}, QUANTITY: {quantity_input}, MACHINE: {machine}")
         
-        # Lưu thông tin vào cơ sở dữ liệu
+        # Save the information to the database
         for order in scanned_orders:
             try:
                 order_number = order['order_number']
@@ -425,11 +427,11 @@ def input_printing(request):
                     else:
                         last_phase_plan = None
                     
-                    # Lưu dữ liệu vào model Printing với số lượng từ form nhập
+                    # Save the information to the Printing model with the quantity from the form
                     printing = Printing.objects.create(
                         sales_order=sales_order,
                         production_plan=last_phase_plan,
-                        print_qty=int(quantity_input),  # Sử dụng số lượng từ form nhập
+                        print_qty=int(quantity_input),  # Use the quantity from the form
                         print_information=print_information,
                         line_no=machine,
                         create_date=timezone.now()
@@ -471,7 +473,7 @@ def input_printing(request):
         }
         return render(request, 'data_monitoring/input_printing.html', context)
 
-    # Nếu có QR code, tìm thông tin đơn hàng
+    # If there is a QR code, find the order information
     data = {
         'status': 'fail',
         'message': 'Order not found'
@@ -853,7 +855,7 @@ def order_search(request):
                     latest_process = proc['process']
                     latest_machine = proc['machine']
             
-            # Kiểm tra xem có bản ghi Printing nào sau bản ghi Inspection cuối cùng không
+            # Check if there is a Printing record after the last Inspection record
             latest_inspection = None
             latest_printing = None
             for proc in reversed(process):
@@ -864,7 +866,7 @@ def order_search(request):
                 if latest_inspection and latest_printing:
                     break
 
-            # Khởi tạo status với cấu trúc đúng
+            # Initialize status with the correct structure
             status_data = {
                 'bal_qty': bal_qty,
                 'line_shortage': sub_pd_qty - bal_qty,
@@ -872,10 +874,10 @@ def order_search(request):
                 'latest_process': latest_process,
                 'latest_create_date': latest_create_date,
                 'latest_machine': latest_machine,
-                'qty_to_printing': None  # Mặc định là None
+                'qty_to_printing': None  # Default is None
             }
 
-            # Chỉ set qty_to_printing nếu bản ghi Inspection cuối cùng không có bản ghi Printing sau nó
+            # Only set qty_to_printing if the last Inspection record does not have a Printing record after it
             if latest_inspection:
                 inspection_date = latest_inspection.get('create_date')
                 printing_date = latest_printing.get('create_date') if latest_printing else None
@@ -1024,13 +1026,13 @@ def drymix(request):
 
 @login_required
 def dryline(request):
-    # Lấy thời gian hiện tại
+    # Get the current time  
     now = datetime.datetime.now()
-    # Tính thời điểm bắt đầu của ngày hiện tại
+    # Calculate the start time of the current day
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    # Tính thời điểm kết thúc của ngày hiện tại
+    # Calculate the end time of the current day
     today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
-    # Tính thời điểm 3 ngày trước
+    # Calculate the time 3 days ago
     _3daysago = today_start - datetime.timedelta(days=3)
     # Tính thời điểm 30 ngày trước cho tìm kiếm
     _30daysago = today_start - datetime.timedelta(days=30)
@@ -1807,4 +1809,216 @@ def printing_waitlist(request):
 
     return render(request, 'data_monitoring/printing_waitlist.html', context)
 
+@csrf_exempt
+def update_swatch_location(request):
+    """API endpoint để cập nhật vị trí của color swatch"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            
+            # Get line_no (hostname) from request data
+            hostname = data.get('line_no', 'UNKNOWN')
+            employee_code = data.get('employee_code', '')
+            
+            # Validate employee code
+            if not employee_code:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'THIẾU MÃ NHÂN VIÊN'
+                })
+            
+            # Get department from Scanner model
+            try:
+                scanner = Scanner.objects.get(hostname=hostname)
+                department = scanner.department
+            except Scanner.DoesNotExist:
+                department = 'UNKNOWN'
+            
+            # Find color swatch based on EPC
+            try:
+                swatch = ColorSwatch.objects.get(epc=data['epc'])
+            except ColorSwatch.DoesNotExist:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': f'KHÔNG TÌM THẤY SWATCH: {data["epc"]}'
+                })
+            
+            # Update location in ColorSwatchMovement
+            ColorSwatchMovement.objects.create(
+                color_swatch=swatch,
+                line_no=hostname,
+                created_by=employee_code,
+                created_date=timezone.now()
+            )
+            
+            # Update last location in ColorSwatch
+            swatch.last_location = department
+            swatch.save()
+            
+            logger.info(f"[SWATCH] {employee_code} checked in swatch {data['epc']} at {hostname}")
+            
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            logger.error(f"[SWATCH] Error updating swatch location: {str(e)}")
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
 
+@login_required
+def swatch_management(request):
+    # Define fixed number of rows per page
+    ROWS_PER_PAGE = {
+        'default': 10,
+        'options': [10, 25, 50, 100]
+    }
+    
+    # Get search parameters
+    epc_search = request.GET.get('epc', '').strip().upper()
+    stt_search = request.GET.get('stt', '').strip()
+    customer_search = request.GET.get('customer', '').strip()
+    item_search = request.GET.get('item', '').strip()
+    color_search = request.GET.get('color', '').strip()
+    pattern_search = request.GET.get('pattern', '').strip()
+    
+    # Get current page from query parameter
+    try:
+        page = max(1, int(request.GET.get('page', '1')))
+    except ValueError:
+        page = 1
+
+    # Get number of rows per page from session or use default value
+    limit = request.session.get('swatch_limit', ROWS_PER_PAGE['default'])
+    
+    # Check for limit in either GET or POST request
+    limit_param = None
+    if request.method == 'POST' and 'limit' in request.POST:
+        limit_param = request.POST.get('limit')
+    elif 'limit' in request.GET:
+        limit_param = request.GET.get('limit')
+        
+    if limit_param:
+        try:
+            new_limit = int(limit_param)
+            if new_limit in ROWS_PER_PAGE['options']:
+                limit = new_limit
+                request.session['swatch_limit'] = limit
+        except ValueError:
+            pass
+
+    # Query database
+    queryset = ColorSwatch.objects.all()
+    
+    # Apply search conditions
+    # if epc_search:
+    #     queryset = queryset.filter(epc__iexact=epc_search)
+    if stt_search:
+        queryset = queryset.filter(stt__icontains=stt_search)
+    if customer_search:
+        queryset = queryset.filter(customer__icontains=customer_search)
+    if item_search:
+        queryset = queryset.filter(item__icontains=item_search)
+    if color_search:
+        queryset = queryset.filter(color__icontains=color_search)
+    if pattern_search:
+        queryset = queryset.filter(pattern__icontains=pattern_search)
+
+    # Calculate offset and get data
+    total_entries = queryset.count()
+    offset = (page - 1) * limit
+    swatches = queryset.order_by('stt')[offset:offset + limit]
+
+    # Calculate pagination information
+    total_pages = (total_entries + limit - 1) // limit
+    start_entry = offset + 1 if total_entries > 0 else 0
+    end_entry = min(offset + limit, total_entries)
+
+        # Create list of pages to display
+    MAX_PAGES_DISPLAY = 5
+    if total_pages <= MAX_PAGES_DISPLAY:
+        page_range = range(1, total_pages + 1)
+    else:
+        if page <= 3:
+            page_range = range(1, 6)
+        elif page >= total_pages - 2:
+            page_range = range(total_pages - 4, total_pages + 1)
+        else:
+            page_range = range(page - 2, page + 3)
+
+        # Add Last Location column show data Department(last time seen)
+    for swatch in swatches:
+        # Get the latest movement for this swatch
+        latest_movement = ColorSwatchMovement.objects.filter(
+            color_swatch=swatch
+        ).order_by('-created_date').first()
+        
+        if latest_movement:
+            swatch.last_seen = latest_movement.created_date.astimezone(
+                pytz.timezone('Asia/Ho_Chi_Minh')
+            ).strftime('%Y-%m-%d %H:%M:%S')
+            swatch.last_employee = latest_movement.created_by or 'N/A'
+        else:
+            swatch.last_seen = None
+            swatch.last_employee = 'N/A'
+
+    context = {
+        'swatches': swatches,
+        'start_entry': start_entry,
+        'end_entry': end_entry,
+        'total_entries': total_entries,
+        'page': page,
+        'total_pages': total_pages,
+        'page_range': page_range,
+        'limit': limit,
+        'limit_options': ROWS_PER_PAGE['options'],
+        'epc_search': epc_search,
+        'stt_search': stt_search,
+        'customer_search': customer_search,
+        'item_search': item_search,
+        'color_search': color_search,
+        'pattern_search': pattern_search
+    }
+    return render(request, 'data_monitoring/swatch_management.html', context)
+
+
+@login_required
+
+def upload_swatch(request):
+    """API endpoint upload swatch file""" 
+    if request.method == 'POST' and request.FILES.get('file'):
+        try:
+            uploaded_file = request.FILES['file']
+            
+            # Validate file extension
+            if not uploaded_file.name.endswith('.xlsb'):
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Invalid file format. Please upload .xlsb file.'
+                })
+            
+            # Save file temporarily
+            temp_path = os.path.join(settings.MEDIA_ROOT, 'temp', uploaded_file.name)
+            os.makedirs(os.path.dirname(temp_path), exist_ok=True)
+            
+            with default_storage.open(temp_path, 'wb+') as destination:
+                for chunk in uploaded_file.chunks():
+                    destination.write(chunk)
+            
+            # Start celery task
+            task = upload_swatch_data.delay(temp_path)
+            
+            return JsonResponse({
+                'status': 'success',
+                'task_id': task.id,
+                'message': 'File upload started successfully.'
+            })
+            
+        except Exception as e:
+            logger.error(f"Error uploading swatch file: {str(e)}")
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Error uploading file: {str(e)}'
+            })
+    
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Invalid request'
+    })
