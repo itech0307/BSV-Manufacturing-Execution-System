@@ -36,14 +36,14 @@ def main_page(request):
 
 def login_view(request):
     if request.user.is_authenticated:
-        return redirect('common:main')  # 이미 로그인한 사용자는 메인 페이지로 리다이렉트
+        return redirect('common:main')  # If the user is already logged in, redirect to the main page
     if request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            return redirect('common:main')  # 로그인 후 메인 페이지로 리다이렉트
+            return redirect('common:main')  # After logging in, redirect to the main page
         else:
             error_message = "Invalid username or password."
             return render(request, 'common/login.html', {'error_message': error_message})
@@ -91,7 +91,7 @@ def activate(request, uidb64, token):
         user.profile.email_confirmed = True
         user.save()
         
-        # 사용자를 인증하고 로그인합니다
+        # Authenticate the user and log in
         authenticated_user = authenticate(username=user.username, password=None)
         if authenticated_user is not None:
             login(request, authenticated_user)
@@ -130,10 +130,10 @@ def change_password(request):
         'form': form
     })
 
-# 레포지토리 루트 설정
-REPOSITORY_ROOT = 'repository/'  # S3 버킷 내의 레포지토리 경로
+# Set the repository root
+REPOSITORY_ROOT = 'repository/'  # The repository path in the S3 bucket
 
-# S3 클라이언트 설정
+# Set the S3 client
 s3_config = Config(
     region_name=settings.AWS_S3_REGION_NAME,
     signature_version='s3v4',
@@ -149,11 +149,11 @@ def list_files(request):
     bucket_name = settings.AWS_STORAGE_BUCKET_NAME
     path = request.GET.get('path', REPOSITORY_ROOT)
 
-    # 경로가 레포지토리 루트 밖으로 나가지 않도록 보장
+    # Ensure the path does not go outside the repository root
     if not path.startswith(REPOSITORY_ROOT):
         path = REPOSITORY_ROOT
     
-    # 경로의 끝에 '/'가 없으면 추가
+    # If the path does not end with '/', add it
     if path and not path.endswith('/'):
         path += '/'
 
@@ -175,13 +175,13 @@ def list_files(request):
 
     if 'Contents' in response:
         for obj in response['Contents']:
-            if obj['Key'] != path:  # 현재 디렉토리 자체는 제외
+            if obj['Key'] != path:  # The current directory itself is excluded
                 file_name = obj['Key'][len(path):]
-                if not file_name.endswith('/'):  # 디렉토리는 제외
-                    # 파일에 대한 임시 URL 생성
+                if not file_name.endswith('/'):  # Directories are excluded
+                    # Create a temporary URL for the file
                     url = s3.generate_presigned_url('get_object',
                                                     Params={'Bucket': bucket_name, 'Key': obj['Key']},
-                                                    ExpiresIn=3600,  # URL의 유효 시간을 1시간으로 설정
+                                                    ExpiresIn=3600,  # Set the validity time of the URL to 1 hour
                                                     )
                     files.append({
                         'name': file_name,
@@ -191,26 +191,26 @@ def list_files(request):
                         'url': url
                     })
 
-    # Parent Directory 경로 계산
+    # Calculate the parent directory path
     parent_directory = os.path.dirname(path.rstrip('/'))
     if parent_directory.endswith('/'):
         parent_directory = parent_directory[:-1]
     
-    # 레포지토리 루트에 있을 때는 parent_directory를 None으로 설정
+    # When the parent directory is in the repository root, set parent_directory to None
     if parent_directory + REPOSITORY_ROOT == REPOSITORY_ROOT:
         parent_directory = None
     else:
-        # parent_directory가 비어있지 않도록 보장
+            # Ensure parent_directory is not empty
         parent_directory = parent_directory if parent_directory else REPOSITORY_ROOT
 
-    # 현재 경로를 부분으로 나누기
+    # Divide the current path into parts
     current_path_parts = []
     if path.startswith(REPOSITORY_ROOT):
         relative_path = path[len(REPOSITORY_ROOT):].strip('/')
         if relative_path:
             current_path_parts = relative_path.split('/')
     
-    # 각 경로 부분에 대한 전체 경로 생성
+    # Create the full path for each path part
     breadcrumbs = []
     cumulative_path = REPOSITORY_ROOT
     for part in current_path_parts:
@@ -227,7 +227,7 @@ def list_files(request):
         'breadcrumbs': breadcrumbs,
         'parent_directory': parent_directory,
         'repository_root': REPOSITORY_ROOT,
-        'is_superuser': request.user.is_superuser,  # 슈퍼유저 여부 추가
+        'is_superuser': request.user.is_superuser,  # Add superuser status
     }
 
     return render(request, 'common/file_browser.html', context)
@@ -239,7 +239,7 @@ def upload_file(request):
         bucket_name = settings.AWS_STORAGE_BUCKET_NAME
         path = request.POST.get('path', REPOSITORY_ROOT)
         
-        # 경로가 레포지토리 루트 밖으로 나가지 않도록 보장
+        # Ensure the path does not go outside the repository root
         if not path.startswith(REPOSITORY_ROOT):
             path = REPOSITORY_ROOT
         
@@ -255,19 +255,19 @@ def upload_file(request):
         except ClientError as e:
             return render(request, 'common/error.html', {'error': str(e)})
         
-    # 현재 경로를 유지하면서 리다이렉트
+    # Redirect while keeping the current path
     return redirect(f"{reverse('common:list_files')}?path={quote(path)}")
 
 @login_required
 def delete_file(request, file_path):
     bucket_name = settings.AWS_STORAGE_BUCKET_NAME
     
-    # 파일 경로가 레포지토리 루트 밖에 있으면 삭제를 허용하지 않음
+    # Do not allow deletion if the file path is outside the repository root
     if not file_path.startswith(REPOSITORY_ROOT):
         return HttpResponseForbidden("You don't have permission to delete this file.")
     
     try:
-        # 파일 메타데이터를 가져와 업로더 확인
+        # Get the file metadata and check the uploader
         response = s3.head_object(Bucket=bucket_name, Key=file_path)
         uploader = response['Metadata'].get('uploader')
         
@@ -278,7 +278,7 @@ def delete_file(request, file_path):
     except ClientError as e:
         return render(request, 'common/error.html', {'error': str(e)})
     
-    # 삭제 후 현재 디렉토리로 리다이렉트
+    # Redirect to the current directory after deletion
     current_dir = os.path.dirname(file_path)
     return redirect(f"{reverse('common:list_files')}?path={current_dir}")
 
@@ -293,7 +293,7 @@ def create_folder(request):
         
         new_folder_path = f"{current_path}{folder_name}/"
         
-        # S3에 빈 객체를 생성하여 폴더를 시뮬레이션합니다
+        # Create an empty object in S3 to simulate a folder
         try:
             s3.put_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=new_folder_path)
         except ClientError as e:

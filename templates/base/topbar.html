@@ -1,0 +1,96 @@
+{% load static %}
+{% load i18n %}
+
+<nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
+    <!-- Navbar Brand - Can be customized -->
+    <div class="logo">
+        <a href="{% url 'common:main' %}" class="BSV-MES">
+            <span class="text-wrapper-1">BSV</span>
+            <span class="text-wrapper-2">MES</span>
+            <div class="subtitle">
+                <span>{% trans "Manufacturing Execution System" %}</span>
+            </div>
+        </a>
+    </div>
+    
+    <!-- Sidebar Toggle Button -->
+    <button class="btn btn-link btn-sm order-1 order-lg-0 ms-lg-5" id="sidebarToggle" href="#!">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- User Menu -->
+    <ul class="navbar-nav ms-auto ms-md-auto me-3 me-lg-4">
+        
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown">
+                <i class="fas fa-user fa-fw"></i>
+                {% if user.is_authenticated %}{{ user.first_name|default:user.username }}{% endif %}
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+                {% if user.is_authenticated %}
+                    <li><a class="dropdown-item" href="{% url 'common:mypage' %}">
+                        <i class="fas fa-user me-2"></i>Profile
+                    </a></li>
+                    <li><hr class="dropdown-divider" /></li>
+                    <li><a class="dropdown-item" href="{% url 'common:logout' %}">
+                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                    </a></li>
+                {% else %}
+                    <li><a class="dropdown-item" href="{% url 'common:login' %}">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login
+                    </a></li>
+                {% endif %}
+            </ul>
+        </li>
+    </ul>
+</nav>
+
+<style>
+.logo {
+    font-size: 27px;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 27px;
+    margin-bottom: 33px;
+    padding: 0 27px;
+    position: relative;
+}
+
+.BSV-MES .text-wrapper-1 {
+    color: #ffffff;
+}
+
+.BSV-MES .text-wrapper-2 {
+    color: #D66F6F;
+}
+
+.BSV-MES {
+    position: relative;
+    display: inline-block;
+    text-decoration: none;
+    color: inherit;
+}
+
+.BSV-MES .subtitle {
+    position: absolute;
+    left: 3px;
+    bottom: -12px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    font-size: 7px;
+    line-height: 4;
+}
+
+.BSV-MES .subtitle span {
+    display: block;
+    color: #D66F6F;
+}
+</style>
+
+<!-- Required CSS (add to the head of the template) -->
+
+<link href="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/style.min.css" rel="stylesheet" />
+<link href="{% static 'css/styles.css' %}" rel="stylesheet" />
+<script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+

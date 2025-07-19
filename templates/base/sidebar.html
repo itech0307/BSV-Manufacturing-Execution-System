@@ -1,0 +1,224 @@
+{% load static %}
+{% load i18n %}
+
+<div id="layoutSidenav_nav">
+    <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
+        <div class="sb-sidenav-menu">
+            <div class="nav">
+                <!-- Core Section -->
+                {% comment %} <div class="sb-sidenav-menu-heading">Core</div> {% endcomment %}
+                
+
+                <!-- Dashboard -->
+                {% comment %} <a class="nav-link {% if request.resolver_match.url_name == 'main' %}active{% endif %}" 
+                   href="{% url 'common:main' %}">
+                    <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
+                    Dashboard
+                </a>
+                 {% endcomment %}
+                <!-- Management Section -->
+                <div class="sb-sidenav-menu-heading">{% trans "Management" %}</div>
+                
+                <!-- Orders -->
+                <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#collapseOrders" 
+                   aria-expanded="false" aria-controls="collapseOrders">
+                    <div class="sb-nav-link-icon"><i class="fas fa-shopping-cart"></i></div>
+                    {% trans "Orders" %}
+                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                </a>
+                <div class="collapse" id="collapseOrders" data-bs-parent="#sidenavAccordion">
+                    <nav class="sb-sidenav-menu-nested nav">
+                        <a class="nav-link" href="{% url 'data_monitoring:order_search' %}">{% trans "Search" %}</a>
+                        <a class="nav-link" href="{% url 'production_management:order_sheet_upload' %}">{% trans "Import" %}</a>
+                        <a class="nav-link" href="{% url 'data_monitoring:inspection_waitlist' %}">{% trans "Inspection Waitlist" %}</a>
+                        <a class="nav-link" href="{% url 'data_monitoring:printing_waitlist' %}">{% trans "Printing Waitlist" %}</a>
+                    </nav>
+                </div>
+
+                <!-- Library -->
+                <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#collapseLibrary" 
+                   aria-expanded="false" aria-controls="collapseLibrary">
+                    <div class="sb-nav-link-icon"><i class="fas fa-box"></i></div>
+                    {% trans "Library" %}
+                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                </a>
+                <div class="collapse" id="collapseLibrary" data-bs-parent="#sidenavAccordion">
+                    <nav class="sb-sidenav-menu-nested nav">
+                        <a class="nav-link" href="{% url 'data_monitoring:swatch_management' %}">{% trans "Color Swatch" %}</a>
+                    </nav>
+                </div>
+
+                <!-- Inventory -->
+                <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#collapseInventory" 
+                   aria-expanded="false" aria-controls="collapseInventory">
+                    <div class="sb-nav-link-icon"><i class="fas fa-warehouse"></i></div>
+                    {% trans "Inventory" %}
+                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                </a>
+                <div class="collapse" id="collapseInventory" data-bs-parent="#sidenavAccordion">
+                    <nav class="sb-sidenav-menu-nested nav">
+                        <a class="nav-link" href="{% url 'inventory_management:view_raw_materials' %}">{% trans "Search" %}</a>
+                    </nav>
+                </div>
+
+                <!-- Planning-->
+                <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePlanning" 
+                   aria-expanded="false" aria-controls="collapsePlanning">
+                    <div class="sb-nav-link-icon"><i class="fas fa-calendar-alt"></i></div>
+                    {% trans "Planning" %}
+                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                </a>
+                <div class="collapse" id="collapsePlanning" data-bs-parent="#sidenavAccordion">
+                    <nav class="sb-sidenav-menu-nested nav">
+                        <a class="nav-link" href="{% url 'production_management:dryplan_import' %}">{% trans "Dry Plan Import" %}</a>
+                        <a class="nav-link" href="#" onclick="alert('Feature coming soon!')">{% trans "Wet Plan Import" %}</a>
+                        <a class="nav-link" href="{% url 'data_monitoring:dryplan' %}">{% trans "Dry Plan Report" %}</a>
+                        <a class="nav-link" href="#" onclick="alert('Feature coming soon!')">{% trans "Wet Plan Report" %}</a>
+                    </nav>
+                </div>
+                
+                <!-- Production-->
+                <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#collapseProduction" 
+                   aria-expanded="false" aria-controls="collapseProduction">
+                    <div class="sb-nav-link-icon"><i class="fas fa-industry"></i></div>
+                    {% trans "Production" %}
+                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                </a>
+                <div class="collapse" id="collapseProduction" data-bs-parent="#sidenavAccordion">
+                    <nav class="sb-sidenav-menu-nested nav">
+                        <a class="nav-link" href="{% url 'data_monitoring:drymix' %}">{% trans "Dry Mix" %}</a>
+                        <a class="nav-link" href="#" onclick="alert('Feature coming soon!')">{% trans "Wet Mix" %}</a>
+                        <a class="nav-link" href="{% url 'data_monitoring:dryline' %}">{% trans "Dry Line" %}</a>
+                        <a class="nav-link" href="#" onclick="alert('Feature coming soon!')">{% trans "Wet Line" %}</a>
+                        <a class="nav-link" href="{% url 'data_monitoring:delamination' %}">{% trans "RP" %}</a>
+                    </nav>
+                </div>
+
+                <!-- Post Process-->
+                <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePostProcess" 
+                   aria-expanded="false" aria-controls="collapsePostProcess">
+                    <div class="sb-nav-link-icon"><i class="fas fa-check-circle"></i></div>
+                    {% trans "Post-Process" %}
+                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                </a>
+                <div class="collapse" id="collapsePostProcess" data-bs-parent="#sidenavAccordion">
+                    <nav class="sb-sidenav-menu-nested nav">
+                        <a class="nav-link" href="#" onclick="alert('Feature coming soon!')">{% trans "Buffing" %}</a>
+                        <a class="nav-link" href="#" onclick="alert('Feature coming soon!')">{% trans "Printing" %}</a>
+                        <a class="nav-link" href="#" onclick="alert('Feature coming soon!')">{% trans "WEL" %}</a>
+                    </nav>
+                </div>
+
+                <!-- Final-Process-->
+                <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#collapseFinalProcess" 
+                   aria-expanded="false" aria-controls="collapseFinalProcess">
+                    <div class="sb-nav-link-icon"><i class="fas fa-check-circle"></i></div>
+                    {% trans "Final-Process" %}
+                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                </a>
+                <div class="collapse" id="collapseFinalProcess" data-bs-parent="#sidenavAccordion">
+                    <nav class="sb-sidenav-menu-nested nav">
+                        <a class="nav-link" href="{% url 'data_monitoring:inspection' %}">{% trans "Inspection" %}</a>
+                        <a class="nav-link" href="#" onclick="alert('Feature coming soon!')">{% trans "QA/QC" %}</a>
+                        <a class="nav-link" href="#" onclick="alert('Feature coming soon!')">{% trans "Shipment" %}</a>
+                    </nav>
+                </div>
+
+                <!-- Board-->
+                <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#collapseBoard" 
+                   aria-expanded="false" aria-controls="collapseBoard">
+                    <div class="sb-nav-link-icon"><i class="fas fa-check-circle"></i></div>
+                    {% trans "Board" %}
+                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                </a>
+                <div class="collapse" id="collapseBoard" data-bs-parent="#sidenavAccordion">
+                    <nav class="sb-sidenav-menu-nested nav">
+                        <a class="nav-link" href="{% url 'common:list_files' %}">{% trans "File Browser" %}</a>
+                        <a class="nav-link" href="#" onclick="alert('Feature coming soon!')">{% trans "Discussion" %}</a>
+                        <a class="nav-link" href="#" onclick="alert('Feature coming soon!')">{% trans "Q&A" %}</a>
+                    </nav>
+                </div>
+
+                <!-- Development-->
+                <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#collapseDevelopment" 
+                   aria-expanded="false" aria-controls="collapseDevelopment">
+                    <div class="sb-nav-link-icon"><i class="fas fa-hammer"></i></div>
+                    {% trans "Development" %}
+                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                </a>
+                <div class="collapse" id="collapseDevelopment" data-bs-parent="#sidenavAccordion">
+                    <nav class="sb-sidenav-menu-nested nav">
+                        <a class="nav-link" href="{% url 'production_management:development_list' %}">{% trans "Report" %}</a>
+                    </nav>
+                </div>
+
+                <!-- HRM-->
+                <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#collapseHRM" 
+                   aria-expanded="false" aria-controls="collapseHRM">
+                    <div class="sb-nav-link-icon"><i class="fas fa-users"></i></div>
+                    {% trans "HRM" %}
+                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                </a>
+                <div class="collapse" id="collapseHRM" data-bs-parent="#sidenavAccordion">
+                    <nav class="sb-sidenav-menu-nested nav">
+                        <a class="nav-link" href="{% url 'workforce_management:worker_list' %}">{% trans "List" %}</a>
+                    </nav>
+                </div>
+
+                <!-- Reports-->
+                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseReports" 
+                   aria-expanded="false" aria-controls="collapseReports">
+                    <div class="sb-nav-link-icon"><i class="fas fa-chart-line"></i></div>
+                    {% trans "Reports" %}
+                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                </a>
+                <div class="collapse" id="collapseReports" data-bs-parent="#sidenavAccordion">
+                    <nav class="sb-sidenav-menu-nested nav">
+                        <a class="nav-link" href="#" onclick="alert('Feature coming soon!')">{% trans "Sales Report" %}</a>
+                        <a class="nav-link" href="#" onclick="alert('Feature coming soon!')">{% trans "User Report" %}</a>
+                    </nav>
+                </div>
+                
+                {% comment %} <!-- Settings Section -->
+                <div class="sb-sidenav-menu-heading">Settings</div>
+                
+                <!-- Settings -->
+                <a class="nav-link" href="#" onclick="alert('Feature coming soon!')">
+                    <div class="sb-nav-link-icon"><i class="fas fa-cog"></i></div>
+                    Settings
+                </a>
+                 {% endcomment %}
+                <!-- Admin Only Menu -->
+                {% if user.is_superuser %}
+                <div class="sb-sidenav-menu-heading">Admin</div>
+                <a class="nav-link" href="/admin/" target="_blank">
+                    <div class="sb-nav-link-icon"><i class="fas fa-tools"></i></div>
+                    Django Admin
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Sidebar Footer -->
+        <div class="sb-sidenav-footer">
+            <div class="small">Logged in as:</div>
+            {{ user.username|default:"Guest" }}
+        </div>
+    </nav>
+</div>
+
+<!-- JavaScript for sidebar toggle (thêm vào cuối body) -->
+
+{% comment %} <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const sidebarToggle = document.body.querySelector('#sidebarToggle');
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', event => {
+            event.preventDefault();
+            document.body.classList.toggle('sb-sidenav-toggled');
+            localStorage.setItem('sb|sidebar-toggle', document.body.classList.contains('sb-sidenav-toggled'));
+        });
+    }
+});
+</script> {% endcomment %}
+

@@ -7,7 +7,7 @@
             <div class="card shadow-lg">
                 <div class="card-body p-5">
                     <div class="text-center mb-4">
-                        <!-- 프로필 사진 -->
+                        <!-- Profile picture -->
                         {% if worker.profile_image_url %}
                         <img src="{{ worker.profile_image_url }}" class="rounded-circle" width="150" height="150">
                         {% endif %}
@@ -15,14 +15,14 @@
                         <h4 class="text-success">{{ worker.get_department_display }} {{ worker.get_position_display }}</h4>
                     </div>
 
-                    <!-- 인적사항 -->
+                    <!-- Personal information -->
                     <div class="border p-3 mb-4">
                         <p><strong>[Worker Code]</strong> {{ worker.worker_code }}</p>
                         <p><strong>[Join Date]</strong> {{ worker.join_date }}</p>
                         <p><strong>[Phone Number]</strong> {{ worker.phone_number }}</p>
                         <p><strong>[Remark]</p>
                     </div>
-                    <!-- 코멘트 -->
+                    <!-- Comment -->
                     {% for worker_comment in worker.worker_comment_set.all %}
                     <div class="border p-3 mb-4">                        
                         <a id="comment_{{ worker_comment.id }}"></a>
@@ -51,12 +51,12 @@
                         </div>
                     </div>
                     {% endfor %}
-                    <!-- 코멘트 등록 -->
+                    <!-- Comment registration -->
                     <form action="{% url 'workforce_management:worker_comment_create' worker.id %}" method="post" enctype="multipart/form-data" class="my-3">
                         {% csrf_token %}
-                        <!-- 오류표시 Start -->
+                        <!-- Error display Start -->
                         {% include "common/form_errors.html" %}
-                        <!-- 오류표시 End -->
+                        <!-- Error display End -->
                         <div class="mb-3">
                             <label for="content" class="form-label">Content</label>
                             <textarea {% if not user.is_authenticated %}disabled{% endif %}
@@ -65,7 +65,7 @@
                         <input type="submit" value="Comment" class="btn btn-primary" {% if not user.is_authenticated %}disabled{% endif %}>
                     </form>
                     {% if user.is_superuser %}
-                    <!-- 버튼 -->
+                    <!-- Button -->
                     <div class="text-center mt-4">
                         <a href="{% url 'workforce_management:worker_modify' worker.id %}" class="btn btn-primary">Modify</a>
                         <a href="#" class="btn btn-danger">Delete</a>

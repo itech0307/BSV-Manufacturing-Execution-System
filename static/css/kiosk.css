@@ -1,161 +1,163 @@
 body.kiosk {
-    background-color: #f2f2f2;
+  background-color: #f2f2f2;
 }
 
 .kiosk-container {
-    margin-top: 10px;
-    background-color: #DFF0D8;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  margin-top: 10px;
+  background-color: #dff0d8;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
 }
 
 .qr-preview {
-    width: 100%;
-    height: auto;
-    border: 5px solid #A89F91;
-    border-radius: 10px;
+  width: 100%;
+  height: auto;
+  border: 5px solid #a89f91;
+  border-radius: 10px;
 }
 
 .qr-count {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    background-color: #FFFFFF;
-    padding: 5px 10px;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background-color: #ffffff;
+  padding: 5px 10px;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 h2.kiosk-title {
-    font-size: 36px;
-    font-weight: bold;
-    color: #228B22;
-    text-shadow: 2px 2px 4px #000000;
+  font-size: 36px;
+  font-weight: bold;
+  color: #228b22;
+  text-shadow: 2px 2px 4px #000000;
 }
 
 .modal-fullscreen {
-    width: 100%;
-    max-width: none;
-    height: 100%;
-    margin: 0;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  margin: 0;
 }
 .modal-fullscreen .modal-content {
-    height: 100%;
-    border-radius: 0;
-    display: flex;
-    flex-direction: column;
+  height: 100%;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
 }
 .modal-footer {
-    flex-shrink: 0;         /* footer 크기 유지 */
+  flex-shrink: 0; /* footer 크기 유지 */
 }
 
 /* 3x6 그리드 레이아웃 스타일 */
 .staff-grid-container {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
 }
 .grid-container-person {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 10px;
-}      
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
 .grid-item {
-    padding: 10px;
-    background-color: #e0e0e0;
-    border: 1px solid #ccc;
-    text-align: center;
-    cursor: pointer;
+  padding: 10px;
+  background-color: #e0e0e0;
+  border: 1px solid #ccc;
+  text-align: center;
+  cursor: pointer;
 }
 .grid-item:hover {
-    background-color: #d0d0d0;
+  background-color: #d0d0d0;
 }
 
 .defect-cause-container {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr); /* 2열로 표시 */
-    gap: 10px; /* 항목 간의 간격 */
-    padding: 10px; /* 컨테이너 내부 여백 */
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2열로 표시 */
+  gap: 10px; /* 항목 간의 간격 */
+  padding: 10px; /* 컨테이너 내부 여백 */
 }
 
 .grid-defect-cause {
-    background-color: #f0f0f0;
-    border: 1px solid #ccc;
-    padding: 10px;
-    text-align: center;
-    cursor: pointer;
-    transition: background-color 0.3s;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.3s;
 }
 
 .grid-defect-cause:hover {
-    background-color: #ddd;
+  background-color: #ddd;
 }
 
 /* 키오스크 알림 메시지 */
 #completionMessage {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%; /* 컨테이너의 높이를 100%로 설정 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%; /* 컨테이너의 높이를 100%로 설정 */
 }
 #notiMessage {
-    font-size: 36px;
-    position: fixed;
-    bottom: 100px; /* 화면 하단으로부터의 거리 */
-    left: calc(100% - 20px); /* 화면 우측 끝으로부터의 거리 */
-    animation: slideRight 10s linear infinite; /* 우측으로 이동하는 애니메이션 */
-    overflow: hidden; /* 초과하는 부분은 숨기기 */
-    white-space: nowrap; /* 줄 바꿈 없이 한 줄에 표시 */
-    background-color: rgba(255, 255, 0, 0.5); /* 반투명 노란색 배경 */
+  font-size: 36px;
+  position: fixed;
+  bottom: 100px; /* 화면 하단으로부터의 거리 */
+  left: calc(100% - 20px); /* 화면 우측 끝으로부터의 거리 */
+  animation: slideRight 10s linear infinite; /* 우측으로 이동하는 애니메이션 */
+  overflow: hidden; /* 초과하는 부분은 숨기기 */
+  white-space: nowrap; /* 줄 바꿈 없이 한 줄에 표시 */
+  background-color: rgba(255, 255, 0, 0.5); /* 반투명 노란색 배경 */
 }
 @keyframes slideRight {
-    0% {
-        left: calc(100% - 5px); /* 시작 위치 */
-    }
-    100% {
-        left: -100%; /* 왼쪽 끝으로 이동 */
-    }
+  0% {
+    left: calc(100% - 5px); /* 시작 위치 */
+  }
+  100% {
+    left: -100%; /* 왼쪽 끝으로 이동 */
+  }
 }
 
 .toggle-button {
-    background: none;
-    border: 1px solid #ccc;
-    padding: 10px 20px;
-    cursor: pointer;
-    margin: 10px 0;
+  background: none;
+  border: 1px solid #ccc;
+  padding: 10px 20px;
+  cursor: pointer;
+  margin: 10px 0;
 }
 .table {
-    width: 100%; /* 테이블의 폭을 부모 요소의 100%로 설정 */
-    table-layout: fixed; /* 테이블 레이아웃을 고정 폭으로 설정 */
+  width: 100%; /* 테이블의 폭을 부모 요소의 100%로 설정 */
+  table-layout: fixed; /* 테이블 레이아웃을 고정 폭으로 설정 */
 }
-.table th, .table td {
-    width: calc(100% / 6); /* 각 셀의 폭을 테이블의 열 개수로 나눈 값으로 설정, 예제에서는 6열을 가정 */
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+.table th,
+.table td {
+  width: calc(
+    100% / 6
+  ); /* 각 셀의 폭을 테이블의 열 개수로 나눈 값으로 설정, 예제에서는 6열을 가정 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .support-info-container {
-    margin-top: 15px;
-    margin-bottom: 15px;
-  }
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
 
 .support-info {
-    display: inline-block;
-    background-color: rgba(40, 167, 69, 0.15);
-    border: 1px solid rgba(40, 167, 69, 0.5);
-    color: #212529;
-    padding: 8px 15px;
-    border-radius: 5px;
-    font-size: 14px;
+  display: inline-block;
+  background-color: rgba(40, 167, 69, 0.15);
+  border: 1px solid rgba(40, 167, 69, 0.5);
+  color: #212529;
+  padding: 8px 15px;
+  border-radius: 5px;
+  font-size: 14px;
 }
 
 .support-phone,
 .support-name {
-    font-weight: bold;
+  font-weight: bold;
+}
 
-  }
-  
 .support-name-po {
-    font-weight: normal;
+  font-weight: normal;
 }

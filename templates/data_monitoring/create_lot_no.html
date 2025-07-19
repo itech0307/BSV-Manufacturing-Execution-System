@@ -1,4 +1,4 @@
-{% extends 'common/main.html' %}
+{% extends 'base/core.html' %}
 {% block content %}
 {% load custom_filters %}
 <body style="background-color:#E0F7FA;">
@@ -57,7 +57,7 @@
                             {% endif %}
                         </td>
                         <td>
-                            <!-- 라디오 버튼 추가 -->
+                            <!-- Add radio button -->
                             <label>
                                 <input type="radio" name="selection_{{ data.id }}" value="A" checked> A
                             </label>

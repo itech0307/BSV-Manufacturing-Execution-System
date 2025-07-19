@@ -20,7 +20,7 @@ import boto3
 s3 = boto3.client('s3', region_name=settings.AWS_S3_REGION_NAME)
 
 def get_s3_file(key):
-    """S3에서 파일을 가져와 BytesIO 객체로 반환합니다."""
+    """Get the file from S3 and return it as a BytesIO object."""
     s3_response = s3.get_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=key)
     file_content = s3_response['Body'].read()
     return io.BytesIO(file_content)
@@ -120,13 +120,13 @@ def ordersheet_upload_celery(self,df_json):
                 # Compare values in the order_quantity field of the object
                 if (int(df['Quantity'][i])) < 0:
                     
-                    # order_status 필드 false로 변경
+                    # Change order_status field to false
                     #sales_order.status = True
                     #sales_order.save()  # Save changes
                     pass
                 
                 elif (int(df['Quantity'][i])) > 0:
-                    # order_status 필드 None으로 변경
+                    # Change the order_status field to None
                     sales_order.status = None
                     sales_order.save()  # Save changes
                     

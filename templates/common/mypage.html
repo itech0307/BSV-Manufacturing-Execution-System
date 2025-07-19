@@ -1,4 +1,4 @@
-{% extends 'common/main.html' %}
+{% extends 'base/core.html' %}
 {% load static %}
 {% load custom_filters %}
 {% load i18n %}
@@ -36,9 +36,9 @@
         <div class="tab-pane fade" id="interests" role="tabpanel" aria-labelledby="interests-tab">
             <div class="report-container">
                 <div aria-live="polite" aria-atomic="true" class="position-relative">
-                    <!-- Toast 메시지를 담을 컨테이너 -->
+                    <!-- Toast container to hold the message -->
                     <div class="toast-container position-absolute top-0 end-0 p-0" style="z-index: 1050;">
-                        <!-- 메모 저장 성공 Toast -->
+                        <!-- Toast for successful memo save -->
                         <div id="saveMemoSuccessToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
                         <div class="toast-header">
                             <strong class="me-auto">Notification</strong>
@@ -142,7 +142,7 @@
 
 {% block extra_js %}
 <script>
-    // 부트스트랩 탭 초기화
+    // Initialize Bootstrap tabs
     var triggerTabList = [].slice.call(document.querySelectorAll('#myTab button'))
     triggerTabList.forEach(function (triggerEl) {
         var tabTrigger = new bootstrap.Tab(triggerEl)

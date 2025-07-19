@@ -3,9 +3,9 @@
 <div class="container my-3">
     <form action="{% url 'production_management:development_comment_modify' development_comment.id %}" method="post" enctype="multipart/form-data" class="my-3">
         {% csrf_token %}
-        <!-- 오류표시 Start -->
+        <!-- Error display Start -->
         {% include "common/form_errors.html" %}
-        <!-- 오류표시 End -->
+        <!-- Error display End -->
         <div class="mb-3">
             <label for="content" class="form-label">Content</label>
             <textarea {% if not user.is_authenticated %}disabled{% endif %}

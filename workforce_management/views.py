@@ -17,10 +17,10 @@ import boto3
 from botocore.exceptions import ClientError
 from botocore.config import Config
 
-# 레포지토리 루트 설정
-REPOSITORY_ROOT = 'profile_images/worker/'  # S3 버킷 내의 레포지토리 경로
+# Set the repository root
+REPOSITORY_ROOT = 'profile_images/worker/'  # The repository path in the S3 bucket
 
-# S3 클라이언트 설정
+# Set the S3 client
 s3_config = Config(
     region_name=settings.AWS_S3_REGION_NAME,
     signature_version='s3v4',
@@ -33,16 +33,16 @@ s3 = boto3.client('s3', config=s3_config)
 
 @login_required
 def worker_list(request):
-    page = request.GET.get('page', '1')  # 페이지
-    kw = request.GET.get('kw', '')  # 검색어
+    page = request.GET.get('page', '1')  # Page
+    kw = request.GET.get('kw', '')  # Search keyword
     list = Worker.objects.order_by('join_date')
     if kw:
         list = list.filter(
-            Q(worker_code__icontains=kw) |  # Worker 코드 검색
-            Q(name__icontains=kw)    # 이름 검색
+            Q(worker_code__icontains=kw) |  # Search by worker code
+            Q(name__icontains=kw)    # Search by name
         ).distinct()
     
-    # 프로필 이미지 URL 생성
+    # Create the profile image URL
     for worker in list:
         try:
             worker.profile_image_url = s3.generate_presigned_url(
@@ -51,13 +51,13 @@ def worker_list(request):
                     'Bucket': settings.AWS_STORAGE_BUCKET_NAME,
                     'Key': f'{REPOSITORY_ROOT}{worker.worker_code}.jpg'
                 },
-                ExpiresIn=3600  # URL 유효 시간 (초)
+                ExpiresIn=3600  # URL validity time (seconds)
             )
         except ClientError as e:
-            print(f"S3 URL 생성 오류: {e}")
+            print(f"S3 URL creation error: {e}")
             worker.profile_image_url = None
     
-    paginator = Paginator(list, 10)  # 페이지당 10개씩 보여주기
+    paginator = Paginator(list, 10)  # Show 10 per page
     page_obj = paginator.get_page(page)
     context = {'list': page_obj, 'page': page, 'kw': kw}
     return render(request, 'workforce_management/worker_list.html', context)
@@ -75,32 +75,32 @@ def worker_register(request):
             worker.position = request.POST['position']
             worker.join_date = request.POST['join_date']
 
-            # 프로필 사진 처리
+            # Process the profile picture
             if 'profile_image' in request.FILES:
                 image = request.FILES['profile_image']
                 img = Image.open(image)
-                img.thumbnail((400, 400))  # 이미지 크기 조정
+                img.thumbnail((400, 400))  # Adjust the image size
                 
-                # 이미지를 바이트 스트림으로 변환
+                # Convert the image to a byte stream
                 buffer = io.BytesIO()
                 img.save(buffer, format='JPEG')
                 buffer.seek(0)
 
-                # S3에 업로드
+                # Upload to S3
                 file_name = f'{REPOSITORY_ROOT}{worker.worker_code}.jpg'
                 try:
                     s3.upload_fileobj(buffer, settings.AWS_STORAGE_BUCKET_NAME, file_name)
-                    # 워커 모델에 이미지 경로 저장
+                    # Save the image path to the worker model
                     worker.profile_image = file_name
                 except ClientError as e:
-                    # S3 업로드 실패 시 에러 처리
+                    # Handle the error when the S3 upload fails
                     print(f"S3 upload error: {e}")
-                    # 에러 메시지를 사용자에게 표시하거나 로깅할 수 있습니다.
+                    # You can display the error message to the user or log it.
 
             worker.save()
             return redirect('workforce_management:worker_list')
         else:
-            # Form 데이터가 유효하지 않으면, 에러 메시지와 함께 다시 form을 보여줍니다.
+            # If the form data is invalid, display the error message and the form again.
             return render(request, 'workforce_management/worker_register.html', {'form': form})
     else:
         form = WorkerForm()
@@ -109,13 +109,13 @@ def worker_register(request):
 @login_required
 def worker_detail(request, worker_id):
     if request.method == 'POST':
-        # request.body가 비어있는지 확인
+        # Check if request.body is empty
         if not request.body:
             return JsonResponse({'error': 'Empty request body'}, status=400)
     
     worker = get_object_or_404(Worker, pk=worker_id)
     
-    # 프로필 이미지 URL 생성
+    # Create the profile image URL
     try:
         worker.profile_image_url = s3.generate_presigned_url(
             'get_object',
@@ -126,7 +126,7 @@ def worker_detail(request, worker_id):
             ExpiresIn=3600
         )
     except ClientError as e:
-        print(f"S3 URL 생성 오류: {e}")
+        print(f"S3 URL creation error: {e}")
         worker.profile_image_url = None
     
     context = {
@@ -138,8 +138,8 @@ def worker_detail(request, worker_id):
 def worker_modify(request, worker_id):
     worker = get_object_or_404(Worker, pk=worker_id)
     
-    # 관리자 권한을 확인합니다.
-    if not request.user.is_superuser:  # 일반적으로 admin 대신 superuser 체크를 사용
+    # Check if the user has admin privileges
+    if not request.user.is_superuser:  # Check if the user has admin privileges
         messages.error(request, 'You do not have permission to edit.')
         return redirect('workforce_management:worker_detail', worker_id=worker_id)
     
@@ -148,7 +148,7 @@ def worker_modify(request, worker_id):
         if form.is_valid():
             worker = form.save(commit=False)
             
-            # 프로필 사진 처리
+            # Process the profile picture
             if 'profile_image' in request.FILES:
                 image = request.FILES['profile_image']
                 img = Image.open(image)
@@ -163,8 +163,8 @@ def worker_modify(request, worker_id):
                     s3.upload_fileobj(buffer, settings.AWS_STORAGE_BUCKET_NAME, file_name)
                     worker.profile_image = file_name
                 except ClientError as e:
-                    print(f"S3 업로드 오류: {e}")
-                    messages.error(request, '프로필 이미지 업로드 중 오류가 발생했습니다.')
+                    print(f"S3 upload error: {e}")
+                    messages.error(request, 'Profile image upload error.')
             
             worker.save()
             return redirect('workforce_management:worker_detail', worker_id=worker.id)
@@ -184,7 +184,7 @@ def worker_comment_create(request, worker_code):
         form = WorkerCommentForm(request.POST)
         if form.is_valid():
             worker_comment = form.save(commit=False)
-            worker_comment.author = request.user  # author 속성에 로그인 계정 저장
+            worker_comment.author = request.user  # Save the login account to the author attribute
             worker_comment.worker = worker
             worker_comment.save()
             return redirect('{}#comment_{}'.format(

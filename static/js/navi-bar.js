@@ -18,23 +18,23 @@ document.addEventListener('DOMContentLoaded', function() {
             navContainer.classList.remove('collapsed');
             mainContent.classList.remove('expanded');
             toggleBtn.style.right = '0px';
-            toggleBtn.innerHTML = '&#9776;'; // 메뉴 접기 아이콘 (햄버거 아이콘)
+            toggleBtn.innerHTML = '&#9776;'; // Collapse menu icon (hamburger icon)
         } else {
             navContainer.classList.add('collapsed');
             mainContent.classList.add('expanded');
-            toggleBtn.innerHTML = '&#8250;'; // 메뉴 펼치기 아이콘 (오른쪽 화살표)
+            toggleBtn.innerHTML = '&#8250;'; // Expand menu icon (right arrow)
             toggleBtn.style.right = '10px';
         }
     }
 
-    // 초기 상태 설정
+    // Set the initial state
     updateNavState();
 
     toggleBtn.addEventListener('click', function() {
         toggleNav();
     });
 
-    // 호버 기능 추가
+    // Add hover functionality
     hoverArea.addEventListener('mouseenter', function() {
         if (!isNavLocked && !isNavExpanded) {
             navContainer.classList.add('temp-expanded');
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // 이벤트 위임을 사용하여 동적으로 로드된 콘텐츠에도 이벤트 처리
+    // Use event delegation to handle events on dynamically loaded content
     $(document).on('click', '.toggle-btn', toggleNav);
     
     document.body.addEventListener('click', function(event) {

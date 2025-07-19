@@ -4,16 +4,16 @@
 {% endblock %} {% block extra_js %}
 <script>
   $(document).ready(function () {
-    // Khi trang được tải, xóa trống trường 'Production Quantity'
+    // When the page loads, clear the 'Production Quantity' input field.
     $("#qty").val("");
 
-    // Cập nhật biến quantityInput mỗi khi giá trị trường 'qty' thay đổi
+    // Update the quantityInput variable whenever the 'qty' field value changes.
     $("#qty").change(function () {
-      quantityInput = $(this).val(); // Đặt giá trị nhập vào biến quantityInput
+      quantityInput = $(this).val(); // Set the input value to the quantityInput variable.
     });
 
     var decimalButton = document.querySelector(".decimal");
-    // Chỉ ẩn nút nếu nó tồn tại
+    // Hide the button if it exists.
     if (decimalButton) {
       decimalButton.style.display = "none";
     }
@@ -67,11 +67,11 @@
   }
 
   function handleFourthClick() {
-    // Lấy các lỗi đã chọn và gửi đến server
+    // Get the selected defects and send them to the server
     const defectSelects = $(".defect-select");
     const defectCauses = [];
 
-    // Collect all selected defect causes
+    // Collect all selected defect causes.
     defectSelects.each(function () {
       const defectCode = $(this).val();
       if (defectCode) {
@@ -81,11 +81,11 @@
 
     if (defectCauses.length === 0) {
       alert("Vui lòng chọn ít nhất một lỗi");
-      nextBtnState = 3; // Quay lại trạng thái chọn lỗi
+      nextBtnState = 3; // Go back to the defect selection state.
       return;
     }
 
-    // Create an array of defect causes
+    // Create an array of defect causes.
     const printInfo = defectCauses.map((defectCause) => ({
       defectCause: defectCause,
     }));
@@ -114,7 +114,7 @@
 
     $("#quantityInputContainer").html(htmlContent);
 
-    // Add event handler for the "+" button
+    // Add event handler for the "+" button.
     $("#quantityInputContainer").on("click", ".add-defect", function () {
       const newRow = `
         <div class="defect-row mb-2">
@@ -185,12 +185,12 @@
     $(".toggle-button").text(buttonText);
   }
 
-  // Hàm cập nhật biến quantityInput khi giá trị trường nhập thay đổi
+  // Update the quantityInput variable when the input field value changes.
   function updateQuantityInput() {
     quantityInput = $("#qty").val();
   }
 
-  // Thêm event listener 'input' để gọi hàm updateQuantityInput mỗi khi trường nhập thay đổi
+  // Add an 'input' event listener to call the updateQuantityInput function whenever the input field value changes.
   $("#qty").on("input", updateQuantityInput);
 </script>
 {% endblock %}

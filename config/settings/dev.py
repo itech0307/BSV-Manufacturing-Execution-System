@@ -12,7 +12,7 @@ AWS_S3_REGION_NAME = 'ap-southeast-1'
 env = environ.Env()
 environ.Env.read_env(BASE_DIR / '.env')
 
-TIME_ZONE = 'Asia/Ho_Chi_Minh'  # 베트남 호치민 시간 적용
+TIME_ZONE = 'Asia/Ho_Chi_Minh'  # Apply the Vietnam Ho Chi Minh time
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True

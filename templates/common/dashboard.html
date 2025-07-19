@@ -1,0 +1,50 @@
+{% extends 'base/core.html' %}
+{% load static %}
+
+{% block title %}Dashboard - SB Admin{% endblock %}
+
+{% block extra_css %}
+<!-- Additional CSS for charts -->
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Page Header -->
+    <h1 class="mt-4">Dashboard</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item active">Dashboard</li>
+    </ol>
+    
+    <!-- Stats Cards Row -->
+    <div class="row">
+        {% include 'base/stat_card.html' with card_bg='primary' card_title='Primary Card' card_link='#' %}
+        {% include 'base/stat_card.html' with card_bg='warning' card_title='Warning Card' card_link='#' %}
+        {% include 'base/stat_card.html' with card_bg='success' card_title='Success Card' card_link='#' %}
+        {% include 'base/stat_card.html' with card_bg='danger' card_title='Danger Card' card_link='#' %}
+    </div>
+    
+    <!-- Charts Row -->
+    <div class="row">
+        <div class="col-xl-6">
+            {% include 'base/chart_card.html' with chart_title='Area Chart Example' chart_id='myAreaChart' chart_icon='chart-area' %}
+        </div>
+        <div class="col-xl-6">
+            {% include 'base/chart_card.html' with chart_title='Bar Chart Example' chart_id='myBarChart' chart_icon='chart-bar' %}
+        </div>
+    </div>
+    
+    <!-- Data Table -->
+    {% include 'base/datatable_card.html' %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js" crossorigin="anonymous"></script>
+<script src="{% static 'js/demo/chart-area-demo.js' %}"></script>
+<script src="{% static 'js/demo/chart-bar-demo.js' %}"></script>
+
+<!-- DataTables -->
+<script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js" crossorigin="anonymous"></script>
+<script src="{% static 'js/demo/datatables-simple-demo.js' %}"></script>
+{% endblock %}

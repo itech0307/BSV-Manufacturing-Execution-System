@@ -5,16 +5,16 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
 <style>
     .file-list-container {
-        height: 400px;  /* 원하는 높이로 조정 가능 */
+        height: 400px;  /* Adjust the height as needed */
         overflow-y: auto;
     }
     .directory-list-container {
-        height: 400px;  /* 파일 리스트와 같은 높이로 설정 */
+        height: 400px;  /* Set the same height as the file list */
         overflow-y: auto;
     }
     @media (max-width: 768px) {
         .file-list-container, .directory-list-container {
-            height: 300px;  /* 모바일 화면에서는 더 작은 높이로 조정 */
+            height: 300px;  /* Adjust the height for mobile screens */
         }
     }
 </style>
@@ -36,7 +36,7 @@
         </ol>
     </nav>
 
-    {% if is_superuser %}   <!-- 슈퍼유저만 볼 수 있는 영역 -->
+    {% if is_superuser %}   <!-- Only the superuser can see this area -->
     <div class="row mb-4">
         <div class="col-md-6">
             <div class="card">

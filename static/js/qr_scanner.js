@@ -4,7 +4,7 @@ scanner.addListener('scan', function (content) {
     const userName = url.searchParams.get("userName");
     const modifiedUserName = userName ? userName.slice(0, -2) : "";
 
-    // AJAX를 사용하여 Django 뷰에 QR 코드 내용 전달
+    // Pass the QR code content to the Django view
     $.ajax({
         url: window.location.pathname,  // Django 뷰의 URL
         type: 'GET',
@@ -13,7 +13,7 @@ scanner.addListener('scan', function (content) {
             if (response.status === "success") {
                 $('#qrResult').text(response.order_number);
         
-                // order_information 값을 테이블 형태로 표시
+                // Display the order_information values in a table format
                 let orderInfoHtml = '';
                 const keys = ['item', 'pattern', 'color_code', 'customer', 'order_qty', 'order_type', 'brand', 'qty_unit'];
                 keys.forEach(key => {

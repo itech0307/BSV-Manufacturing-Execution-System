@@ -4,9 +4,9 @@
     <h5 class="my-3 border-bottom pb-2">Development Register</h5>
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
-        <!-- 오류표시 Start -->
+        <!-- Error display Start -->
         {% include "common/form_errors.html" %}
-        <!-- 오류표시 End -->
+        <!-- Error display End -->
         <div class="mb-3">
             <label for="subject" class="form-label">Title</label>
             <input type="text" class="form-control" name="title" id="title"
@@ -30,7 +30,7 @@
                 <input type="text" class="form-control" name="purpose" id="purpose" value="{{ form.purpose.value|default_if_none:'' }}">
             </div>
         </div>
-        <!-- Item, Color, Pattern 행을 담을 컨테이너 -->
+        <!-- Container to hold the Item, Color, Pattern rows -->
         <div id="item-container">
             {% for order in orders %}
             <div class="item-row mb-3">
@@ -72,7 +72,7 @@
             </div>
             {% endfor %}
         </div>
-        <!-- Add 버튼 -->
+        <!-- Add button -->
         <div class="mb-3">
             <button type="button" class="btn btn-secondary" id="add-item">Add Item</button>
             <select id="item-type" class="form-select" style="display: inline-block; width: auto; margin-left: 10px;">
@@ -89,7 +89,7 @@
 </div>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // 필드 정보를 배열로 정의
+        // Define the field information as an array
         var fields = [
             { name: 'item_name', col: '3' },
             { name: 'color_code', col: '2' },
@@ -103,14 +103,14 @@
         ];
 
         function addItem() {
-            // 새로운 행을 담을 div 생성
+            // Create a div to hold the new row
             var newItemRow = document.createElement('div');
             newItemRow.className = 'item-row mb-3';
 
             var newRow = document.createElement('div');
             newRow.className = 'row mb-3';
             
-            // 각 필드를 생성하여 행에 추가
+            // Create each field and add it to the row
             fields.forEach(function(field) {
                 var colDiv = document.createElement('div');
                 colDiv.className = 'col-' + field.col;
@@ -143,11 +143,11 @@
 
             newItemRow.appendChild(newRow);
 
-            // 두 번째 행 생성
+            // Create the second row
             var secondRow = document.createElement('div');
             secondRow.className = 'row mb-3';
 
-            // 각 필드를 생성하여 두 번째 행에 추가
+            // Create each field and add it to the second row
             fields2.forEach(function(field) {
                 var colDiv = document.createElement('div');
                 colDiv.className = 'col-' + field.col;
@@ -170,7 +170,7 @@
 
             newItemRow.appendChild(secondRow);
 
-            // Del 버튼 생성 및 추가
+            // Create the Del button and add it
             var delCol = document.createElement('div');
             delCol.className = 'col-2 d-flex align-items-end';
             var delButton = document.createElement('button');
@@ -180,16 +180,16 @@
             delCol.appendChild(delButton);
             secondRow.appendChild(delCol);
 
-            // item-container에 새로운 행을 추가
+            // Add the new row to the item-container
             document.getElementById('item-container').appendChild(newItemRow);
             
-            // 삭제 버튼에 이벤트 리스너 추가
+            // Add an event listener to the delete button
             delButton.addEventListener('click', function() {
                 newItemRow.remove();
             });
         }
 
-        // Add 버튼 클릭 이벤트에 addItem 함수 연결
+        // Add an event listener to the Add button to call the addItem function
         document.getElementById('add-item').addEventListener('click', addItem);
     });
 </script>

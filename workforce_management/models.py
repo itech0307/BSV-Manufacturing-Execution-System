@@ -48,7 +48,7 @@ class Worker(models.Model):
         default='PO',
     )
     join_date = models.DateField()
-    status = models.BooleanField(null=True) # 등록 시 null, 삭제 시 false
+    status = models.BooleanField(null=True) # When registered, null, when deleted, false
 
     def __str__(self):
         return f"{self.worker_code}-{self.name}"

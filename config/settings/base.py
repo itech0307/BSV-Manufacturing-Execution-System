@@ -32,11 +32,12 @@ ALLOWED_HOSTS = []
 
 env = environ.Env()
 environ.Env.read_env(BASE_DIR / '.env')
+
 # Get the domain from the environment variable
 DOMAIN = env('DOMAIN')
 
 LOGIN_URL = '/common/login/'
-LOGIN_REDIRECT_URL = '/common/main/'  # 로그인 성공 후 리다이렉트할 URL
+LOGIN_REDIRECT_URL = '/common/main/'  # Redirect to the main page after login
 
 # Application definition
 
@@ -162,7 +163,7 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# 로깅 설정
+# Logging settings
 LOGGING = {
     'version': 1,   # version must be set to 1. This ensures current settings are preserved even when logging module is upgraded
     'disable_existing_loggers': False,  # If set to True, previously set loggers will not be used.

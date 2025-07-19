@@ -394,7 +394,7 @@ def development_comment_create(request, development_id):
         form = DevelopmentCommentForm(request.POST)
         if form.is_valid():
             development_comment = form.save(commit=False)
-            development_comment.user = request.user  # user 속성에 로그인 계정 저장
+            development_comment.user = request.user  # Save login account to user attribute
             development_comment.development = development
             
             development_comment.save()

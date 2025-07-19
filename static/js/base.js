@@ -313,10 +313,35 @@ document.addEventListener("DOMContentLoaded", function () {
     function (e) {
       e.preventDefault();
       clickedRow = e.target.closest("tr"); // Save the clicked row to the global variable
-      const { clientX: mouseX, clientY: mouseY } = e;
-      contextMenu.style.top = `${mouseY}px`;
-      contextMenu.style.left = `${mouseX}px`;
+      
+      // Use clientX/clientY for fixed positioning (no scroll offset)
+      const mouseX = e.clientX;
+      const mouseY = e.clientY;
+      
+      // Ensure context menu is not obscured
+      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
+      const menuWidth = 150; // Approximate width of context menu
+      const menuHeight = 160; // Approximate height of context menu
+      
+      // Adjust position if menu overflows viewport
+      let finalX = mouseX;
+      let finalY = mouseY;
+      
+      if (mouseX + menuWidth > windowWidth) {
+        finalX = mouseX - menuWidth;
+      }
+      
+      if (mouseY + menuHeight > windowHeight) {
+        finalY = mouseY - menuHeight;
+      }
+      
+      // Use fixed positioning to avoid scroll issues
+      contextMenu.style.position = "fixed";
+      contextMenu.style.top = `${finalY}px`;
+      contextMenu.style.left = `${finalX}px`;
       contextMenu.style.display = "block";
+      contextMenu.style.zIndex = "99999";
     },
     false
   );
@@ -324,7 +349,10 @@ document.addEventListener("DOMContentLoaded", function () {
   document.addEventListener(
     "click",
     function (e) {
-      contextMenu.style.display = "none";
+      // Hide context menu when clicking anywhere else
+      if (!contextMenu.contains(e.target)) {
+        contextMenu.style.display = "none";
+      }
     },
     false
   );
@@ -351,6 +379,9 @@ function elapsedTime(timeDifferenceMs) {
 
 function action1() {
   if (!clickedRow) return; // If there is no clicked row, stop the function
+
+  // Hide context menu immediately when function is called
+  hideContextMenu();
 
   // Get the data attribute from the clicked row
   const dataStatus = clickedRow.getAttribute("data-status");
@@ -416,7 +447,7 @@ function action1() {
       ].machine.slice(-1)}</td>
           `;
       
-      // Kiểm tra quyền người dùng thông qua biến toàn cục
+      // Check user permissions through global variable
       const isProductionManager = window.isProductionManager || false;
       
       for (const value of Object.values(statusInfo.process[i].chemical)) {
@@ -560,6 +591,10 @@ window.onclick = function (event) {
 
 function action2() {
   if (!clickedRow) return;
+  
+  // Hide context menu immediately when function is called
+  hideContextMenu();
+  
   const my_list = clickedRow.getAttribute("data-order-number");
 
   const csrftoken = getCookie("csrftoken");
@@ -609,11 +644,25 @@ function getCookie(name) {
   return cookieValue;
 }
 
+// Helper function để ẩn context menu
+function hideContextMenu() {
+  const contextMenu = document.getElementById("context-menu");
+  if (contextMenu) {
+    contextMenu.style.display = "none";
+  }
+}
+
 function action3() {
+  // Hide context menu immediately when function is called
+  hideContextMenu();
+  
   alert("Now Preparing..!");
 }
 
 function action4() {
+  // Hide context menu immediately when function is called
+  hideContextMenu();
+  
   alert("Now Preparing..!");
 }
 

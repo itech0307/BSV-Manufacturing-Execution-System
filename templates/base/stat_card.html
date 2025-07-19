@@ -1,0 +1,28 @@
+<!-- Stat Card Component -->
+<div class="col-xl-3 col-md-6">
+  <div class="card bg-{{ card_bg }} text-white mb-4">
+      <div class="card-body">
+          {% if card_value %}
+              <div class="row no-gutters align-items-center">
+                  <div class="col mr-2">
+                      <div class="text-xs font-weight-bold text-uppercase mb-1">{{ card_title }}</div>
+                      <div class="h5 mb-0 font-weight-bold">{{ card_value }}</div>
+                  </div>
+                  {% if card_icon %}
+                  <div class="col-auto">
+                      <i class="fas fa-{{ card_icon }} fa-2x"></i>
+                  </div>
+                  {% endif %}
+              </div>
+          {% else %}
+              {{ card_title }}
+          {% endif %}
+      </div>
+      <div class="card-footer d-flex align-items-center justify-content-between">
+          <a class="small text-white stretched-link" href="{{ card_link }}">
+              {{ card_link_text|default:"View Details" }}
+          </a>
+          <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+      </div>
+  </div>
+</div>

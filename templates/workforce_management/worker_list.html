@@ -1,4 +1,4 @@
-{% extends 'common/main.html' %}
+{% extends 'base/core.html' %}
 {% load forum_filters %}
 {% block content %}
 <div class="forum-container my-3" style="margin:15px;">
@@ -63,9 +63,9 @@
         {% endif %}
         </tbody>
     </table>
-    <!-- 페이징처리 시작 -->
+    <!-- Start pagination processing -->
     <ul class="pagination justify-content-center">
-        <!-- 이전페이지 -->
+        <!-- Previous page -->
         {% if list.has_previous %}
         <li class="page-item">
             <a class="page-link" data-page="{{ list.previous_page_number }}"
@@ -76,7 +76,7 @@
             <a class="page-link" tabindex="-1" aria-disabled="true" href="#">Prev</a>
         </li>
         {% endif %}
-        <!-- 페이지리스트 -->
+        <!-- Page list -->
         {% for page_number in list.paginator.page_range %}
         {% if page_number >= list.number|add:-5 and page_number <= list.number|add:5 %}
         {% if page_number == list.number %}
@@ -92,7 +92,7 @@
         {% endif %}
         {% endif %}
         {% endfor %}
-        <!-- 다음페이지 -->
+        <!-- Next page -->
         {% if list.has_next %}
         <li class="page-item">
             <a class="page-link" data-page="{{ list.next_page_number }}"
@@ -104,7 +104,7 @@
         </li>
         {% endif %}
     </ul>
-    <!-- 페이징처리 끝 -->
+    <!-- End pagination processing -->
 </div>
 <form id="searchForm" method="get" action="{% url 'workforce_management:worker_list' %}">
     <input type="hidden" id="kw" name="kw" value="{{ kw|default_if_none:'' }}">
@@ -125,14 +125,14 @@ const search_input = document.getElementById("search_kw");
 
 btn_search.addEventListener('click', function() {
     document.getElementById('kw').value = search_input.value;
-    document.getElementById('page').value = 1;  // 검색버튼을 클릭할 경우 1페이지부터 조회한다.
+    document.getElementById('page').value = 1;  // When the search button is clicked, the first page is searched.
     document.getElementById('searchForm').submit();
 });
 
 search_input.addEventListener('keydown', function(event) {
     if (event.key === "Enter") {
-        event.preventDefault();  // 기본 이벤트를 취소한다. (엔터로 인한 폼 제출 방지)
-        btn_search.click();  // Search 버튼을 프로그래매틱하게 클릭한다.
+        event.preventDefault();  // Cancel the default event (prevent form submission due to Enter)
+        btn_search.click();  // Click the Search button programmatically
     }
 });
 </script>

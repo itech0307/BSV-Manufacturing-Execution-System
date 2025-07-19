@@ -7,15 +7,15 @@
 {% block extra_js %}
 <script>
 $(document).ready(function() {
-    // 페이지가 로드되었을 때 'Production Quantity' 입력 필드를 비웁니다.
+    // When the page loads, clear the 'Production Quantity' input field.
     $('#qty').val('');
 
-    // 'qty' 필드의 값이 변경될 때마다 quantityInput 변수를 업데이트합니다.
+    // Update the quantityInput variable whenever the 'qty' field value changes.
     $('#qty').change(function() {
-        quantityInput = $(this).val(); // quantityInput 변수에 입력값을 설정합니다.
+        quantityInput = $(this).val(); // Set the input value to the quantityInput variable.
     });
     var decimalButton = document.querySelector('.decimal');
-    // 버튼이 존재하는 경우에만 숨깁니다
+    // Hide the button if it exists.
     decimalButton.style.display = 'none';
 });
 
@@ -105,12 +105,12 @@ function toggleTableVisibility() {
     $('.toggle-button').text(buttonText);
 }
 
-// 입력 필드의 값이 변경될 때 quantityInput 변수를 업데이트하는 함수
+// Update the quantityInput variable when the input field value changes.
 function updateQuantityInput() {
     quantityInput = $('#qty').val();
 }
 
-// 'input' 이벤트 리스너를 추가하여 입력 필드가 변경될 때마다 updateQuantityInput 함수를 호출합니다.
+// Add an 'input' event listener to call the updateQuantityInput function whenever the input field value changes.
 $('#qty').on('input', updateQuantityInput);
 </script>
 {% endblock %}

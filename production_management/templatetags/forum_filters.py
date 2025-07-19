@@ -20,13 +20,16 @@ def first_image(files):
     image_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp']
     for file in files:
         if isinstance(file, dict):
-            # file이 딕셔너리인 경우
+
+            # If the file is a dictionary
             file_name = file.get('name', '')
         elif hasattr(file, 'name'):
-            # file이 File 객체인 경우
+
+            # If the file is a File object
             file_name = file.name
         else:
-            # 예상치 못한 형태의 경우, 다음 파일로 넘어갑니다
+            
+            # If the file is an unexpected form, skip to the next file
             continue
         
         _, ext = os.path.splitext(file_name.lower())

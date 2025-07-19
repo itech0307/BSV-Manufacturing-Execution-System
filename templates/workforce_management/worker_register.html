@@ -1,4 +1,4 @@
-{% extends "common/main.html" %}
+{% extends "base/core.html" %}
 {% block content %}
 <div class="container mt-5">
     <div class="row justify-content-center">
@@ -10,10 +10,10 @@
                 <div class="card-body">
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
-                        <!-- 오류표시 Start -->
+                        <!-- Show error messages --> 
                         {% include "common/form_errors.html" %}
-                        <!-- 오류표시 End -->
-                        <!-- 프로필 사진 -->
+                        <!-- Show error messages End -->
+                        <!-- Profile picture -->
                         <div class="text-center mb-4">
                             {% if worker_image_url %}
                             <img src="{{ worker_image_url }}" alt="Worker Profile" class="img-fluid my-2" style="max-width: 200px;">
@@ -29,12 +29,12 @@
                           <label for="worker_code" class="form-label">Worker Code</label>
                           <input type="text" class="form-control" id="worker_code" name="worker_code" value="{{ form.worker_code.value|default_if_none:'' }}" {% if form.worker_code.value %}readonly{% endif %}>
                         </div>
-                        <!-- 이름 -->
+                        <!-- Name -->
                         <div class="form-group">
                             <label for="name">Name</label>
                             <input type="text" class="form-control" id="name" name="name" value="{{ form.name.value|default_if_none:'' }}">
                         </div>                        
-                        <!-- 부서 -->
+                        <!-- Department -->
                         <div class="form-group">
                           <label for="department">Department</label>
                           <select class="form-control" id="department" name="department">
@@ -43,12 +43,12 @@
                                 {% endfor %}
                           </select>
                         </div>                        
-                        <!-- 입사일 -->
+                        <!-- Join Date -->
                         <div class="form-group">
                           <label for="join_date">Join Date</label>
                           <input type="date" class="form-control" id="join_date" name="join_date" value="{{ form.join_date.value|date:"Y-m-d" }}">
                         </div>
-                        <!-- 직급 -->
+                        <!-- Position -->
                         <div class="form-group">
                           <label for="position">Position</label>
                           <select class="form-control" id="position" name="position">
@@ -57,13 +57,13 @@
                               {% endfor %}
                           </select>
                         </div>  
-                        <!-- 전화번호 -->
+                        <!-- Phone Number -->
                         <div class="form-group">
                           <label for="phone_number">Phone Number</label>
                           <input type="tel" class="form-control" id="phone_number" name="phone_number">
                         </div>
                         <br>
-                        <!-- 제출 버튼 -->
+                        <!-- Submit Button -->
                         <div class="text-center">
                           <button type="submit" class="btn btn-success">Save</button>
                         </div>

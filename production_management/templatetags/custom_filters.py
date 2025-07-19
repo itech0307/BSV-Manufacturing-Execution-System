@@ -50,7 +50,7 @@ def json_script(value, element_id):
 
 def json_serializable(value):
     """
-    객체를 JSON으로 직렬화할 수 있는 문자열로 변환합니다.
+    Convert an object to a string that can be serialized to JSON.
     """
     if isinstance(value, datetime):
         return value.isoformat()
@@ -61,7 +61,7 @@ def json_serializable(value):
 @register.filter(name='json_str')
 def json_str(value):
     """
-    JSON 직렬화 필터.
+    JSON serialization filter.
     """
     try:
         json_str = json.dumps(value, default=json_serializable)
@@ -76,15 +76,15 @@ def zip_count(value):
 
 @register.filter(name='elapsed_time')
 def elapsed_time(value):
-    """주어진 datetime 객체와 현재 시간 사이의 경과 시간을 'Xd Xh ago' 형식으로 반환합니다."""
+    """Return the elapsed time between the given datetime object and the current time in the format 'Xd Xh ago'."""
     if isinstance(value, str):
         try:
             value = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
         except ValueError:
-            return value  # 처리할 수 없는 형식이면 그대로 반환
+            return value  # If the format cannot be processed, return it as is
         
     if isinstance(value, datetime):
-        # 현재 시간
+        # Current time
         now = datetime.now()
         
         elapsed_time = now - value
@@ -103,18 +103,18 @@ def elapsed_time(value):
 
 @register.filter(name='d_day')
 def d_day(value):
-    """주어진 날짜와 오늘 사이의 D-day를 계산하여 반환합니다."""
+    """Calculate the D-day between the given date and today and return it."""
     if isinstance(value, str):
         try:
-            value = datetime.strptime(value, "%Y-%m-%d").date()  # 문자열을 날짜 객체로 변환
+            value = datetime.strptime(value, "%Y-%m-%d").date()  # Convert the string to a date object
         except ValueError:
-            return value  # 날짜 형식이 잘못된 경우 그대로 반환
+            return value  # If the date format is incorrect, return it as is
 
     if isinstance(value, date):
-        today = date.today()  # 현재 날짜 (date 객체)
+        today = date.today()  # Current date (date object)
         
-        delta = value - today  # 날짜 차이 계산
-        days = delta.days      # 일수 추출
+        delta = value - today  # Calculate the date difference
+        days = delta.days      # Extract the number of days
         
         if days == 0:
             return "D-day"

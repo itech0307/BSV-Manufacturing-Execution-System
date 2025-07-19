@@ -22,7 +22,7 @@
 .BSV-MES .subtitle {
     position: absolute;
     left: 0;
-    bottom: -12px; /* 4줄의 텍스트를 수용하기 위해 조정 */
+    bottom: -12px; /* Adjust to accommodate 4 lines of text */
     display: flex;
     flex-direction: column;
     align-items: flex-start;

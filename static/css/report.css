@@ -1,28 +1,28 @@
 .report-container {
-    height: 90vh; /* 뷰포트 높이의 100%로 설정 */
-    width: 100%; /* 컨테이너의 너비를 화면 전체로 설정 */
-    max-width: 100%; /* 최대 너비 제한을 없애서 확장 가능하게 합니다 */
-    margin: 0 auto; /* 중앙 정렬 */
-    padding: 0 20px; /* 좌우 패딩 추가 */
+    height: 90vh; /* Set height to 100% of viewport */
+    width: 100%; /* Set container width to full screen */
+    max-width: 100%; /* Remove maximum width limit to allow expansion */
+    margin: 0 auto; /* Center align */
+    padding: 0 20px; /* Add left and right padding */
     display: flex;
-    flex-direction: column; /* 자식 요소들을 수직으로 정렬 */
+    flex-direction: column; /* Align child elements vertically */
 }
 .report-row {
     padding: 10px;
     display: flex;
     align-items: center;
-    justify-content: space-between; /* row 내의 요소들이 양쪽으로 정렬되도록 조정 */
+    justify-content: space-between; /* Align elements horizontally */
 }
 .scrollable-tbody {
     overflow-y: auto;
-    flex-grow: 1; /* 가능한 모든 공간을 차지하도록 설정 */
+    flex-grow: 1; /* Take up all available space */
     max-height: 720px;
     display: block;
 }
 
 .title-buttons {
     display: flex;
-    gap: 10px; /* 버튼 사이의 간격 */
+    gap: 10px; /* Gap between buttons */
 }
 .scrollable-tbody {
     max-height: 720px;
@@ -31,30 +31,30 @@
 }
 .table-report {
     width: 100%;
-    table-layout: auto; /* 테이블 레이아웃을 고정으로 설정 */
-    border-collapse: collapse; /* 테두리 겹침 방지 */
-    border: 3px solid #2C3E50; /* 테이블 전체에 테두리 추가 */
+    table-layout: auto; /* Set table layout to fixed */
+    border-collapse: collapse; /* Prevent border overlap */
+    border: 3px solid #2C3E50; /* Add border to entire table */
 }
 .table-report th, .table td {
-    box-sizing: border-box; /* 패딩과 테두리가 너비에 포함되도록 설정 */
+    box-sizing: border-box; /* Include padding and border in width */
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 .table-report th {
     color: #E0E0E0;
-    background-color: #2C3E50; /* 헤더 배경색 설정 */
-    position: sticky; /* 헤더 고정 */
-    top: 0; /* 상단 고정 */
-    z-index: 10; /* 콘텐츠보다 앞에 위치 */
+    background-color: #2C3E50; /* Set header background color */
+    position: sticky; /* Fix header */
+    top: 0; /* Fix top */
+    z-index: 10; /* Position above content */
 }
 .table-report td {
     font-size: 13px;
 }
 .table-report tbody tr:hover {
-    background-color: #f2f2f2; /* 마우스를 갖다 대면 회색 음영이 나타납니다. */
+    background-color: #f2f2f2; /* When mouse is hovered, a gray shadow appears */
 }
 .plan-highlight {
-    background-color: yellow; /* 배경색을 노란색으로 설정 */
+    background-color: yellow; /* Set background color to yellow */
 }
 .hidden {
     display: none;
@@ -115,7 +115,7 @@
     width: 80%;
 }
 
-/* 툴팁 스타일 */
+/* Tooltip style */
 .tooltip {
     position: relative;
     display: inline-block;
@@ -129,7 +129,7 @@
     text-align: center;
     border-radius: 6px;
     padding: 5px 0;
-    /* 툴팁 위치 조정 */
+    /* Adjust tooltip position */
     position: absolute;
     z-index: 1;
     bottom: 100%;
@@ -137,16 +137,33 @@
     margin-left: -60px;
 }
 
-/* 마우스를 갖다 댔을 때 툴팁 표시 */
+/* Show tooltip when mouse is hovered */
 .tooltip:hover .tooltiptext {
     visibility: visible;
 }
 
-/* 컨텍스트 메뉴 스타일 */
-.context-menu { display: none; position: absolute; z-index: 1000; padding: 12px 0; background-color: #f0f0f0; border-radius: 5px; box-shadow: 0 2px 12px rgba(0,0,0,.35); }
+/* Context menu style */
+.context-menu { 
+    display: none; 
+    position: fixed !important; 
+    z-index: 99999 !important; 
+    padding: 12px 0; 
+    background-color: #ffffff; 
+    border-radius: 8px; 
+    box-shadow: 0 4px 16px rgba(0,0,0,.3); 
+    border: 1px solid #ddd;
+    min-width: 150px;
+}
 .context-menu ul { list-style: none; margin: 0; padding: 0; }
-.context-menu ul li { padding: 8px 12px; cursor: pointer; }
-.context-menu ul li:hover { background-color: #ddd; }
+.context-menu ul li { 
+    padding: 10px 15px; 
+    cursor: pointer; 
+    font-size: 14px;
+    color: #333;
+    border-bottom: 1px solid #eee;
+}
+.context-menu ul li:hover { background-color: #007bff; color: white; }
+.context-menu ul li:last-child { border-bottom: none; }
 
 /* 모달 스타일 */
 .modal { display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgb(0,0,0); background-color: rgba(0,0,0,0.4); }

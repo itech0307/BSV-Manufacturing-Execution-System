@@ -133,22 +133,22 @@
     margin-top: auto;
     padding: 10px;
     border-top: 1px solid rgba(255,255,255,0.1);
-    text-align: center; /* 중앙 정렬 */
+    text-align: center; /* Center alignment */
 }
 
 .user-info .nav-link {
     color: #ffffff;
     text-decoration: none;
-    display: inline-block; /* 인라인 블록으로 변경 */
-    padding: 5px 10px; /* 패딩 추가 */
+    display: inline-block; /* Change to inline block */
+    padding: 5px 10px; /* Add padding */
 }
 
-/* 드롭다운 화살표 제거 */
+/* Remove the dropdown arrow */
 .user-info .dropdown-toggle::after {
     display: none;
 }
 
-/* hover 시 배경색 변경 방지 */
+/* Prevent background color change on hover */
 .user-info .nav-link:hover,
 .user-info .nav-link:focus {
     background-color: transparent;
@@ -175,15 +175,15 @@
     top: auto !important;
     bottom: 100% !important;
     margin-bottom: 0.125rem;
-    left: 50%; /* 드롭다운 메뉴를 중앙에 위치 */
-    transform: translateX(-50%); /* 정확한 중앙 정렬을 위한 변형 */
+    left: 50%; /* Place the dropdown menu in the center */
+    transform: translateX(-50%); /* Transform to center */
 }
 
 @media (max-width: 767.98px) {
     .user-info .dropdown-menu {
         position: static;
         float: none;
-        transform: none; /* 모바일에서는 변형 제거 */
+        transform: none; /* Remove transformation on mobile */
     }
 }
 

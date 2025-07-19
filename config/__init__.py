@@ -1,4 +1,4 @@
-# Django가 시작될 때 Celery import
-# shared_task 데코레이션이 Celery를 사용
+# When Django starts, import Celery
+# The shared_task decorator uses Celery
 from .celery import app as celery_app
 __all__ = ('celery_app',)
