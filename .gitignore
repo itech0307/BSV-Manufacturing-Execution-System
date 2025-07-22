@@ -10,3 +10,4 @@ temp/
 setup.ini
 redis/
 .cursor/
+.env
